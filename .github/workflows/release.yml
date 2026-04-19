@@ -22,12 +22,12 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: rust-embedded-ide.exe
-            archive: rust-embedded-ide-windows-x86_64.zip
+            artifact: oxide.exe
+            archive: oxide-windows-x86_64.zip
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact: rust-embedded-ide
-            archive: rust-embedded-ide-linux-x86_64.tar.gz
+            artifact: oxide
+            archive: oxide-linux-x86_64.tar.gz
 
     steps:
       - uses: actions/checkout@v4
@@ -99,20 +99,19 @@ jobs:
         with:
           name: "Release ${{ github.ref_name }}"
           body: |
-            ## Rust Embedded IDE ${{ github.ref_name }}
-            
-            ### 対応ボード
-            - Arduino Uno / Nano / Mega / Leonardo (AVR)
-            - Raspberry Pi Pico / Pico 2 (ARM Cortex-M0+/M33)
-            - ESP32 / S2 / S3 (Xtensa)
-            - ESP32-C3 / C6 / H2 (RISC-V)
-            - STM32F1 / F4 / L4 / F7 / H7 (ARM Cortex-M3/M4F/M7)
-            - nRF52840, SAMD21/51, Teensy 4 他
-            
+            ## OxIDE ${{ github.ref_name }}
+
+            > Arduino-IDE-style simplicity, for Rust embedded development.
+
+            ### ✅ 実装済みボード
+            - Arduino Uno / Nano (AVR)
+            - ESP32 (Xtensa)
+            - STM32F4xx (ARM Cortex-M4F)
+
             ### ダウンロード
-            - `rust-embedded-ide-windows-x86_64.zip` — Windows 64-bit
-            - `rust-embedded-ide-linux-x86_64.tar.gz` — Linux 64-bit
-            
+            - `oxide-windows-x86_64.zip` — Windows 64-bit
+            - `oxide-linux-x86_64.tar.gz` — Linux 64-bit
+
             ### ライセンス
             MIT OR Apache-2.0
           draft: false
