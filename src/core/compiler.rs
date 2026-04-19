@@ -22,6 +22,7 @@ pub struct BuildResult {
 pub fn build_async(req: BuildRequest, tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
     std::thread::spawn(move || {
         let mut cmd = std::process::Command::new("cargo");
+        crate::core::no_window(&mut cmd);
         cmd.current_dir(&req.project_dir).arg("build");
 
         // .cargo/config.toml が存在する場合はそちらの target 設定を使う
@@ -145,7 +146,8 @@ fn copy_artifacts_to_dist(
     let hex_src = artifact_dir.join(format!("{}.hex", pkg_name));
     if elf_src.exists() && !hex_src.exists() {
         for tool in &["arm-none-eabi-objcopy", "rust-objcopy", "llvm-objcopy"] {
-            if std::process::Command::new(tool)
+            let mut c = std::process::Command::new(tool);
+            if crate::core::no_window(&mut c)
                 .arg("-O").arg("ihex")
                 .arg(&elf_src)
                 .arg(&hex_src)
