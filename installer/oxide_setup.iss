@@ -39,12 +39,12 @@ Name: "{commondesktop}\OxIDE"; Filename: "{app}\\oxide.exe"; Tasks: desktopicon
 
 [Run]
 ; Install Rust (only run rustup-init if rustup is not already installed)
-Filename: "{tmp}\\rustup-init.exe"; Parameters: "-y --default-toolchain stable --no-modify-path"; StatusMsg: "Rustをインストール中..."; Flags: waituntilterminated; Check: not FileExists(ExpandConstant('{userprofile}\\.cargo\\bin\\rustup.exe'))
+Filename: "{tmp}\\rustup-init.exe"; Parameters: "-y --default-toolchain stable --no-modify-path"; StatusMsg: "Rustをインストール中..."; Flags: waituntilterminated; Check: not FileExists(ExpandConstant('{%USERPROFILE}\\.cargo\\bin\\rustup.exe'))
 
 ; Ensure rustup target additions (run if rustup is available)
-Filename: "{userprofile}\\.cargo\\bin\\rustup.exe"; Parameters: "target add thumbv7em-none-eabihf"; StatusMsg: "ARM Cortex-M4ターゲットを追加中..."; Flags: waituntilterminated runhidden; Check: FileExists(ExpandConstant('{userprofile}\\.cargo\\bin\\rustup.exe'))
+Filename: "{%USERPROFILE}\\.cargo\\bin\\rustup.exe"; Parameters: "target add thumbv7em-none-eabihf"; StatusMsg: "ARM Cortex-M4ターゲットを追加中..."; Flags: waituntilterminated runhidden; Check: FileExists(ExpandConstant('{%USERPROFILE}\\.cargo\\bin\\rustup.exe'))
 
-Filename: "{userprofile}\\.cargo\\bin\\rustup.exe"; Parameters: "target add riscv32imc-unknown-none-elf"; StatusMsg: "RISC-Vターゲットを追加中..."; Flags: waituntilterminated runhidden; Check: FileExists(ExpandConstant('{userprofile}\\.cargo\\bin\\rustup.exe'))
+Filename: "{%USERPROFILE}\\.cargo\\bin\\rustup.exe"; Parameters: "target add riscv32imc-unknown-none-elf"; StatusMsg: "RISC-Vターゲットを追加中..."; Flags: waituntilterminated runhidden; Check: FileExists(ExpandConstant('{%USERPROFILE}\\.cargo\\bin\\rustup.exe'))
 
 ; Note: ESP32 (xtensa) requires espup and must be handled separately by the user
 

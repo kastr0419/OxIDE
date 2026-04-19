@@ -46,30 +46,36 @@ if (-not (Test-Path $rustupTarget)) {
 
 # 3) Attempt to download avrdude.exe (best-effort). Replace or provide manually if download fails.
 $avrdudeTarget = Join-Path $toolsDir 'avrdude.exe'
-$avrdudeCandidates = @(
-    'https://example.com/avrdude.exe' # <- Replace with a real avrdude Windows binary URL if you have one
-)
+$avrdudeZipUrl = 'https://github.com/avrdudes/avrdude/releases/download/v8.1/avrdude-v8.1-windows-mingw-ucrt-x64.zip'
+$avrdudeZip    = Join-Path $toolsDir 'avrdude.zip'
 if (-not (Test-Path $avrdudeTarget)) {
-    foreach ($url in $avrdudeCandidates) {
-        try {
-            Write-Host "Attempting to download avrdude from $url ..."
-            Invoke-WebRequest -Uri $url -OutFile $avrdudeTarget -UseBasicParsing -ErrorAction Stop
+    try {
+        Write-Host "Downloading avrdude from $avrdudeZipUrl ..."
+        Invoke-WebRequest -Uri $avrdudeZipUrl -OutFile $avrdudeZip -UseBasicParsing -ErrorAction Stop
+        Write-Host "Extracting avrdude.exe ..."
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($avrdudeZip)
+        $entry = $zip.Entries | Where-Object { $_.Name -eq 'avrdude.exe' } | Select-Object -First 1
+        if ($entry) {
+            [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $avrdudeTarget, $true)
             Write-Host "Saved avrdude.exe to $avrdudeTarget"
-            break
-        } catch {
-            Write-Warning "Failed to download from $url: $_"
+        } else {
+            Write-Warning "avrdude.exe not found in zip. Check the archive contents."
         }
-    }
-    if (-not (Test-Path $avrdudeTarget)) {
-        Write-Warning "avrdude.exe was not downloaded. Please provide a Windows avrdude binary at: $avrdudeTarget"
+        $zip.Dispose()
+        Remove-Item $avrdudeZip -Force
+    } catch {
+        Write-Warning "Failed to download/extract avrdude: $_"
+        Write-Warning "Please manually place avrdude.exe at: $avrdudeTarget"
     }
 } else { Write-Host "avrdude.exe already present at $avrdudeTarget" }
 
 # 4) Run Inno Setup Compiler (ISCC.exe)
 # Common install locations for Inno Setup 6
 $isccPaths = @( 
-    "$Env:ProgramFiles(x86)\\Inno Setup 6\\ISCC.exe",
-    "$Env:ProgramFiles\\Inno Setup 6\\ISCC.exe"
+    "$Env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe",
+    "$Env:ProgramFiles\Inno Setup 6\ISCC.exe",
+    "$Env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
 )
 $isccPath = $isccPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $isccPath) {

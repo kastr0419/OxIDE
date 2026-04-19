@@ -7,3 +7,5 @@ config.toml
 *.exe
 *.pdb
 launch_oxide.vbs
+installer/tools/
+installer/output/
