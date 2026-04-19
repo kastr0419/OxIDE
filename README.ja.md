@@ -65,12 +65,32 @@ UI の Build & Flash ワークフローに統合されているプリセット:
 
 ## 🛠 前提ツール
 
+### 1. Rust 環境のセットアップ
+
+OxIDE は**自身のビルド**にも、**ファームウェアのコンパイル**にも Rust が必要です。
+
+```sh
+# rustup（Rust ツールチェーンマネージャ）をインストール
+# Windows: https://rustup.rs からインストーラをダウンロードして実行
+# Linux/macOS:
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# インストール後、PATH を反映してバージョンを確認
+rustc --version   # 例: rustc 1.78.0 (...)
+cargo --version   # 例: cargo 1.78.0 (...)
+```
+
+> **Windows の注意:** C リンカも必要です。
+> [Visual Studio Build Tools](https://visualstudio.microsoft.com/ja/visual-cpp-build-tools/) をインストールし、
+> **C++ によるデスクトップ開発** ワークロードを選択してください（MSVC + Windows SDK が含まれます）。
+> Linux / macOS は `gcc`（`sudo apt install build-essential` / `xcode-select --install`）で対応できます。
+
 ### 共通（必須）
 
 | ツール | インストール |
 |--------|-------------|
-| **Rust (stable)** | [rustup.rs](https://rustup.rs) |
-| **C リンカ** | Windows: Visual Studio Build Tools (MSVC) · Linux/macOS: `gcc` |
+| **Rust (stable)** | 上記参照 |
+| **C リンカ** | Windows: MSVC (Visual Studio Build Tools) · Linux/macOS: `gcc` |
 
 ### ボード別ツール
 
