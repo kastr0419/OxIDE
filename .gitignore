@@ -5,3 +5,7 @@ Cargo.lock
 .DS_Store
 *.log
 config.toml
+/target
+*.exe
+*.pdb
+launch_oxide.vbs
