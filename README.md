@@ -2,14 +2,14 @@
 
 A cross-platform GUI IDE for writing embedded firmware in Rust, inspired by the simplicity of the Arduino IDE. Built with egui / eframe and focused on a clean, minimal workflow: edit, build, inspect, and flash.
 
-日本語版: [README.ja.md](README.ja.md)
+Japanese README: [README.ja.md](README.ja.md)
 
-🚀 Why OxIDE
+## 🚀 Why OxIDE
 
 - Designed for hobbyists and embedded Rust newcomers who want a lightweight, integrated editing/building/flashing workflow.
 - Provides focused tooling for common microcontroller families (AVR, RP2040, ESP32, STM32, nRF, etc.).
 
-✨ Implemented features (accurate to source)
+## ✨ Implemented features
 
 - Editor & file explorer: open/save files, workspace file list, multiple tabs.
 - Build system: run Cargo builds (with automatic target injection and memory.x generation for presets). Uses `cargo` on PATH.
@@ -25,7 +25,7 @@ A cross-platform GUI IDE for writing embedded firmware in Rust, inspired by the 
 
 Note: Features implemented in the UI call into core modules. Some backends depend on external command-line tools (avrdude, esptool.py, probe-rs, objcopy, nm, rust-analyzer). If a required tool isn't installed the IDE will show an error or fall back.
 
-📋 Project templates (Blink templates available)
+## 📋 Project templates
 
 OxIDE provides blink/project templates for the following boards (templates generate a ready-to-build Cargo project):
 
@@ -41,7 +41,7 @@ OxIDE provides blink/project templates for the following boards (templates gener
 
 (See source: src/templates/blink/mod.rs)
 
-✅ Full Build & Flash support (BOARD_PRESETS)
+## ✅ Full Build & Flash support
 
 These presets include build target, flash tool selection and are wired into the Build & Flash workflow in the UI:
 
@@ -54,7 +54,7 @@ These presets include build target, flash tool selection and are wired into the 
 
 (See source: src/core/board/presets.rs)
 
-🗺️ Pinout viewer (boards with built-in pin data)
+## 🗺️ Pinout viewer
 
 The pinout viewer contains curated pin maps for these boards:
 
@@ -67,43 +67,43 @@ The pinout viewer contains curated pin maps for these boards:
 
 ## 📦 Installation
 
-### Windows — インストーラー（推奨）
+### Windows — Installer (Recommended)
 
-Rust・avrdude を自動セットアップする all-in-one インストーラーです。
+All-in-one installer that automatically sets up Rust and avrdude.
 
-1. [Releases ページ](https://github.com/kastr0419/OxIDE/releases/latest) から `OxIDE_Setup_*.exe` をダウンロード
-2. 実行してウィザードに従う
-3. スタートメニュー / デスクトップから **OxIDE** を起動
+1. Download `OxIDE_Setup_*.exe` from the [Releases page](https://github.com/kastr0419/OxIDE/releases/latest)
+2. Run it and follow the wizard
+3. Launch **OxIDE** from the Start Menu or Desktop
 
-> 同梱: oxide.exe + rustup (Rust 自動インストール) + avrdude v8.1
+> Bundled: oxide.exe + rustup (auto-installs Rust) + avrdude v8.1
 
-### Linux — ワンライナー
+### Linux — One-liner
 
 ```bash
 curl -sSf https://raw.githubusercontent.com/kastr0419/OxIDE/master/installer/install.sh | bash
 ```
 
-対応ディストリビューション: Ubuntu/Debian, Fedora/RHEL, Arch Linux, openSUSE
+Supported distributions: Ubuntu/Debian, Fedora/RHEL, Arch Linux, openSUSE
 
-オプション:
+Options:
 
 ```bash
-bash install.sh --prefix=/usr/local   # インストール先を指定
-bash install.sh --no-rust             # Rust インストールをスキップ
-bash install.sh --no-tools            # avrdude インストールをスキップ
-bash install.sh --version=v0.1.0      # バージョン指定
+bash install.sh --prefix=/usr/local   # specify install prefix
+bash install.sh --no-rust             # skip Rust installation
+bash install.sh --no-tools            # skip avrdude installation
+bash install.sh --version=v0.1.0      # specify version
 ```
 
-### ポータブル（Windows / Linux 共通）
+### Portable (Windows / Linux)
 
-[Releases ページ](https://github.com/kastr0419/OxIDE/releases/latest) からアーカイブをダウンロード:
+Download an archive from the [Releases page](https://github.com/kastr0419/OxIDE/releases/latest):
 
-| ファイル | OS |
+| File | OS |
 |---|---|
 | `oxide-windows-x86_64.zip` | Windows 64-bit |
 | `oxide-linux-x86_64.tar.gz` | Linux 64-bit |
 
-### ソースからビルド
+### Build from Source
 
 ```sh
 git clone https://github.com/kastr0419/OxIDE.git
@@ -200,26 +200,20 @@ rustup component add llvm-tools-preview
 | `rust-analyzer` | LSP features in the editor (completion, diagnostics). Install via `rustup component add rust-analyzer` or from [rust-analyzer.github.io](https://rust-analyzer.github.io) |
 | `nm` / `arm-none-eabi-nm` | Stack analyzer panel (estimates stack usage from symbol table) |
 
-Build from source
-
-1. Clone the repository to a folder and cd into it.
-2. Build: cargo build --release
-3. Run: cargo run --release
-
-Quick start
+## 🚀 Quick start
 
 1. Start OxIDE.
-2. In Settings set your workspace directory.
-3. Select a board in the Board picker.
-4. (Optional) Click "Load Template" to generate a blink project for the selected board.
-5. Edit files, click ▶ Build, then ⚡ Flash (or Build & Flash).
+2. In **Settings**, set your workspace directory.
+3. Select a board in the **Board picker**.
+4. (Optional) Click **Load Template** to generate a blink project for the selected board.
+5. Edit files, click ▶ **Build**, then ⚡ **Flash** (or **Build & Flash**).
 
-Contributing
+## 🤝 Contributing
 
-- Bug reports and PRs welcome. Follow repository coding guidelines and run tests where provided.
+Bug reports and PRs are welcome. Follow repository coding guidelines and run tests where provided.
 
-License
+## 📄 License
 
-Dual licensed: MIT OR Apache-2.0. See LICENSE-MIT and LICENSE-APACHE.
+Dual licensed: MIT OR Apache-2.0. See [LICENSE-MIT](LICENSE-MIT) and [LICENSE-APACHE](LICENSE-APACHE).
 
-日本語版: [README.ja.md](README.ja.md)
+Japanese README: [README.ja.md](README.ja.md)
