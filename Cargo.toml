@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "OxIDE — A Rust-based embedded IDE for Arduino, ESP32, STM32, and more"
-repository = "https://github.com/your-username/oxide"
+repository = "https://github.com/kastr0419/oxide"
 keywords = ["embedded", "arduino", "esp32", "stm32", "ide"]
 categories = ["embedded", "development-tools"]
 
