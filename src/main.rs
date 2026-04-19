@@ -13,10 +13,10 @@ fn main() {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([WINDOW_WIDTH, WINDOW_HEIGHT])
-            .with_title("Rust Embedded IDE"),
+            .with_title("OxIDE"),
         ..Default::default()
     };
-    if let Err(e) = eframe::run_native("Rust Embedded IDE", options,
+    if let Err(e) = eframe::run_native("OxIDE", options,
         Box::new(|cc| Ok(Box::new(app::IdeApp::new(cc))))) {
         eprintln!("Failed to run application: {}", e);
     }

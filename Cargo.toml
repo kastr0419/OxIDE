@@ -13,7 +13,7 @@ name = "oxide"
 path = "src/lib.rs"
 
 [dependencies]
-probe-rs = "0.26"
+probe-rs = "0.31"
 # H-1: Removed broken [patch.crates-io] attempt. If xmas-elf related build issues occur,
 # this requires an upstream probe-rs/espflash upgrade (no local patch).
 anyhow = "1.0"
