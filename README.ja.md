@@ -1,132 +1,92 @@
-# OxIDE
+# OxIDE — 小さな組み込み Rust IDE
 
-> Arduino IDE の「シンプルさ」を、Rust 組み込み開発へ。
+Rust で組み込みファームウェアを書くためのクロスプラットフォーム GUI IDE。Arduino IDE のシンプルなワークフローに触発され、egui / eframe 上に最小限で使いやすい編集→ビルド→書き込みの体験を提供します。
 
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
-[![CI](https://github.com/your-username/oxide/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/oxide/actions/workflows/ci.yml)
+English: [README.md](README.md)
 
-OxIDE は **Rust** でマイコンのファームウェアを書くための GUI IDE です。  
-Arduino IDE が広めた「ボードを選んで → コードを書いて → 焼く」というシンプルなワークフローを、Rust 組み込み開発と 27 種以上のボードに対応して実現します。
+🚀 OxIDE の特徴
 
-[English README](README.md)
+- 初心者やホビイスト向けに軽量で統合された開発体験を提供します。
+- AVR、RP2040、ESP32、STM32、nRF など主要 MCU ファミリ向けの実用的なツール群を備えます。
 
----
+✨ 実装済みの機能（ソースに基づく正確な一覧）
 
-## なぜ OxIDE？
+- エディタ & ファイルエクスプローラ：開く／保存、ワークスペース一覧、複数タブ。
+- ビルド：Cargo を実行（プリセットに基づくターゲット注入、memory.x の自動生成）。
+- 書き込み：avrdude / esptool / probe-rs / DAPLink へのコピーなど、対応バックエンドへの連携（外部ツールが必要）
+- シリアルモニタ & プロッタ：シリアル接続、送受信、数値データの簡易プロット
+- ボード選択 & 自動検出：USB VID/PID / probe-rs / esptool による検出
+- ピン配置ビューア：図と表でピンを可視化
+- ELF アナライザ：セクション・シンボル一覧（object クレート利用）
+- スタックアナライザ：nm ベースのスタック推定
+- SVD ビューア：.svd ファイルの読み込みとレジスタ閲覧
+- Rust Analyzer (LSP) クライアント：補完・診断のために rust-analyzer を起動して利用可能
+- デバッグ UI のスケルトン（RTT 等）：外部デバッグツールと組み合わせて利用します
 
-|  | Arduino IDE | VS Code + 拡張 | **OxIDE** |
-|--|:-----------:|:-------------:|:---------:|
-| 言語 | C/C++ | 何でも | **Rust** |
-| セットアップの手間 | 少ない | 多い | **少ない** |
-| LSP / オートコンプリート | ✗ | ✓（手動設定） | **✓ 組み込み済み** |
-| シリアルモニタ | ✓ | プラグイン | **✓ 組み込み済み** |
-| シリアルプロッタ | ✗ | プラグイン | **✓ 組み込み済み** |
-| ピン配置ビューア | ✗ | ✗ | **✓ 組み込み済み** |
-| ELF / SVD / RTT デバッグ | ✗ | プラグイン | **✓ 組み込み済み** |
-| 対応ボード数 | Arduino 中心 | 何でも | **27 種以上** |
+📋 プロジェクトテンプレート（Blink）
 
----
+以下のボード向けにテンプレートを提供します（ビルド可能な Cargo プロジェクトを生成）：
 
-## ✨ 機能
+- AVR: Arduino Uno, Arduino Nano, Arduino Mega, Arduino Leonardo
+- RP2040: Raspberry Pi Pico, Raspberry Pi Pico 2
+- STM32: STM32F1, STM32F4, STM32L4, STM32F7, STM32H7, STM32G0
+- micro:bit V2
+- ESP32 系: ESP32, ESP32-S2, ESP32-S3, ESP32-C3, ESP32-C6, ESP32-H2
+- Nordic: nRF52840, nRF51822
+- SAMD 系: SAMD21, SAMD51, Arduino Due
+- Teensy 4
+- RISC-V / その他: GD32VF103, CH32V003, Raspberry Pi Zero (bare-metal)
 
-- **コードエディタ** — シンタックスハイライト + rust-analyzer LSP 統合（補完・エラー表示・定義ジャンプ）
-- **ワンクリック ビルド & 書き込み** — `cargo build` から avrdude / esptool / probe-rs まで自動連携
-- **シリアルモニタ** — 接続・送受信・ボーレート設定
-- **シリアルプロッタ** — シリアル出力の数値データをリアルタイムグラフ表示
-- **ピン配置ビューア** — 対応全ボードのインタラクティブなピン図
-- **ELF アナライザ** — バイナリサイズ・セクション・シンボルテーブルの確認
-- **SVD レジスタビューア** — SVD ファイルからペリフェラルレジスタを参照・デコード
-- **RTT デバッグパネル** — probe-rs 経由のリアルタイム転送出力（シリアルケーブル不要）
-- **スタックアナライザ** — コールグラフとスタック使用量の推定
-- **プロジェクトテンプレート** — 全対応ターゲット向けの新規プロジェクト雛形（Blink 等）
-- **ボード自動検出** — USB VID/PID による接続ボードの自動認識
+(ソース参照: src/templates/blink/mod.rs)
 
----
+✅ フル ビルド & 書き込み対応（BOARD_PRESETS）
 
-## 📦 対応ボード
+UI の Build & Flash ワークフローに統合されているプリセット:
 
-## 📦 対応ボード
+- Arduino Uno (ATmega328P) — avrdude（注: AVR 向けに nightly + avr-gcc が必要になる場合あり）
+- Arduino Nano (ATmega328P) — avrdude
+- Arduino Mega 2560 (ATmega2560) — avrdude
+- Arduino Leonardo (ATmega32u4) — avrdude
+- Raspberry Pi Pico (RP2040) — picotool / UF2 ワークフロー
+- ESP32 (Xtensa LX6) — esptool（espup 等のセットアップが必要）
 
-### ✅ フルサポート（ビルド & 書き込み）
+(ソース参照: src/core/board/presets.rs)
 
-| ボード | CPU | アーキテクチャ | 書き込みツール |
-|--------|-----|-------------|--------------|
-| Arduino Uno | ATmega328P | AVR 8-bit | avrdude |
-| Arduino Nano | ATmega328P | AVR 8-bit | avrdude |
-| Arduino Mega 2560 | ATmega2560 | AVR 8-bit | avrdude |
-| Arduino Leonardo | ATmega32u4 | AVR 8-bit | avrdude |
-| Raspberry Pi Pico | RP2040 (Cortex-M0+) | ARM 32-bit | picotool |
-| ESP32 | Xtensa LX6 | Xtensa 32-bit | esptool |
+🗺️ ピン配置ビューア（組み込みデータあり）
 
-### 📋 プロジェクトテンプレート（27ボード）
+次のボードに対してピンデータが内蔵されています：
 
-「New Project」でのテンプレート生成は以下のすべてのボードに対応しています：
+- Arduino Uno（Arduino Nano は Uno のデータを共有）
+- micro:bit V2 (nRF52833)
+- ESP32 (DevKit スタイル)
+- STM32F4 Discovery
 
-**AVR** — Uno, Nano, Mega, Leonardo  
-**ARM Cortex-M** — Raspberry Pi Pico, Pico 2, STM32F1/F4/L4/F7/H7/G0, micro:bit V2, nRF52840, nRF51822, SAMD21, SAMD51, Arduino Due, Teensy 4  
-**ESP32** — ESP32, S2, S3, C3, C6, H2  
-**RISC-V** — GD32VF103, CH32V003  
-**その他** — Raspberry Pi Zero（ベアメタル）
+(ソース参照: src/core/pinout.rs)
 
-### 🗺️ ピン配置ビューア（4ボード）
+前提ツール
 
-Arduino Uno · ESP32 · BBC micro:bit V2 · STM32F4xx
+- Rust（stable）と Cargo
+- LSP 利用時は rust-analyzer（任意）
+- ボードや解析機能に応じて外部ツールが必要: avrdude, esptool.py, probe-rs, objcopy, nm 等
 
-### 🔜 今後の対応予定
+ソースからビルド
 
-STM32、nRF52840、Raspberry Pi Pico 2、ESP32-S3/C3 のビルド & 書き込みサポート — 詳細は [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md) を参照。
+1. リポジトリをクローンしてカレントに移動
+2. `cargo build --release`
+3. `cargo run --release`
 
----
-
-## 🛠 前提ツール
-
-| ツール | 用途 | インストール |
-|--------|------|-------------|
-| Rust (stable) | 全ターゲット | [rustup.rs](https://rustup.rs) |
-| avrdude | Arduino / AVR | `winget install avrdude` / `apt install avrdude` |
-| esptool | ESP32 系 | `pip install esptool` |
-| probe-rs | STM32, nRF, RP2040 | `cargo install probe-rs-tools` |
-| rust-analyzer | LSP 機能 | 同梱 or `rustup component add rust-analyzer` |
-
-AVR ターゲットを使う場合は nightly ツールチェーンも必要です：
-
-```sh
-rustup toolchain install nightly
-rustup component add rust-src --toolchain nightly
-```
-
----
-
-## 🚀 ソースからビルド
-
-```sh
-git clone https://github.com/your-username/oxide.git
-cd oxide
-cargo build --release
-./target/release/oxide        # Linux
-.\target\release\oxide.exe    # Windows
-```
-
-Rust 1.70 以上と C リンカ（Windows: MSVC、Linux: gcc）が必要です。
-
----
-
-## ⚡ クイックスタート
+クイックスタート
 
 1. OxIDE を起動
-2. **File → New Project** でボードとテンプレート（例: Blink）を選択
-3. エディタで Rust ファームウェアを編集
-4. 左パネルでボードとシリアルポートを選択
-5. **Build & Flash** をクリック — 完了！
+2. Settings でワークスペースを設定
+3. Board picker でボードを選択
+4. （任意）Load Template で Blink プロジェクトを生成
+5. 編集 → ▶ Build → ⚡ Flash
 
----
+貢献
 
-## 🤝 コントリビューション
+バグ報告・PR歓迎。詳細は CONTRIBUTING.md を参照してください。
 
-コーディング規約・コミットメッセージ形式など、詳細は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
+ライセンス
 
----
-
-## 📄 ライセンス
-
-[MIT](LICENSE-MIT) または [Apache 2.0](LICENSE-APACHE) のデュアルライセンスです。いずれかを選択して利用できます。
+MIT または Apache-2.0 のデュアルライセンスです。

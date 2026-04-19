@@ -1,130 +1,96 @@
-# OxIDE
+# OxIDE — a small embedded Rust IDE
 
-> Arduino-IDE-style simplicity, for Rust embedded development.
+A cross-platform GUI IDE for writing embedded firmware in Rust, inspired by the simplicity of the Arduino IDE. Built with egui / eframe and focused on a clean, minimal workflow: edit, build, inspect, and flash.
 
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
-[![CI](https://github.com/your-username/oxide/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/oxide/actions/workflows/ci.yml)
+日本語版: [README.ja.md](README.ja.md)
 
-OxIDE is a GUI IDE for writing embedded firmware **in Rust** — with the same
-"select board → write code → flash" workflow that Arduino IDE made famous,
-but targeting 27+ boards and the full Rust embedded ecosystem.
+🚀 Why OxIDE
 
-[日本語版 README](README.ja.md)
+- Designed for hobbyists and embedded Rust newcomers who want a lightweight, integrated editing/building/flashing workflow.
+- Provides focused tooling for common microcontroller families (AVR, RP2040, ESP32, STM32, nRF, etc.).
 
----
+✨ Implemented features (accurate to source)
 
-## Why OxIDE?
+- Editor & file explorer: open/save files, workspace file list, multiple tabs.
+- Build system: run Cargo builds (with automatic target injection and memory.x generation for presets). Uses `cargo` on PATH.
+- Flashing: integrated flash pipeline for supported boards (avrdude, esptool, probe-rs, DAPLink copy, UF2/img where applicable). Some flash backends require external tools installed.
+- Serial monitor & plotter: connect to serial ports, send/receive text; a simple CSV/value plotter is included.
+- Board picker & auto-detect: choose board preset, refresh ports, and run auto-detection (USB VID/PID, probe-rs, esptool fallbacks).
+- Pinout viewer: visual pin maps (diagram + table) for several boards.
+- ELF analyzer: basic ELF section and symbol listing (uses `object` crate).
+- Stack analyzer: attempts stack-size estimation using `nm`/`arm-none-eabi-nm`.
+- SVD viewer: load & browse .svd files (registers, fields).
+- Rust Analyzer (LSP) client: embedded client to start `rust-analyzer` for completion and diagnostics (requires rust-analyzer on PATH or configured path).
+- Debug UI skeletons: debug / RTT panels are present and wire up to debug command channels (requires external debug tooling to be useful).
 
-|  | Arduino IDE | VS Code + plugins | **OxIDE** |
-|--|:-----------:|:-----------------:|:---------:|
-| Language | C/C++ | Any | **Rust** |
-| Setup complexity | Low | High | **Low** |
-| LSP / autocomplete | ✗ | ✓ (manual) | **✓ built-in** |
-| Serial monitor | ✓ | plugin | **✓ built-in** |
-| Serial plotter | ✗ | plugin | **✓ built-in** |
-| Pinout viewer | ✗ | ✗ | **✓ built-in** |
-| ELF / SVD / RTT debug | ✗ | plugin | **✓ built-in** |
-| Board support | Arduino-focused | Any | **27+ boards** |
+Note: Features implemented in the UI call into core modules. Some backends depend on external command-line tools (avrdude, esptool.py, probe-rs, objcopy, nm, rust-analyzer). If a required tool isn't installed the IDE will show an error or fall back.
 
----
+📋 Project templates (Blink templates available)
 
-## ✨ Features
+OxIDE provides blink/project templates for the following boards (templates generate a ready-to-build Cargo project):
 
-- **Code Editor** — syntax highlighting + rust-analyzer LSP integration (autocomplete, diagnostics, go-to-definition)
-- **One-click Build & Flash** — `cargo build` → avrdude / esptool / probe-rs, all wired up automatically
-- **Serial Monitor** — connect, send/receive, configurable baud rate
-- **Serial Plotter** — real-time graph of numeric serial output
-- **Pinout Viewer** — interactive visual pin diagram for every supported board
-- **ELF Analyzer** — inspect binary size, sections, and symbol table
-- **SVD Register Viewer** — browse and decode peripheral registers from SVD files
-- **RTT Debug Panel** — real-time transfer output via probe-rs (no serial cable needed)
-- **Stack Analyzer** — call graph and stack usage estimation
-- **Project Templates** — new-project scaffolding for all supported targets (blink and more)
-- **Board Auto-detect** — USB VID/PID detection identifies connected boards automatically
+- AVR: Arduino Uno, Arduino Nano, Arduino Mega, Arduino Leonardo
+- RP2040: Raspberry Pi Pico, Raspberry Pi Pico 2
+- STM32: STM32F1, STM32F4, STM32L4, STM32F7, STM32H7, STM32G0
+- micro:bit: micro:bit V2
+- ESP32 family: ESP32, ESP32-S2, ESP32-S3, ESP32-C3, ESP32-C6, ESP32-H2
+- Nordic: nRF52840, nRF51822
+- SAMD: SAMD21, SAMD51, Arduino Due (SAM)
+- Teensy: Teensy 4
+- RISC-V / others: GD32VF103, CH32V003, Raspberry Pi Zero (baremetal)
 
----
+(See source: src/templates/blink/mod.rs)
 
-## 📦 Supported Boards
+✅ Full Build & Flash support (BOARD_PRESETS)
 
-### ✅ Full Support (Build & Flash)
+These presets include build target, flash tool selection and are wired into the Build & Flash workflow in the UI:
 
-| Board | CPU | Architecture | Flash Tool |
-|-------|-----|-------------|-----------|
-| Arduino Uno | ATmega328P | AVR 8-bit | avrdude |
-| Arduino Nano | ATmega328P | AVR 8-bit | avrdude |
-| Arduino Mega 2560 | ATmega2560 | AVR 8-bit | avrdude |
-| Arduino Leonardo | ATmega32u4 | AVR 8-bit | avrdude |
-| Raspberry Pi Pico | RP2040 (Cortex-M0+) | ARM 32-bit | picotool |
-| ESP32 | Xtensa LX6 | Xtensa 32-bit | esptool |
+- Arduino Uno (ATmega328P) — avrdude (note: nightly + avr-gcc often required)
+- Arduino Nano (ATmega328P) — avrdude (note: nightly + avr-gcc often required)
+- Arduino Mega 2560 (ATmega2560) — avrdude
+- Arduino Leonardo (ATmega32u4) — avrdude
+- Raspberry Pi Pico (RP2040) — picotool / UF2-style workflow
+- ESP32 (Xtensa LX6) — esptool (espup/esp toolchain required)
 
-### 📋 Project Templates (27 boards)
+(See source: src/core/board/presets.rs)
 
-Template generation (`New Project`) is available for all boards below, even if Build & Flash is not yet wired up:
+🗺️ Pinout viewer (boards with built-in pin data)
 
-**AVR** — Uno, Nano, Mega, Leonardo  
-**ARM Cortex-M** — Raspberry Pi Pico, Pico 2, STM32F1/F4/L4/F7/H7/G0, micro:bit V2, nRF52840, nRF51822, SAMD21, SAMD51, Arduino Due, Teensy 4  
-**ESP32** — ESP32, S2, S3, C3, C6, H2  
-**RISC-V** — GD32VF103, CH32V003  
-**Other** — Raspberry Pi Zero (bare-metal)
+The pinout viewer contains curated pin maps for these boards:
 
-### 🗺️ Pinout Viewer (4 boards)
+- Arduino Uno (used also for Arduino Nano)
+- micro:bit V2 (nRF52833)
+- ESP32 (DevKit-style)
+- STM32F4 Discovery
 
-Arduino Uno · ESP32 · BBC micro:bit V2 · STM32F4xx
+(See source: src/core/pinout.rs)
 
-### 🔜 Coming Next
+Prerequisites
 
-Full Build & Flash support for STM32, nRF52840, Raspberry Pi Pico 2, ESP32-S3/C3 — see [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md).
+- Rust toolchain (stable) and Cargo.
+- For LSP: rust-analyzer (optional, recommended for completions/diagnostics).
+- External tools depending on boards: avrdude, esptool.py, probe-rs, arm-none-eabi-objcopy/objcopy, nm/arm-none-eabi-nm, etc.
 
----
+Build from source
 
-## 🛠 Prerequisites
+1. Clone the repository to a folder and cd into it.
+2. Build: cargo build --release
+3. Run: cargo run --release
 
-| Tool | Required for | Install |
-|------|-------------|---------|
-| Rust (stable) | All targets | [rustup.rs](https://rustup.rs) |
-| avrdude | Arduino / AVR | `winget install avrdude` / `apt install avrdude` |
-| esptool | ESP32 series | `pip install esptool` |
-| probe-rs | STM32, nRF, RP2040 | `cargo install probe-rs-tools` |
-| rust-analyzer | LSP features | bundled or `rustup component add rust-analyzer` |
+Quick start
 
-For AVR targets, a nightly toolchain is also required:
-```sh
-rustup toolchain install nightly
-rustup component add rust-src --toolchain nightly
-```
+1. Start OxIDE.
+2. In Settings set your workspace directory.
+3. Select a board in the Board picker.
+4. (Optional) Click "Load Template" to generate a blink project for the selected board.
+5. Edit files, click ▶ Build, then ⚡ Flash (or Build & Flash).
 
----
+Contributing
 
-## 🚀 Build from Source
+- Bug reports and PRs welcome. Follow repository coding guidelines and run tests where provided.
 
-```sh
-git clone https://github.com/your-username/oxide.git
-cd oxide
-cargo build --release
-./target/release/oxide        # Linux
-.\target\release\oxide.exe    # Windows
-```
+License
 
-Requires Rust 1.70+ and a C linker (MSVC on Windows, gcc on Linux).
+Dual licensed: MIT OR Apache-2.0. See LICENSE-MIT and LICENSE-APACHE.
 
----
-
-## ⚡ Quick Start
-
-1. Launch OxIDE
-2. **File → New Project** — choose your board and a template (e.g. Blink)
-3. Write your Rust firmware in the editor
-4. Select your board and serial port in the left panel
-5. Click **Build & Flash** — done
-
----
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, coding conventions, and the commit message format.
-
----
-
-## 📄 License
-
-Dual-licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE) — your choice.
+日本語版: [README.ja.md](README.ja.md)
