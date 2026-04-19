@@ -1,0 +1,3 @@
+fix: ensure release binary uses Windows GUI subsystem (no console window)
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
