@@ -4,12 +4,12 @@ Rust で組み込みファームウェアを書くためのクロスプラット
 
 English: [README.md](README.md)
 
-🚀 OxIDE の特徴
+## 🚀 OxIDE の特徴
 
 - 初心者やホビイスト向けに軽量で統合された開発体験を提供します。
 - AVR、RP2040、ESP32、STM32、nRF など主要 MCU ファミリ向けの実用的なツール群を備えます。
 
-✨ 実装済みの機能（ソースに基づく正確な一覧）
+## ✨ 実装済みの機能
 
 - エディタ & ファイルエクスプローラ：開く／保存、ワークスペース一覧、複数タブ。
 - ビルド：Cargo を実行（プリセットに基づくターゲット注入、memory.x の自動生成）。
@@ -23,7 +23,7 @@ English: [README.md](README.md)
 - Rust Analyzer (LSP) クライアント：補完・診断のために rust-analyzer を起動して利用可能
 - デバッグ UI のスケルトン（RTT 等）：外部デバッグツールと組み合わせて利用します
 
-📋 プロジェクトテンプレート（Blink）
+## 📋 プロジェクトテンプレート
 
 以下のボード向けにテンプレートを提供します（ビルド可能な Cargo プロジェクトを生成）：
 
@@ -39,7 +39,7 @@ English: [README.md](README.md)
 
 (ソース参照: src/templates/blink/mod.rs)
 
-✅ フル ビルド & 書き込み対応（BOARD_PRESETS）
+## ✅ フル ビルド & 書き込み対応
 
 UI の Build & Flash ワークフローに統合されているプリセット:
 
@@ -52,7 +52,7 @@ UI の Build & Flash ワークフローに統合されているプリセット:
 
 (ソース参照: src/core/board/presets.rs)
 
-🗺️ ピン配置ビューア（組み込みデータあり）
+## 🗺️ ピン配置ビューア
 
 次のボードに対してピンデータが内蔵されています：
 
@@ -62,6 +62,56 @@ UI の Build & Flash ワークフローに統合されているプリセット:
 - STM32F4 Discovery
 
 (ソース参照: src/core/pinout.rs)
+
+## 📦 インストール
+
+### Windows — インストーラー（推奨）
+
+Rust・avrdude を自動セットアップする all-in-one インストーラーです。
+
+1. [Releases ページ](https://github.com/kastr0419/OxIDE/releases/latest) から `OxIDE_Setup_*.exe` をダウンロード
+2. 実行してウィザードに従う
+3. スタートメニュー / デスクトップから **OxIDE** を起動
+
+> 同梱: oxide.exe + rustup (Rust 自動インストール) + avrdude v8.1
+
+### Linux — ワンライナー
+
+```bash
+curl -sSf https://raw.githubusercontent.com/kastr0419/OxIDE/master/installer/install.sh | bash
+```
+
+対応ディストリビューション: Ubuntu/Debian, Fedora/RHEL, Arch Linux, openSUSE
+
+オプション:
+
+```bash
+bash install.sh --prefix=/usr/local   # インストール先を指定
+bash install.sh --no-rust             # Rust インストールをスキップ
+bash install.sh --no-tools            # avrdude インストールをスキップ
+bash install.sh --version=v0.1.0      # バージョン指定
+```
+
+### ポータブル（Windows / Linux 共通）
+
+[Releases ページ](https://github.com/kastr0419/OxIDE/releases/latest) からアーカイブをダウンロード:
+
+| ファイル | OS |
+|---|---|
+| `oxide-windows-x86_64.zip` | Windows 64-bit |
+| `oxide-linux-x86_64.tar.gz` | Linux 64-bit |
+
+### ソースからビルド
+
+```sh
+git clone https://github.com/kastr0419/OxIDE.git
+cd OxIDE
+cargo build --release
+./target/release/oxide          # Linux
+.\target\release\oxide.exe      # Windows
+```
+
+---
 
 ## 🛠 前提ツール
 
@@ -148,24 +198,18 @@ rustup component add llvm-tools-preview
 | `rust-analyzer` | エディタの LSP 機能（補完・診断）。`rustup component add rust-analyzer` または [rust-analyzer.github.io](https://rust-analyzer.github.io) |
 | `nm` / `arm-none-eabi-nm` | スタックアナライザパネル（シンボルテーブルからスタック使用量を推定） |
 
-ソースからビルド
-
-1. リポジトリをクローンしてカレントに移動
-2. `cargo build --release`
-3. `cargo run --release`
-
-クイックスタート
+## 🚀 クイックスタート
 
 1. OxIDE を起動
-2. Settings でワークスペースを設定
-3. Board picker でボードを選択
-4. （任意）Load Template で Blink プロジェクトを生成
-5. 編集 → ▶ Build → ⚡ Flash
+2. **Settings** でワークスペースを設定
+3. **Board picker** でボードを選択
+4. （任意）**Load Template** で Blink プロジェクトを生成
+5. 編集 → ▶ **Build** → ⚡ **Flash**
 
-貢献
+## 🤝 貢献
 
-バグ報告・PR歓迎。詳細は CONTRIBUTING.md を参照してください。
+バグ報告・PR 歓迎。詳細は [CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
-ライセンス
+## 📄 ライセンス
 
-MIT または Apache-2.0 のデュアルライセンスです。
+MIT または Apache-2.0 のデュアルライセンスです。[LICENSE-MIT](LICENSE-MIT) / [LICENSE-APACHE](LICENSE-APACHE) を参照してください。
