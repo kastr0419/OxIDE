@@ -9,6 +9,8 @@ OxIDE is a GUI IDE for writing embedded firmware **in Rust** — with the same
 "select board → write code → flash" workflow that Arduino IDE made famous,
 but targeting 27+ boards and the full Rust embedded ecosystem.
 
+[日本語版 README](README.ja.md)
+
 ---
 
 ## Why OxIDE?
