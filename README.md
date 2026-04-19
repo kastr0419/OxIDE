@@ -65,11 +65,70 @@ The pinout viewer contains curated pin maps for these boards:
 
 (See source: src/core/pinout.rs)
 
-Prerequisites
+## 🛠 Prerequisites
 
-- Rust toolchain (stable) and Cargo.
-- For LSP: rust-analyzer (optional, recommended for completions/diagnostics).
-- External tools depending on boards: avrdude, esptool.py, probe-rs, arm-none-eabi-objcopy/objcopy, nm/arm-none-eabi-nm, etc.
+### Always required
+
+| Tool | Install |
+|------|---------|
+| **Rust (stable)** | [rustup.rs](https://rustup.rs) |
+| **C linker** | Windows: Visual Studio Build Tools (MSVC) · Linux/macOS: `gcc` |
+
+### Per-board tools
+
+**Arduino / AVR** (Uno, Nano, Mega, Leonardo)
+```sh
+# Nightly toolchain + AVR source (required to cross-compile for AVR)
+rustup toolchain install nightly
+rustup component add rust-src --toolchain nightly
+
+# avr-gcc (compiler backend)
+# Windows: install WinAVR or via MSYS2: pacman -S avr-gcc avr-libc
+# Linux:   sudo apt install gcc-avr binutils-avr avr-libc
+# macOS:   brew install avr-gcc
+
+# avrdude (flash tool)
+# Windows: winget install avrdude   or  https://github.com/avrdudes/avrdude/releases
+# Linux:   sudo apt install avrdude
+```
+
+**Raspberry Pi Pico (RP2040)**
+```sh
+rustup target add thumbv6m-none-eabi
+# picotool for flashing: https://github.com/raspberrypi/picotool
+# Or use UF2 drag-and-drop: hold BOOTSEL on power-on, copy the .uf2 file
+```
+
+**ESP32**
+```sh
+# espup installs the Xtensa Rust toolchain + target
+cargo install espup
+espup install
+
+# esptool.py (flash tool)
+pip install esptool
+```
+
+**STM32 / nRF52840 / DAPLink boards**
+```sh
+# probe-rs (flash/debug via J-Link, ST-Link, CMSIS-DAP)
+cargo install probe-rs-tools
+
+# Target triple — example for STM32F4:
+rustup target add thumbv7em-none-eabihf
+
+# ELF conversion (for .hex/.bin output, used by DAPLink flash)
+cargo install cargo-binutils
+rustup component add llvm-tools-preview
+# Alternative: install arm-none-eabi-binutils from https://developer.arm.com/downloads
+```
+
+### Optional tools
+
+| Tool | Purpose |
+|------|---------|
+| `rust-analyzer` | LSP features in the editor (completion, diagnostics). Install via `rustup component add rust-analyzer` or from [rust-analyzer.github.io](https://rust-analyzer.github.io) |
+| `nm` / `arm-none-eabi-nm` | Stack analyzer panel (estimates stack usage from symbol table) |
 
 Build from source
 

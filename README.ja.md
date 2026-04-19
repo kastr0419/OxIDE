@@ -63,11 +63,70 @@ UI の Build & Flash ワークフローに統合されているプリセット:
 
 (ソース参照: src/core/pinout.rs)
 
-前提ツール
+## 🛠 前提ツール
 
-- Rust（stable）と Cargo
-- LSP 利用時は rust-analyzer（任意）
-- ボードや解析機能に応じて外部ツールが必要: avrdude, esptool.py, probe-rs, objcopy, nm 等
+### 共通（必須）
+
+| ツール | インストール |
+|--------|-------------|
+| **Rust (stable)** | [rustup.rs](https://rustup.rs) |
+| **C リンカ** | Windows: Visual Studio Build Tools (MSVC) · Linux/macOS: `gcc` |
+
+### ボード別ツール
+
+**Arduino / AVR**（Uno / Nano / Mega / Leonardo）
+```sh
+# nightly ツールチェーン + AVR ソース（AVR クロスコンパイルに必須）
+rustup toolchain install nightly
+rustup component add rust-src --toolchain nightly
+
+# avr-gcc（コンパイラバックエンド）
+# Windows: WinAVR または MSYS2: pacman -S avr-gcc avr-libc
+# Linux:   sudo apt install gcc-avr binutils-avr avr-libc
+# macOS:   brew install avr-gcc
+
+# avrdude（書き込みツール）
+# Windows: winget install avrdude  または  https://github.com/avrdudes/avrdude/releases
+# Linux:   sudo apt install avrdude
+```
+
+**Raspberry Pi Pico (RP2040)**
+```sh
+rustup target add thumbv6m-none-eabi
+# picotool: https://github.com/raspberrypi/picotool
+# または UF2 ドラッグ＆ドロップ: BOOTSEL を押しながら電源を入れ .uf2 をコピー
+```
+
+**ESP32**
+```sh
+# espup が Xtensa 向け Rust ツールチェーンとターゲットをインストール
+cargo install espup
+espup install
+
+# esptool.py（書き込みツール）
+pip install esptool
+```
+
+**STM32 / nRF52840 / DAPLink 対応ボード**
+```sh
+# probe-rs（J-Link / ST-Link / CMSIS-DAP 経由の書き込み・デバッグ）
+cargo install probe-rs-tools
+
+# ターゲットの例（STM32F4）
+rustup target add thumbv7em-none-eabihf
+
+# ELF 変換（DAPLink 書き込み用 .hex/.bin 生成）
+cargo install cargo-binutils
+rustup component add llvm-tools-preview
+# 代替: https://developer.arm.com/downloads から arm-none-eabi-binutils を導入
+```
+
+### 任意ツール
+
+| ツール | 用途 |
+|--------|------|
+| `rust-analyzer` | エディタの LSP 機能（補完・診断）。`rustup component add rust-analyzer` または [rust-analyzer.github.io](https://rust-analyzer.github.io) |
+| `nm` / `arm-none-eabi-nm` | スタックアナライザパネル（シンボルテーブルからスタック使用量を推定） |
 
 ソースからビルド
 
