@@ -32,7 +32,8 @@ fn run_objcopy(format: &str, elf: &Path, out: &Path) -> std::result::Result<(), 
     ];
     for tool in &candidates {
         if tool.is_empty() { continue; }
-        let result = std::process::Command::new(tool)
+        let mut c = std::process::Command::new(tool);
+        let result = crate::core::no_window(&mut c)
             .arg("-O").arg(format)
             .arg(elf)
             .arg(out)
@@ -89,6 +90,7 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                 let mut hex = elf.clone();
                 hex.set_extension("hex");
                 let mut cmd = Command::new("avrdude");
+                crate::core::no_window(&mut cmd);
                 let mcu = preset.avrdude_mcu.unwrap_or("m328p");
                 cmd.args(["-p", mcu, "-c", "arduino", "-P", &port, "-b", "115200", "-U", &format!("flash:w:{}:i", hex.display())]);
                 cmd_opt = Some(cmd);
@@ -108,6 +110,7 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                             _ => "esp32",
                         };
                         let mut cmd = Command::new("esptool.py");
+                        crate::core::no_window(&mut cmd);
                         cmd.arg("--chip").arg(chip_str)
                             .arg("--port").arg(&port)
                             .arg("write_flash")
@@ -164,6 +167,7 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
             }
             FlashToolKind::ProbeRs => {
                 let mut cmd = Command::new("probe-rs");
+                crate::core::no_window(&mut cmd);
                 cmd.arg("download").arg("--chip").arg(preset.probe_rs_chip).arg(&elf);
                 cmd_opt = Some(cmd);
             }

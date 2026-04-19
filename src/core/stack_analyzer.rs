@@ -22,7 +22,8 @@ pub fn analyze_stack(elf_path: &Path) -> anyhow::Result<StackReport> {
     let tools = ["arm-none-eabi-nm", "nm"];
     let mut out = None;
     for t in &tools {
-        let res = Command::new(t)
+        let mut nm_cmd = Command::new(t);
+        let res = crate::core::no_window(&mut nm_cmd)
             .arg("-S")
             .arg("--defined-only")
             .arg(elf_path.as_os_str())

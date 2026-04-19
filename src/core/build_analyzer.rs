@@ -62,7 +62,8 @@ pub fn analyze_elf(
         BoardKind::ArduinoUno | BoardKind::ArduinoNano => "avr-size",
         _ => "arm-none-eabi-size",
     };
-    let output = std::process::Command::new(tool)
+    let mut size_cmd = std::process::Command::new(tool);
+    let output = crate::core::no_window(&mut size_cmd)
         .arg(elf_path)
         .output()?;
     let stdout = String::from_utf8_lossy(&output.stdout);

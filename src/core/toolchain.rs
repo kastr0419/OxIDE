@@ -16,12 +16,15 @@ pub struct RustAnalyzerStatus {
 pub fn check_rust_analyzer() -> RustAnalyzerStatus {
     // which で PATH 上を探す
     if let Ok(path) = which::which("rust-analyzer") {
-        let version = Command::new(&path)
-            .arg("--version")
-            .output()
-            .ok()
-            .and_then(|o| String::from_utf8(o.stdout).ok())
-            .map(|s| s.trim().to_string());
+        let version = {
+            let mut c = Command::new(&path);
+            crate::core::no_window(&mut c)
+                .arg("--version")
+                .output()
+                .ok()
+                .and_then(|o| String::from_utf8(o.stdout).ok())
+                .map(|s| s.trim().to_string())
+        };
         return RustAnalyzerStatus { is_installed: true, path: Some(path), version };
     }
     // ~/.cargo/bin を直接確認（PATH が通っていない場合）
@@ -51,7 +54,8 @@ pub fn install_rust_analyzer_async(tx: crossbeam_channel::Sender<crate::app::App
             crate::app::ToolchainMsg::InstallStarted,
         ));
 
-        let result = Command::new("rustup")
+        let mut rustup_cmd = Command::new("rustup");
+        let result = crate::core::no_window(&mut rustup_cmd)
             .args(["component", "add", "rust-analyzer"])
             .output();
 

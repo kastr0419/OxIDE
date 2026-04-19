@@ -89,7 +89,8 @@ pub fn start_lsp(workspace: PathBuf, tx_to_ui: Sender<LspMessage>, ra_path_overr
         .filter(|p| p.exists())
         .or_else(|| which::which("rust-analyzer").ok())?;
 
-    let mut child = Command::new(ra_path)
+    let mut ra_cmd = Command::new(ra_path);
+    let mut child = crate::core::no_window(&mut ra_cmd)
         .current_dir(&workspace)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

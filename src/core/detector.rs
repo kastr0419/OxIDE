@@ -89,7 +89,8 @@ pub fn detect_by_usb_id() -> Vec<DetectedBoard> {
 ///   [0]: CMSIS-DAP -- 0D28:0204 -- nRF52833_xxAA
 pub fn detect_by_probe_rs() -> Vec<DetectedBoard> {
     let mut results = Vec::new();
-    let output = match std::process::Command::new("probe-rs").args(["list"]).output() {
+    let mut probe_cmd = std::process::Command::new("probe-rs");
+    let output = match crate::core::no_window(&mut probe_cmd).args(["list"]).output() {
         Ok(o) => o,
         Err(_) => return results, // probe-rs 未インストール → スキップ
     };
@@ -158,7 +159,8 @@ pub fn detect_by_probe_rs() -> Vec<DetectedBoard> {
 
 /// esptool.py でESP チップ種別を確定する（3秒タイムアウト）。
 pub fn detect_by_esptool(port: &str) -> Option<DetectedBoard> {
-    let output = std::process::Command::new("esptool.py")
+    let mut esptool_cmd = std::process::Command::new("esptool.py");
+    let output = crate::core::no_window(&mut esptool_cmd)
         .args(["--port", port, "--no-stub", "--timeout", "3", "chip_id"])
         .output()
         .ok()?;
