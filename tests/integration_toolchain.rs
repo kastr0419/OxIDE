@@ -3,7 +3,7 @@
 
 //! rust-analyzer ツールチェーン管理の統合テスト
 
-use rust_embedded_ide::core::toolchain::{
+use oxide::core::toolchain::{
     check_rust_analyzer, validate_custom_path, home_cargo_bin,
 };
 use std::path::PathBuf;

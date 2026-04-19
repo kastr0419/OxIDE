@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
-use rust_embedded_ide::core::board::{BoardKind, BOARD_PRESETS};
-use rust_embedded_ide::templates::blink::get_blink_template;
-use rust_embedded_ide::templates::create_blink_project;
+use oxide::core::board::{BoardKind, BOARD_PRESETS};
+use oxide::templates::blink::get_blink_template;
+use oxide::templates::create_blink_project;
 
 /// すべてのボードにテンプレートが存在することを確認
 #[test]
@@ -126,9 +126,9 @@ fn create_blink_project_writes_cargo_config() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).unwrap();
 
-    let result = rust_embedded_ide::templates::create_blink_project(
+    let result = oxide::templates::create_blink_project(
         &tmp,
-        &rust_embedded_ide::core::board::BoardKind::Stm32F4,
+        &oxide::core::board::BoardKind::Stm32F4,
     );
     assert!(result.is_ok(), "create_blink_project failed: {:?}", result.err());
 
@@ -148,9 +148,9 @@ fn create_blink_project_avr_has_no_memory_x() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).unwrap();
 
-    let result = rust_embedded_ide::templates::create_blink_project(
+    let result = oxide::templates::create_blink_project(
         &tmp,
-        &rust_embedded_ide::core::board::BoardKind::ArduinoUno,
+        &oxide::core::board::BoardKind::ArduinoUno,
     );
     assert!(result.is_ok());
 
@@ -166,9 +166,9 @@ fn create_blink_project_stm32_has_memory_x() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).unwrap();
 
-    let result = rust_embedded_ide::templates::create_blink_project(
+    let result = oxide::templates::create_blink_project(
         &tmp,
-        &rust_embedded_ide::core::board::BoardKind::Stm32F4,
+        &oxide::core::board::BoardKind::Stm32F4,
     );
     assert!(result.is_ok());
 

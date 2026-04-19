@@ -3,8 +3,8 @@
 
 //! 自動検出ロジックの統合テスト
 
-use rust_embedded_ide::core::detector::{DetectionConfidence, detect_by_port_hint, detect_by_usb_id};
-use rust_embedded_ide::core::board::BOARD_PRESETS;
+use oxide::core::detector::{DetectionConfidence, detect_by_port_hint, detect_by_usb_id};
+use oxide::core::board::BOARD_PRESETS;
 
 #[test]
 fn detect_usb_returns_valid_indices() {
