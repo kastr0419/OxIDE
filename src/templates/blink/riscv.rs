@@ -1,0 +1,125 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+// Copyright 2026 rust-embedded-ide contributors
+
+use super::BlinkTemplate;
+
+pub fn gd32vf103() -> BlinkTemplate {
+    BlinkTemplate {
+        main_rs: r#"//! GD32VF103 Lチカ
+//! LED: PB0
+#![no_std]
+#![no_main]
+
+use gd32vf103xx_hal::{pac, prelude::*, gpio::{GpioExt, Output, PushPull, gpiob::PB0}};
+use riscv_rt::entry;
+use panic_halt as _;
+
+#[entry]
+fn main() -> ! {
+    let dp = pac::Peripherals::take().unwrap();
+    let mut rcu = dp.RCU.configure().freeze();
+    let mut gpiob = dp.GPIOB.split(&mut rcu);
+    let mut led: PB0<Output<PushPull>> = gpiob.pb0.into_push_pull_output(&mut gpiob.config);
+    loop {
+        led.set_low().unwrap();
+        riscv::asm::delay(8_000_000);
+        led.set_high().unwrap();
+        riscv::asm::delay(8_000_000);
+    }
+}
+"#,
+        cargo_toml: r#"[package]
+name = "blink"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "blink"
+test = false
+bench = false
+
+[dependencies]
+gd32vf103xx-hal = "0.4"
+riscv = "0.10"
+riscv-rt = "0.12"
+panic-halt = "0.2"
+"#,
+        cargo_config: r#"[build]
+target = "riscv32imac-unknown-none-elf"
+"#,
+        rust_toolchain: r#"[toolchain]
+channel = "stable"
+targets = ["riscv32imac-unknown-none-elf"]
+"#,
+        memory_x: Some("/*******************************************************************************
+Memory layout for GD32VF103
+FLASH ORIGIN = 0x08000000 LENGTH = 128K
+RAM   ORIGIN = 0x20000000 LENGTH = 32K
+*******************************************************************************/"),
+        build_rs: None,
+        linker_ld: None,
+        target_json: None,
+    }
+}
+
+pub fn ch32v003() -> BlinkTemplate {
+    BlinkTemplate {
+        main_rs: r#"//! CH32V003 Lチカ
+//! LED: PD0 (CH32V003F4P6)
+#![no_std]
+#![no_main]
+
+use ch32v_hal::{pac, prelude::*, gpio::GpioExt};
+use panic_halt as _;
+
+#[ch32v_hal::entry]
+fn main() -> ! {
+    let dp = pac::Peripherals::take().unwrap();
+    let rcc = dp.RCC.constrain();
+    let _ = rcc.cfgr.freeze();
+    let gpiod = dp.GPIOD.split();
+    let mut led = gpiod.pd0.into_push_pull_output();
+    loop {
+        led.set_low().unwrap();  // LED ON
+        unsafe { riscv::asm::delay(480_000) };
+        led.set_high().unwrap(); // LED OFF
+        unsafe { riscv::asm::delay(480_000) };
+    }
+}
+"#,
+        cargo_toml: r#"[package]
+name = "blink"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "blink"
+test = false
+bench = false
+
+[dependencies]
+ch32v-hal = "0.1"
+riscv = "0.10"
+riscv-rt = "0.12"
+panic-halt = "0.2"
+"#,
+        cargo_config: r#"[build]
+target = "riscv32ec-unknown-none-elf"
+
+[unstable]
+build-std = ["core"]
+"#,
+        rust_toolchain: r#"[toolchain]
+channel = "stable"
+targets = ["riscv32ec-unknown-none-elf"]
+"#,
+        memory_x: Some("/*******************************************************************************
+Memory layout for CH32V003 (example)
+FLASH ORIGIN = 0x08000000 LENGTH = 16K-64K (device dependent)
+RAM   ORIGIN = 0x20000000 LENGTH = 8K-32K (device dependent)
+*******************************************************************************/"),
+        build_rs: None,
+        linker_ld: None,
+        target_json: None,
+    }
+}

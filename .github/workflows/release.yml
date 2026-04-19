@@ -1,0 +1,120 @@
+# SPDX-License-Identifier: MIT OR Apache-2.0
+# Copyright 2026 rust-embedded-ide contributors
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  # ─────────────────────────────────────────────
+  # バイナリビルド (Windows + Linux)
+  # ─────────────────────────────────────────────
+  build-release:
+    name: Build Release (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: rust-embedded-ide.exe
+            archive: rust-embedded-ide-windows-x86_64.zip
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: rust-embedded-ide
+            archive: rust-embedded-ide-linux-x86_64.tar.gz
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -y && sudo apt-get install -y \
+            libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev \
+            libxcb-xfixes0-dev libxkbcommon-dev libssl-dev \
+            libudev-dev pkg-config
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: release-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+
+      # Windows: zip 圧縮
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $bin = "target\${{ matrix.target }}\release\${{ matrix.artifact }}"
+          Compress-Archive -Path $bin, README.md, LICENSE-MIT, LICENSE-APACHE, NOTICE `
+            -DestinationPath ${{ matrix.archive }}
+
+      # Linux: tar.gz 圧縮
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          BIN="target/${{ matrix.target }}/release/${{ matrix.artifact }}"
+          tar czf ${{ matrix.archive }} $BIN README.md LICENSE-MIT LICENSE-APACHE NOTICE
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive }}
+          path: ${{ matrix.archive }}
+
+  # ─────────────────────────────────────────────
+  # GitHub Release 作成 & アップロード
+  # ─────────────────────────────────────────────
+  create-release:
+    name: Create GitHub Release
+    needs: build-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Release ${{ github.ref_name }}"
+          body: |
+            ## Rust Embedded IDE ${{ github.ref_name }}
+            
+            ### 対応ボード
+            - Arduino Uno / Nano / Mega / Leonardo (AVR)
+            - Raspberry Pi Pico / Pico 2 (ARM Cortex-M0+/M33)
+            - ESP32 / S2 / S3 (Xtensa)
+            - ESP32-C3 / C6 / H2 (RISC-V)
+            - STM32F1 / F4 / L4 / F7 / H7 (ARM Cortex-M3/M4F/M7)
+            - nRF52840, SAMD21/51, Teensy 4 他
+            
+            ### ダウンロード
+            - `rust-embedded-ide-windows-x86_64.zip` — Windows 64-bit
+            - `rust-embedded-ide-linux-x86_64.tar.gz` — Linux 64-bit
+            
+            ### ライセンス
+            MIT OR Apache-2.0
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: artifacts/**/*

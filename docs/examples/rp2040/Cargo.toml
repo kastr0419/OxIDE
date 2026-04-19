@@ -1,0 +1,20 @@
+[package]
+name = "blink"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "blink"
+test = false
+bench = false
+
+[dependencies]
+rp-pico = { version = "0.9", features = ["critical-section-impl"] }
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+embedded-hal = "1.0"
+panic-halt = "0.2"
+
+[profile.release]
+lto = true
+opt-level = "s"

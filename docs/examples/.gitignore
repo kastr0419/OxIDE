@@ -1,0 +1,4 @@
+*/target/
+*/Cargo.lock
+# Unignore .cargo/config.toml (overrides root .gitignore which ignores all config.toml)
+!*/.cargo/config.toml

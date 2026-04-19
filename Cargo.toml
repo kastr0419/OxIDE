@@ -1,0 +1,38 @@
+[package]
+name = "oxide"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+description = "OxIDE — A Rust-based embedded IDE for Arduino, ESP32, STM32, and more"
+repository = "https://github.com/your-username/oxide"
+keywords = ["embedded", "arduino", "esp32", "stm32", "ide"]
+categories = ["embedded", "development-tools"]
+
+[lib]
+name = "oxide"
+path = "src/lib.rs"
+
+[dependencies]
+probe-rs = "0.26"
+# H-1: Removed broken [patch.crates-io] attempt. If xmas-elf related build issues occur,
+# this requires an upstream probe-rs/espflash upgrade (no local patch).
+anyhow = "1.0"
+crossbeam-channel = "0.5"
+serialport = "4.0"
+eframe = "0.31"
+egui = "0.31"
+egui_plot = "0.31"
+roxmltree = "0.20"
+egui_extras = { version = "0.31", features = ["syntect"] }
+egui_commonmark = { version = "0.20", features = ["better_syntax_highlighting"] }
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.5"
+dirs = "6"
+rfd = "0.10"
+serde_json = "1"
+# lsp-types removed: unused in code
+# RUSTSEC-2025-0018: xmas-elf は probe-rs 経由の間接依存。upstream 修正待ち.
+which = "4"
+object = { version = "0.36", features = ["read"] }
+
+[dev-dependencies]

@@ -1,0 +1,20 @@
+[package]
+name = "blink"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "blink"
+test = false
+bench = false
+
+[dependencies]
+microbit-v2 = "0.15"
+embedded-hal = "1"
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+panic-halt = "0.2"
+
+[profile.release]
+lto = true
+opt-level = "s"
