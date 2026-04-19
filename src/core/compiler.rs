@@ -211,7 +211,7 @@ mod tests {
         // .cargo/config.toml が存在するディレクトリでは --target を渡さない判定を確認する
         let tmp = std::env::temp_dir().join("test_cargo_config_check");
         let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(tmp.join(".cargo")).unwrap();
+        std::fs::create_dir_all(tmp.join(".cargo")).expect("create .cargo directory in test failed");
 
         // .cargo/config.toml なし → has_cargo_config = false
         let has_config = tmp.join(".cargo").join("config.toml").exists()
@@ -219,7 +219,7 @@ mod tests {
         assert!(!has_config);
 
         // .cargo/config.toml あり → has_cargo_config = true
-        std::fs::write(tmp.join(".cargo").join("config.toml"), "[build]\ntarget = \"thumbv7em-none-eabihf\"\n").unwrap();
+        std::fs::write(tmp.join(".cargo").join("config.toml"), "[build]\ntarget = \"thumbv7em-none-eabihf\"\n").expect("write .cargo/config.toml in test failed");
         let has_config = tmp.join(".cargo").join("config.toml").exists()
             || tmp.join(".cargo").join("config").exists();
         assert!(has_config);
