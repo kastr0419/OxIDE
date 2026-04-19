@@ -1,0 +1,26 @@
+[package]
+name = "blink"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "blink"
+test = false
+bench = false
+
+[dependencies]
+esp-hal = { version = "1.0", features = ["esp32", "unstable"] }
+esp-backtrace = { version = "0.19", features = ["esp32", "panic-handler", "println"] }
+esp-println = { version = "0.17", default-features = false, features = ["esp32", "uart"] }
+
+[profile.dev]
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1
+debug = 2
+debug-assertions = false
+incremental = false
+lto = "fat"
+opt-level = "s"
+overflow-checks = false

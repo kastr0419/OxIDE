@@ -1,0 +1,15 @@
+[package]
+name = "blink"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "blink"
+test = false
+bench = false
+
+[dependencies]
+teensy4-bsp = { version = "0.5", features = ["rt"] }
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+panic-halt = "0.2"

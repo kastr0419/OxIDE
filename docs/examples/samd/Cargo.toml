@@ -1,0 +1,15 @@
+[package]
+name = "blink"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "blink"
+test = false
+bench = false
+
+[dependencies]
+metro_m0 = "0.14"
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+panic-halt = "0.2"

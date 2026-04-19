@@ -1,0 +1,16 @@
+[package]
+name = "blink"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "blink"
+test = false
+bench = false
+
+[dependencies]
+gd32vf103xx-hal = "0.4"
+embedded-hal = "0.2"
+riscv = "0.10"
+riscv-rt = "0.12"
+panic-halt = "0.2"

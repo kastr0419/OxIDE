@@ -1,0 +1,5 @@
+[build]
+target = "avr-atmega328p.json"
+
+[target.'cfg(target_arch = "avr")']
+rustflags = ["-C", "opt-level=s", "-C", "target-cpu=atmega328p"]
