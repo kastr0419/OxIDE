@@ -1,11 +1,9 @@
 /target
-
 *.swp
 *.swo
 .DS_Store
 *.log
 config.toml
-/target
 *.exe
 *.pdb
 launch_oxide.vbs
