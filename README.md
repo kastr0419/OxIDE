@@ -67,12 +67,32 @@ The pinout viewer contains curated pin maps for these boards:
 
 ## 🛠 Prerequisites
 
+### 1. Set up Rust
+
+OxIDE requires Rust both to **run itself** (build from source) and to **compile your firmware**.
+
+```sh
+# Install rustup (the Rust toolchain manager)
+# Windows: download and run https://rustup.rs
+# Linux/macOS:
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+# After install, make sure cargo is in your PATH, then verify:
+rustc --version   # e.g. rustc 1.78.0 (...)
+cargo --version   # e.g. cargo 1.78.0 (...)
+```
+
+> **Windows note:** You also need a C linker. Install
+> [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+> and select the **C++ build tools** workload (includes MSVC + Windows SDK).
+> Linux/macOS users need `gcc` (`sudo apt install build-essential` / `xcode-select --install`).
+
 ### Always required
 
 | Tool | Install |
 |------|---------|
-| **Rust (stable)** | [rustup.rs](https://rustup.rs) |
-| **C linker** | Windows: Visual Studio Build Tools (MSVC) · Linux/macOS: `gcc` |
+| **Rust (stable)** | see above |
+| **C linker** | Windows: MSVC (Visual Studio Build Tools) · Linux/macOS: `gcc` |
 
 ### Per-board tools
 
