@@ -52,14 +52,16 @@ but targeting 27+ boards and the full Rust embedded ecosystem.
 |-------|-----|-------------|-----------|
 | Arduino Uno | ATmega328P | AVR 8-bit | avrdude |
 | Arduino Nano | ATmega328P | AVR 8-bit | avrdude |
+| Arduino Mega 2560 | ATmega2560 | AVR 8-bit | avrdude |
+| Arduino Leonardo | ATmega32u4 | AVR 8-bit | avrdude |
+| Raspberry Pi Pico | RP2040 (Cortex-M0+) | ARM 32-bit | picotool |
 | ESP32 | Xtensa LX6 | Xtensa 32-bit | esptool |
-| STM32F4xx | Cortex-M4F | ARM 32-bit | probe-rs |
 
 ### 🔜 Planned (next releases)
 
-Raspberry Pi Pico, ESP32-S3, ESP32-C3, STM32F1/H7/L4, nRF52840,
-BBC micro:bit v2, Arduino Mega/Leonardo, Adafruit SAMD21/SAMD51,
-Arduino Due, Teensy 4.0 — see [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md) for full details.
+ESP32-S3, ESP32-C3, STM32F1/F4/H7/L4, nRF52840,
+BBC micro:bit v2, Adafruit SAMD21/SAMD51,
+Arduino Due, Teensy 4.0, Raspberry Pi Pico 2 — see [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md) for full details.
 
 ### 🔬 Experimental
 
