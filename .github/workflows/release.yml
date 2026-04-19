@@ -66,12 +66,14 @@ jobs:
           Compress-Archive -Path $bin, README.md, LICENSE-MIT, LICENSE-APACHE, NOTICE `
             -DestinationPath ${{ matrix.archive }}
 
-      # Linux: tar.gz 圧縮
+      # Linux: tar.gz 圧縮 (バイナリをトップレベルに配置)
       - name: Package (Linux)
         if: runner.os == 'Linux'
         run: |
           BIN="target/${{ matrix.target }}/release/${{ matrix.artifact }}"
-          tar czf ${{ matrix.archive }} $BIN README.md LICENSE-MIT LICENSE-APACHE NOTICE
+          cp "$BIN" oxide
+          tar czf ${{ matrix.archive }} oxide README.md LICENSE-MIT LICENSE-APACHE NOTICE
+          rm oxide
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -109,8 +111,14 @@ jobs:
             - STM32F4xx (ARM Cortex-M4F)
 
             ### ダウンロード
-            - `oxide-windows-x86_64.zip` — Windows 64-bit
+            - `OxIDE_Setup_*.exe` — Windows 64-bit インストーラー (Rust同梱)
+            - `oxide-windows-x86_64.zip` — Windows 64-bit ポータブル
             - `oxide-linux-x86_64.tar.gz` — Linux 64-bit
+
+            ### Linux クイックインストール
+            ```bash
+            curl -sSf https://raw.githubusercontent.com/kastr0419/OxIDE/master/installer/install.sh | bash
+            ```
 
             ### ライセンス
             MIT OR Apache-2.0
