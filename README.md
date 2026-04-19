@@ -1,40 +1,118 @@
-# Rust Embedded IDE
+# OxIDE
 
-Arduino IDEのRust版 — RustでマイコンをプログラムできるGUI IDE
+> Arduino-IDE-style simplicity, for Rust embedded development.
 
-## ✨ 機能
-- コードエディタ（Rustシンタックスハイライト）
-- 複数ボード対応（Arduino Uno/Nano、ESP32、STM32F4）
-- コンパイル（cargo build）
-- マイコンへの書き込み（avrdude / esptool / probe-rs）
-- シリアルモニタ（送受信）
-- 新規プロジェクトテンプレート生成
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE-MIT)
+[![CI](https://github.com/your-username/oxide/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/oxide/actions/workflows/ci.yml)
 
-## 🛠 対応環境
-- OS: Windows / Linux
-- Rust: 1.70+
-- GUI: egui (純Rust)
+OxIDE is a GUI IDE for writing embedded firmware **in Rust** — with the same
+"select board → write code → flash" workflow that Arduino IDE made famous,
+but targeting 27+ boards and the full Rust embedded ecosystem.
 
-## 🚀 使い方
-（ビルド・起動手順）
+---
 
-## 📦 対応ボード
-| ボード | ターゲット | 書き込みツール |
-|--------|-----------|--------------|
-| Arduino Uno | avr-atmega328p | avrdude |
-| Arduino Nano | avr-atmega328p | avrdude |
-| ESP32 | xtensa-esp32-none-elf | esptool |
-| STM32F4 | thumbv7em-none-eabihf | probe-rs |
+## Why OxIDE?
 
-## 🤝 コントリビューション
-CONTRIBUTING.md を参照してください。
+|  | Arduino IDE | VS Code + plugins | **OxIDE** |
+|--|:-----------:|:-----------------:|:---------:|
+| Language | C/C++ | Any | **Rust** |
+| Setup complexity | Low | High | **Low** |
+| LSP / autocomplete | ✗ | ✓ (manual) | **✓ built-in** |
+| Serial monitor | ✓ | plugin | **✓ built-in** |
+| Serial plotter | ✗ | plugin | **✓ built-in** |
+| Pinout viewer | ✗ | ✗ | **✓ built-in** |
+| ELF / SVD / RTT debug | ✗ | plugin | **✓ built-in** |
+| Board support | Arduino-focused | Any | **27+ boards** |
 
-## 📄 ライセンス
-本プロジェクトは MIT License または Apache License 2.0 のいずれかの条件で利用できます。
+---
 
-- [MIT License](LICENSE-MIT)
-- [Apache License 2.0](LICENSE-APACHE)
+## ✨ Features
 
-ライセンスバッジ:
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE-MIT)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE-APACHE)
+- **Code Editor** — syntax highlighting + rust-analyzer LSP integration (autocomplete, diagnostics, go-to-definition)
+- **One-click Build & Flash** — `cargo build` → avrdude / esptool / probe-rs, all wired up automatically
+- **Serial Monitor** — connect, send/receive, configurable baud rate
+- **Serial Plotter** — real-time graph of numeric serial output
+- **Pinout Viewer** — interactive visual pin diagram for every supported board
+- **ELF Analyzer** — inspect binary size, sections, and symbol table
+- **SVD Register Viewer** — browse and decode peripheral registers from SVD files
+- **RTT Debug Panel** — real-time transfer output via probe-rs (no serial cable needed)
+- **Stack Analyzer** — call graph and stack usage estimation
+- **Project Templates** — new-project scaffolding for all supported targets (blink and more)
+- **Board Auto-detect** — USB VID/PID detection identifies connected boards automatically
+
+---
+
+## 📦 Supported Boards
+
+### ✅ Implemented
+
+| Board | CPU | Architecture | Flash Tool |
+|-------|-----|-------------|-----------|
+| Arduino Uno | ATmega328P | AVR 8-bit | avrdude |
+| Arduino Nano | ATmega328P | AVR 8-bit | avrdude |
+| ESP32 | Xtensa LX6 | Xtensa 32-bit | esptool |
+| STM32F4xx | Cortex-M4F | ARM 32-bit | probe-rs |
+
+### 🔜 Planned (next releases)
+
+Raspberry Pi Pico, ESP32-S3, ESP32-C3, STM32F1/H7/L4, nRF52840,
+BBC micro:bit v2, Arduino Mega/Leonardo, Adafruit SAMD21/SAMD51,
+Arduino Due, Teensy 4.0 — see [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md) for full details.
+
+### 🔬 Experimental
+
+GD32VF103, CH32V003, nRF51822, BBC micro:bit v1, MSP430G2553
+
+---
+
+## 🛠 Prerequisites
+
+| Tool | Required for | Install |
+|------|-------------|---------|
+| Rust (stable) | All targets | [rustup.rs](https://rustup.rs) |
+| avrdude | Arduino / AVR | `winget install avrdude` / `apt install avrdude` |
+| esptool | ESP32 series | `pip install esptool` |
+| probe-rs | STM32, nRF, RP2040 | `cargo install probe-rs-tools` |
+| rust-analyzer | LSP features | bundled or `rustup component add rust-analyzer` |
+
+For AVR targets, a nightly toolchain is also required:
+```sh
+rustup toolchain install nightly
+rustup component add rust-src --toolchain nightly
+```
+
+---
+
+## 🚀 Build from Source
+
+```sh
+git clone https://github.com/your-username/oxide.git
+cd oxide
+cargo build --release
+./target/release/oxide        # Linux
+.\target\release\oxide.exe    # Windows
+```
+
+Requires Rust 1.70+ and a C linker (MSVC on Windows, gcc on Linux).
+
+---
+
+## ⚡ Quick Start
+
+1. Launch OxIDE
+2. **File → New Project** — choose your board and a template (e.g. Blink)
+3. Write your Rust firmware in the editor
+4. Select your board and serial port in the left panel
+5. Click **Build & Flash** — done
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, coding conventions, and the commit message format.
+
+---
+
+## 📄 License
+
+Dual-licensed under [MIT](LICENSE-MIT) or [Apache 2.0](LICENSE-APACHE) — your choice.
