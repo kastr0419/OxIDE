@@ -3,7 +3,7 @@
 
 //! ボード定義の統合テスト
 
-use rust_embedded_ide::core::board::{BoardKind, BOARD_PRESETS, FlashToolKind};
+use oxide::core::board::{BoardKind, BOARD_PRESETS, FlashToolKind};
 
 #[test]
 fn all_boards_have_valid_target_triple() {

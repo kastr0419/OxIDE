@@ -3,7 +3,7 @@
 
 //! 設定の統合テスト
 
-use rust_embedded_ide::core::config::AppConfig;
+use oxide::core::config::AppConfig;
 
 #[test]
 fn config_roundtrip_toml() {

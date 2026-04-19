@@ -3,7 +3,7 @@
 
 //! コンパイララッパーの統合テスト
 
-use rust_embedded_ide::core::compiler::{BuildRequest, BuildResult};
+use oxide::core::compiler::{BuildRequest, BuildResult};
 use std::path::PathBuf;
 
 #[test]
