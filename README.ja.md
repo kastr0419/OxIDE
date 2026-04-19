@@ -45,7 +45,9 @@ Arduino IDE が広めた「ボードを選んで → コードを書いて → �
 
 ## 📦 対応ボード
 
-### ✅ 実装済み
+## 📦 対応ボード
+
+### ✅ フルサポート（ビルド & 書き込み）
 
 | ボード | CPU | アーキテクチャ | 書き込みツール |
 |--------|-----|-------------|--------------|
@@ -56,15 +58,23 @@ Arduino IDE が広めた「ボードを選んで → コードを書いて → �
 | Raspberry Pi Pico | RP2040 (Cortex-M0+) | ARM 32-bit | picotool |
 | ESP32 | Xtensa LX6 | Xtensa 32-bit | esptool |
 
-### 🔜 実装予定（次期リリース）
+### 📋 プロジェクトテンプレート（27ボード）
 
-ESP32-S3、ESP32-C3、STM32F1/F4/H7/L4、nRF52840、  
-BBC micro:bit v2、Adafruit SAMD21/SAMD51、  
-Arduino Due、Teensy 4.0、Raspberry Pi Pico 2 — 詳細は [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md) を参照。
+「New Project」でのテンプレート生成は以下のすべてのボードに対応しています：
 
-### 🔬 実験的サポート
+**AVR** — Uno, Nano, Mega, Leonardo  
+**ARM Cortex-M** — Raspberry Pi Pico, Pico 2, STM32F1/F4/L4/F7/H7/G0, micro:bit V2, nRF52840, nRF51822, SAMD21, SAMD51, Arduino Due, Teensy 4  
+**ESP32** — ESP32, S2, S3, C3, C6, H2  
+**RISC-V** — GD32VF103, CH32V003  
+**その他** — Raspberry Pi Zero（ベアメタル）
 
-GD32VF103、CH32V003、nRF51822、BBC micro:bit v1、MSP430G2553
+### 🗺️ ピン配置ビューア（4ボード）
+
+Arduino Uno · ESP32 · BBC micro:bit V2 · STM32F4xx
+
+### 🔜 今後の対応予定
+
+STM32、nRF52840、Raspberry Pi Pico 2、ESP32-S3/C3 のビルド & 書き込みサポート — 詳細は [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md) を参照。
 
 ---
 

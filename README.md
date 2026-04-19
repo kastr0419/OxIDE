@@ -46,7 +46,7 @@ but targeting 27+ boards and the full Rust embedded ecosystem.
 
 ## 📦 Supported Boards
 
-### ✅ Implemented
+### ✅ Full Support (Build & Flash)
 
 | Board | CPU | Architecture | Flash Tool |
 |-------|-----|-------------|-----------|
@@ -57,15 +57,23 @@ but targeting 27+ boards and the full Rust embedded ecosystem.
 | Raspberry Pi Pico | RP2040 (Cortex-M0+) | ARM 32-bit | picotool |
 | ESP32 | Xtensa LX6 | Xtensa 32-bit | esptool |
 
-### 🔜 Planned (next releases)
+### 📋 Project Templates (27 boards)
 
-ESP32-S3, ESP32-C3, STM32F1/F4/H7/L4, nRF52840,
-BBC micro:bit v2, Adafruit SAMD21/SAMD51,
-Arduino Due, Teensy 4.0, Raspberry Pi Pico 2 — see [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md) for full details.
+Template generation (`New Project`) is available for all boards below, even if Build & Flash is not yet wired up:
 
-### 🔬 Experimental
+**AVR** — Uno, Nano, Mega, Leonardo  
+**ARM Cortex-M** — Raspberry Pi Pico, Pico 2, STM32F1/F4/L4/F7/H7/G0, micro:bit V2, nRF52840, nRF51822, SAMD21, SAMD51, Arduino Due, Teensy 4  
+**ESP32** — ESP32, S2, S3, C3, C6, H2  
+**RISC-V** — GD32VF103, CH32V003  
+**Other** — Raspberry Pi Zero (bare-metal)
 
-GD32VF103, CH32V003, nRF51822, BBC micro:bit v1, MSP430G2553
+### 🗺️ Pinout Viewer (4 boards)
+
+Arduino Uno · ESP32 · BBC micro:bit V2 · STM32F4xx
+
+### 🔜 Coming Next
+
+Full Build & Flash support for STM32, nRF52840, Raspberry Pi Pico 2, ESP32-S3/C3 — see [SUPPORTED_CPUS.md](SUPPORTED_CPUS.md).
 
 ---
 
