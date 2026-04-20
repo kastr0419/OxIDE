@@ -3,6 +3,20 @@
 
 use super::BlinkTemplate;
 
+// Common build.rs used to copy memory.x into OUT_DIR
+const BUILD_RS: &str = r#"use std::env;
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
+
+fn main() {
+    let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    File::create(out.join("memory.x")).unwrap().write_all(include_bytes!("memory.x")).unwrap();
+    println!("cargo:rustc-link-search={}", out.display());
+    println!("cargo:rerun-if-changed=memory.x");
+}
+"#;
+
 pub fn nrf52840() -> BlinkTemplate {
     BlinkTemplate {
         main_rs: r#"//! nRF52840 DK Lチカ
@@ -48,17 +62,21 @@ opt-level = "s"
 "#,
         cargo_config: r#"[build]
 target = "thumbv7em-none-eabihf"
-"#,
+
+[target.thumbv7em-none-eabihf]
+runner = "probe-rs run --chip nRF52840_xxAA"
+"#, 
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some("/*******************************************************************************
-Memory layout for nRF52840 DK
-FLASH ORIGIN = 0x00000000 LENGTH = 1M
-RAM   ORIGIN = 0x20000000 LENGTH = 256K
-*******************************************************************************/"),
-        build_rs: None,
+        memory_x: Some(r#"MEMORY
+{
+  FLASH : ORIGIN = 0x00000000, LENGTH = 1024K
+  RAM :   ORIGIN = 0x20000000, LENGTH = 256K
+}
+"#),
+        build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
     }
@@ -106,17 +124,21 @@ panic-halt = "0.2"
 "#,
         cargo_config: r#"[build]
 target = "thumbv6m-none-eabi"
-"#,
+
+[target.thumbv6m-none-eabi]
+runner = "probe-rs run --chip nRF51422_xxAC"
+"#, 
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["thumbv6m-none-eabi"]
 "#,
-        memory_x: Some("/*******************************************************************************
-Memory layout for nRF51
-FLASH ORIGIN = 0x00000000 LENGTH = 256K
-RAM   ORIGIN = 0x20000000 LENGTH = 16K
-*******************************************************************************/"),
-        build_rs: None,
+        memory_x: Some(r#"MEMORY
+{
+  FLASH : ORIGIN = 0x00000000, LENGTH = 256K
+  RAM : ORIGIN = 0x20000000, LENGTH = 16K
+}
+"#),
+        build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
     }

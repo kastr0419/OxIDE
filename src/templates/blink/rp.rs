@@ -73,7 +73,7 @@ opt-level = "s"
 target = "thumbv6m-none-eabi"
 
 [target.thumbv6m-none-eabi]
-runner = "probe-rs run --chip RP2040"
+runner = "elf2uf2-rs -d"
 rustflags = [
     "-C", "link-arg=-Tlink.x",
     "-C", "link-arg=--nmagic",
@@ -161,7 +161,7 @@ opt-level = "s"
 target = "thumbv8m.main-none-eabihf"
 
 [target.thumbv8m.main-none-eabihf]
-runner = "probe-rs run --chip RP2350"
+runner = "elf2uf2-rs -d"
 rustflags = [
     "-C", "link-arg=-Tlink.x",
 ]

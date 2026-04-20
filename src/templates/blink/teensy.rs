@@ -3,6 +3,19 @@
 
 use super::BlinkTemplate;
 
+const BUILD_RS: &str = r#"use std::env;
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
+
+fn main() {
+    let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    File::create(out.join("memory.x")).unwrap().write_all(include_bytes!("memory.x")).unwrap();
+    println!("cargo:rustc-link-search={}", out.display());
+    println!("cargo:rerun-if-changed=memory.x");
+}
+"#;
+
 pub fn teensy4() -> BlinkTemplate {
     BlinkTemplate {
         main_rs: r#"//! Teensy 4.0 Lチカ
@@ -12,7 +25,7 @@ pub fn teensy4() -> BlinkTemplate {
 
 use teensy4_bsp as bsp;
 use bsp::board;
-use embedded_hal::digital::OutputPin;
+use embedded_hal::digital::v2::OutputPin;
 use panic_halt as _;
 
 #[bsp::rt::entry]
@@ -23,7 +36,6 @@ fn main() -> ! {
     
     loop {
         led.set_high().unwrap();
-        bsp::ral::modify_reg!(bsp::ral::gpt, instances.GPT1, CR, EN: 1);
         cortex_m::asm::delay(600_000_000 / 2);
         led.set_low().unwrap();
         cortex_m::asm::delay(600_000_000 / 2);
@@ -44,22 +56,26 @@ bench = false
 teensy4-bsp = "0.5"
 cortex-m = "0.7"
 cortex-m-rt = "0.7"
-embedded-hal = "1.0"
+embedded-hal = "0.2"
 panic-halt = "0.2"
 "#,
         cargo_config: r#"[build]
 target = "thumbv7em-none-eabihf"
-"#,
+
+[target.thumbv7em-none-eabihf]
+runner = "teensy_loader_cli --mcu=TEENSY40 -w"
+"#, 
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some("/*******************************************************************************
-Memory layout for Teensy 4.0 (IMXRT1062)
-FLASH ORIGIN = 0x60000000 LENGTH = 2M
-RAM   ORIGIN = 0x20200000 LENGTH = 512K
-*******************************************************************************/"),
-        build_rs: None,
+        memory_x: Some(r#"MEMORY
+{
+  FLASH : ORIGIN = 0x60000000, LENGTH = 1984K
+  RAM : ORIGIN = 0x20200000, LENGTH = 512K
+}
+"#),
+        build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
     }

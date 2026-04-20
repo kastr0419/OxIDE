@@ -3,6 +3,19 @@
 
 use super::BlinkTemplate;
 
+const BUILD_RS: &str = r#"use std::env;
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
+
+fn main() {
+    let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    File::create(out.join("memory.x")).unwrap().write_all(include_bytes!("memory.x")).unwrap();
+    println!("cargo:rustc-link-search={}", out.display());
+    println!("cargo:rerun-if-changed=memory.x");
+}
+"#;
+
 pub fn gd32vf103() -> BlinkTemplate {
     BlinkTemplate {
         main_rs: r#"//! GD32VF103 Lチカ
@@ -50,13 +63,14 @@ target = "riscv32imac-unknown-none-elf"
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["riscv32imac-unknown-none-elf"]
-"#,
-        memory_x: Some("/*******************************************************************************
-Memory layout for GD32VF103
-FLASH ORIGIN = 0x08000000 LENGTH = 128K
-RAM   ORIGIN = 0x20000000 LENGTH = 32K
-*******************************************************************************/"),
-        build_rs: None,
+"#, 
+        memory_x: Some(r#"MEMORY
+{
+  FLASH : ORIGIN = 0x08000000, LENGTH = 128K
+  RAM : ORIGIN = 0x20000000, LENGTH = 32K
+}
+"#),
+        build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
     }
@@ -104,21 +118,19 @@ riscv-rt = "0.12"
 panic-halt = "0.2"
 "#,
         cargo_config: r#"[build]
-target = "riscv32ec-unknown-none-elf"
-
-[unstable]
-build-std = ["core"]
-"#,
+target = "riscv32imc-unknown-none-elf"
+"#, 
         rust_toolchain: r#"[toolchain]
 channel = "stable"
-targets = ["riscv32ec-unknown-none-elf"]
-"#,
-        memory_x: Some("/*******************************************************************************
-Memory layout for CH32V003 (example)
-FLASH ORIGIN = 0x08000000 LENGTH = 16K-64K (device dependent)
-RAM   ORIGIN = 0x20000000 LENGTH = 8K-32K (device dependent)
-*******************************************************************************/"),
-        build_rs: None,
+targets = ["riscv32imc-unknown-none-elf"]
+"#, 
+        memory_x: Some(r#"MEMORY
+{
+  FLASH : ORIGIN = 0x08000000, LENGTH = 16K
+  RAM : ORIGIN = 0x20000000, LENGTH = 2K
+}
+"#),
+        build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
     }

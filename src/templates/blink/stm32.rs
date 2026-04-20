@@ -324,7 +324,7 @@ targets = ["thumbv7em-none-eabihf"]
         memory_x: Some(r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 2M
-  RAM   : ORIGIN = 0x20020000, LENGTH = 512K
+  RAM   : ORIGIN = 0x20000000, LENGTH = 320K
 }
 "#),
         build_rs: Some(BUILD_RS),

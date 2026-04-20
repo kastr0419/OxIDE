@@ -3,6 +3,19 @@
 
 use super::BlinkTemplate;
 
+const BUILD_RS: &str = r#"use std::env;
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
+
+fn main() {
+    let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    File::create(out.join("memory.x")).unwrap().write_all(include_bytes!("memory.x")).unwrap();
+    println!("cargo:rustc-link-search={}", out.display());
+    println!("cargo:rerun-if-changed=memory.x");
+}
+"#;
+
 pub fn samd21() -> BlinkTemplate {
     BlinkTemplate {
         main_rs: r#"//! Arduino Zero / SAMD21 Lチカ
@@ -61,12 +74,13 @@ target = "thumbv6m-none-eabi"
 channel = "stable"
 targets = ["thumbv6m-none-eabi"]
 "#,
-        memory_x: Some("/*******************************************************************************
-Memory layout for SAMD21
-FLASH ORIGIN = 0x00000000 LENGTH = 256K
-RAM   ORIGIN = 0x20000000 LENGTH = 32K
-*******************************************************************************/"),
-        build_rs: None,
+        memory_x: Some(r#"MEMORY
+{
+  FLASH : ORIGIN = 0x00000000, LENGTH = 256K
+  RAM : ORIGIN = 0x20000000, LENGTH = 32K
+}
+"#),
+        build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
     }
@@ -130,12 +144,13 @@ target = "thumbv7em-none-eabihf"
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some("/*******************************************************************************
-Memory layout for SAMD51
-FLASH ORIGIN = 0x00000000 LENGTH = 512K
-RAM   ORIGIN = 0x20000000 LENGTH = 192K
-*******************************************************************************/"),
-        build_rs: None,
+        memory_x: Some(r#"MEMORY
+{
+  FLASH : ORIGIN = 0x00000000, LENGTH = 512K
+  RAM : ORIGIN = 0x20000000, LENGTH = 192K
+}
+"#),
+        build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
     }
@@ -149,16 +164,18 @@ pub fn arduino_due() -> BlinkTemplate {
 #![no_main]
 
 use cortex_m_rt::entry;
+use cortex_m::asm;
 use panic_halt as _;
 
 #[entry]
 fn main() -> ! {
-    // Minimal placeholder for Due; BSPs vary. User should adapt.
+    // Simple timing loop. Replace with board-specific GPIO toggling if desired.
     loop {
-        cortex_m::asm::nop();
+        asm::delay(8_000_000);
+        asm::delay(8_000_000);
     }
 }
-"#,
+"#, 
         cargo_toml: r#"[package]
 name = "blink"
 version = "0.1.0"
@@ -176,17 +193,19 @@ cortex-m-rt = "0.7"
 panic-halt = "0.2"
 "#,
         cargo_config: r#"[build]
-target = "thumbv7em-none-eabi"
-"#,
+target = "thumbv7m-none-eabi"
+"#, 
         rust_toolchain: r#"[toolchain]
 channel = "stable"
-"#,
-        memory_x: Some("/*******************************************************************************
-Memory layout suggestion for Arduino Due (adjust as needed)
-FLASH ORIGIN = 0x00000000 LENGTH = 512K
-RAM   ORIGIN = 0x20070000 LENGTH = 96K
-*******************************************************************************/"),
-        build_rs: None,
+targets = ["thumbv7m-none-eabi"]
+"#, 
+        memory_x: Some(r#"MEMORY
+{
+  FLASH : ORIGIN = 0x00080000, LENGTH = 512K
+  RAM : ORIGIN = 0x20000000, LENGTH = 96K
+}
+"#),
+        build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
     }
