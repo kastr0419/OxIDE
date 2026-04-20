@@ -609,7 +609,7 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         toolchain_note: Some("rustup target add riscv32imac-unknown-none-elf"),
         probe_rs_chip: "",
         rustflags: &[],
-        flash_offset: 0,
+        flash_offset: 0x10000,
         memory_layout: None,
     },
     BoardPreset {
