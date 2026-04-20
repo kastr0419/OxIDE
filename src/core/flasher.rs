@@ -175,10 +175,40 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                 // stub
             }
             FlashToolKind::Picotool => {
-                // stub: picotool for RP2040 UF2 programming
+                // prefer picotool; if not available, fallback to elf2uf2-rs -d
+                let picotool_ok = Command::new("picotool").arg("--version").output().map(|o| o.status.success()).unwrap_or(false);
+                if picotool_ok {
+                    let mut cmd = Command::new("picotool");
+                    crate::core::no_window(&mut cmd);
+                    cmd.arg("load").arg("-f").arg("-x").arg(&elf);
+                    cmd_opt = Some(cmd);
+                } else {
+                    // fallback to elf2uf2-rs which will produce and deploy UF2 to mounted drive
+                    let mut cmd = Command::new("elf2uf2-rs");
+                    crate::core::no_window(&mut cmd);
+                    cmd.arg("-d").arg(&elf);
+                    cmd_opt = Some(cmd);
+                }
             }
             FlashToolKind::Bossac => {
-                // stub: bossac (SAM core USB bootloader)
+                // ELF -> BIN, then run bossac
+                let mut bin = elf.clone();
+                bin.set_extension("bin");
+                match run_objcopy("binary", &elf, &bin) {
+                    Ok(()) => {
+                        let mut cmd = Command::new("bossac");
+                        crate::core::no_window(&mut cmd);
+                        if !port.is_empty() {
+                            cmd.arg("-p").arg(&port);
+                        }
+                        cmd.args(["-e", "-w", "-v", "-R"]);
+                        cmd.arg(&bin);
+                        cmd_opt = Some(cmd);
+                    }
+                    Err(e) => {
+                        log = e;
+                    }
+                }
             }
             FlashToolKind::StFlash => {
                 // stub: st-flash for STM32 via ST-Link
@@ -187,7 +217,21 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                 // stub: nrfjprog for Nordic chips
             }
             FlashToolKind::TeensyLoader => {
-                // stub: teensy_loader_cli for Teensy boards
+                // ELF -> IHEX, then use teensy_loader_cli
+                let mut hex = elf.clone();
+                hex.set_extension("hex");
+                match run_objcopy("ihex", &elf, &hex) {
+                    Ok(()) => {
+                        let mut cmd = Command::new("teensy_loader_cli");
+                        crate::core::no_window(&mut cmd);
+                        // default to TEENSY40 for Teensy 4 boards
+                        cmd.arg("--mcu=TEENSY40").arg("-w").arg(&hex);
+                        cmd_opt = Some(cmd);
+                    }
+                    Err(e) => {
+                        log = e;
+                    }
+                }
             }
         }
         let final_log = if let Some(cmd) = cmd_opt {
