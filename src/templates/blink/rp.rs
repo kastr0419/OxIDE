@@ -60,7 +60,7 @@ bench = false
 
 [dependencies]
 rp-pico = "0.9"
-cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
+cortex-m = "0.7"
 cortex-m-rt = "0.7"
 embedded-hal = "1.0"
 panic-halt = "0.2"
@@ -148,7 +148,7 @@ bench = false
 
 [dependencies]
 rp235x-hal = "0.2"
-cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
+cortex-m = "0.7"
 cortex-m-rt = "0.7"
 embedded-hal = "1.0"
 panic-halt = "0.2"
