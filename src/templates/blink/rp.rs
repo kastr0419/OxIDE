@@ -11,8 +11,8 @@ pub fn rpi_pico() -> BlinkTemplate {
 #![no_main]
 
 use bsp::entry;
-use bsp::hal::{clocks::init_clocks_and_plls, pac, sio::Sio, watchdog::Watchdog};
-use embedded_hal::delay::DelayNs;
+use bsp::hal::{clocks::init_clocks_and_plls, pac, sio::Sio, watchdog::Watchdog, Clock};
+use embedded_hal::digital::OutputPin;
 use panic_halt as _;
 use rp_pico as bsp;
 
@@ -97,16 +97,16 @@ pub fn rpi_pico2()-> BlinkTemplate {
 #![no_std]
 #![no_main]
 
-use bsp::entry;
-use bsp::hal::{clocks::init_clocks_and_plls, pac, sio::Sio, watchdog::Watchdog};
-use embedded_hal::delay::DelayNs;
+use rp235x_hal as hal;
+use hal::entry;
+use hal::{clocks::init_clocks_and_plls, pac, sio::Sio, watchdog::Watchdog, Clock};
+use embedded_hal::digital::OutputPin;
 use panic_halt as _;
-use rp235x_hal as bsp;
 
 #[entry]
 fn main() -> ! {
     let mut pac = pac::Peripherals::take().unwrap();
-    let core = pac::CorePeripherals::take().unwrap();
+    let core = cortex_m::peripheral::Peripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
     let sio = Sio::new(pac.SIO);
 
@@ -120,7 +120,7 @@ fn main() -> ! {
         core.SYST, clocks.system_clock.freq().to_Hz()
     );
 
-    let pins = bsp::gpio::Pins::new(
+    let pins = hal::gpio::Pins::new(
         pac.IO_BANK0, pac.PADS_BANK0, sio.gpio_bank0, &mut pac.RESETS,
     );
 
@@ -128,7 +128,6 @@ fn main() -> ! {
     let mut led = pins.gpio25.into_push_pull_output();
 
     loop {
-        use embedded_hal::digital::OutputPin;
         led.set_high().unwrap();
         delay.delay_ms(500);
         led.set_low().unwrap();
