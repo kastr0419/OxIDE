@@ -176,14 +176,14 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
             }
             FlashToolKind::Picotool => {
                 // prefer picotool; if not available, fallback to elf2uf2-rs -d
-                let picotool_ok = Command::new("picotool").arg("--version").output().map(|o| o.status.success()).unwrap_or(false);
+                let picotool_ok = which::which("picotool").is_ok();
                 if picotool_ok {
                     let mut cmd = Command::new("picotool");
                     crate::core::no_window(&mut cmd);
                     cmd.arg("load").arg("-f").arg("-x").arg(&elf);
                     cmd_opt = Some(cmd);
                 } else {
-                    let elf2uf2_ok = Command::new("elf2uf2-rs").arg("--version").output().map(|o| o.status.success()).unwrap_or(false);
+                    let elf2uf2_ok = which::which("elf2uf2-rs").is_ok();
                     if elf2uf2_ok {
                         let mut cmd = Command::new("elf2uf2-rs");
                         crate::core::no_window(&mut cmd);
