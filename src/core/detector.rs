@@ -24,7 +24,49 @@ pub struct DetectedBoard {
     pub chip_info: Option<String>,
 }
 
-// ─── Stage 1: USB VID/PID ────────────────────────────────────────────────────
+// ─── Stage 0: RP2040/RP2350 BOOTSEL ドライブ検出 ─────────────────────────────
+
+/// BOOTSEL モードの Pico/Pico2 を検出する。
+///
+/// Pico を BOOTSEL ボタン押しながら接続すると RPI-RP2 (RP2040) または
+/// RP2350 (RP2350) という USB Mass Storage デバイスになる。
+/// この場合は serialport には現れないが INFO_UF2.TXT が存在する。
+pub fn detect_rp_bootloader() -> Vec<DetectedBoard> {
+    let mut results = Vec::new();
+    for drive_letter in 'A'..='Z' {
+        let drive = format!("{}:\\", drive_letter);
+        let info_path = std::path::Path::new(&drive).join("INFO_UF2.TXT");
+        if !info_path.exists() {
+            continue;
+        }
+        let content = std::fs::read_to_string(&info_path).unwrap_or_default();
+        let lower = content.to_lowercase();
+        let kind_info: Option<(BoardKind, &str)> = if lower.contains("rp2350") {
+            Some((BoardKind::RpiPico2, "RP2350"))
+        } else if lower.contains("rp2040") {
+            Some((BoardKind::RpiPico, "RP2040"))
+        } else {
+            None
+        };
+        if let Some((board_kind, chip_name)) = kind_info {
+            if let Some(idx) = BOARD_PRESETS.iter().position(|p| p.kind == board_kind) {
+                results.push(DetectedBoard {
+                    port_name: drive.clone(),
+                    board_index: idx,
+                    confidence: DetectionConfidence::High,
+                    description: format!(
+                        "{} BOOTSEL ドライブ: {} (BOOTSEL モード — Flash ボタンでそのまま書き込み可能)",
+                        chip_name, drive
+                    ),
+                    chip_info: Some(content.trim().to_string()),
+                });
+            }
+        }
+    }
+    results
+}
+
+
 
 /// USB VID/PID を使ってボードを検出する。
 /// serialport::SerialPortType::UsbPort から VID/PID を取得し、
@@ -255,6 +297,9 @@ pub fn detect_by_port_hint() -> Vec<DetectedBoard> {
 pub fn auto_detect(tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
     std::thread::spawn(move || {
         let mut all: Vec<DetectedBoard> = Vec::new();
+
+        // Stage 0: RP2040/RP2350 BOOTSEL ドライブ（INFO_UF2.TXT）
+        all.extend(detect_rp_bootloader());
 
         // Stage 1: USB VID/PID
         all.extend(detect_by_usb_id());

@@ -183,11 +183,21 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                     cmd.arg("load").arg("-f").arg("-x").arg(&elf);
                     cmd_opt = Some(cmd);
                 } else {
-                    // fallback to elf2uf2-rs which will produce and deploy UF2 to mounted drive
-                    let mut cmd = Command::new("elf2uf2-rs");
-                    crate::core::no_window(&mut cmd);
-                    cmd.arg("-d").arg(&elf);
-                    cmd_opt = Some(cmd);
+                    let elf2uf2_ok = Command::new("elf2uf2-rs").arg("--version").output().map(|o| o.status.success()).unwrap_or(false);
+                    if elf2uf2_ok {
+                        let mut cmd = Command::new("elf2uf2-rs");
+                        crate::core::no_window(&mut cmd);
+                        cmd.arg("-d").arg(&elf);
+                        cmd_opt = Some(cmd);
+                    } else {
+                        log = "❌ フラッシュツールが見つかりません。\n\
+                               以下のいずれかをインストールしてください:\n\
+                               • cargo install elf2uf2-rs\n\
+                               • https://github.com/raspberrypi/picotool から picotool をインストール\n\n\
+                               または Pico を BOOTSEL モード (BOOTSELボタンを押しながら接続) で接続し、\n\
+                               RPI-RP2 ドライブが現れたら dist/ フォルダの .elf ファイルを\n\
+                               uf2conv ツールで変換してコピーしてください。".to_string();
+                    }
                 }
             }
             FlashToolKind::Bossac => {
@@ -292,7 +302,15 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
             let ok = status.map(|s| s.success()).unwrap_or(false);
             (ok, log.lock().unwrap_or_else(|e| e.into_inner()).clone())
         }
-        Err(_) => {
+        Err(crossbeam_channel::RecvTimeoutError::Disconnected) => {
+            // ツールが stdout/stderr に何も出力せず正常終了した（elf2uf2-rs など）
+            for h in handles {
+                let _ = h.join();
+            }
+            let ok = child.wait().ok().map(|s| s.success()).unwrap_or(false);
+            (ok, log.lock().unwrap_or_else(|e| e.into_inner()).clone())
+        }
+        Err(crossbeam_channel::RecvTimeoutError::Timeout) => {
             // タイムアウト — デバイスが応答しない
             let _ = child.kill();
             let _ = child.wait();
@@ -302,7 +320,8 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
             (
                 false,
                 "⏱ タイムアウト: 3秒以内にデバイスからの応答がありませんでした。\n\
-                 マイコンが接続されているか、ポート設定を確認してください。"
+                 Pico の場合は BOOTSEL ボタンを押しながら接続し直してください。\n\
+                 RPI-RP2 ドライブが現れたら Flash を再試行してください。"
                     .to_string(),
             )
         }
