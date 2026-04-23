@@ -334,6 +334,23 @@ impl IdeApp {
 
         app.sanitize_selected_board();
 
+        // 起動時に workspace_dir/dist/*.elf が存在すれば last_dist_path を自動設定
+        let dist_dir = app.config.workspace_dir.join("dist");
+        if dist_dir.exists() {
+            let has_elf = std::fs::read_dir(&dist_dir)
+                .ok()
+                .and_then(|mut rd| {
+                    rd.find_map(|e| {
+                        let p = e.ok()?.path();
+                        if p.extension().map(|x| x == "elf").unwrap_or(false) { Some(()) } else { None }
+                    })
+                })
+                .is_some();
+            if has_elf {
+                app.last_dist_path = Some(dist_dir);
+            }
+        }
+
         // LSP 起動（rust-analyzerがあれば）。workspace_dir を使用
         let ws_dir = app.config.workspace_dir.clone();
         let ws = if ws_dir.exists() { Some(ws_dir) } else { std::env::current_dir().ok() };
