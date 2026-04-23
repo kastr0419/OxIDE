@@ -18,7 +18,19 @@ pub enum FlashMessage {
     Finished { ok: bool, log: String },
 }
 
-/// ~/.cargo/bin が PATH に含まれていない場合に追加する（GUIアプリ起動時のPATH漏れ対策）
+/// GUIアプリ起動時にPATHにcargo/binがない場合でもツールを探す。
+/// which::which が失敗した場合は ~/.cargo/bin を直接確認する。
+fn find_cargo_tool(name: &str) -> Option<std::path::PathBuf> {
+    if let Ok(path) = which::which(name) {
+        return Some(path);
+    }
+    let exe_name = if cfg!(windows) { format!("{}.exe", name) } else { name.to_string() };
+    dirs::home_dir()
+        .map(|h| h.join(".cargo").join("bin").join(&exe_name))
+        .filter(|p| p.exists())
+}
+
+/// 子プロセスに ~/.cargo/bin を PATH として渡す
 fn ensure_cargo_bin_in_path(cmd: &mut Command) {
     let cargo_bin = dirs::home_dir()
         .map(|h| h.join(".cargo").join("bin"))
@@ -192,13 +204,14 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
             FlashToolKind::Picotool => {
                 // prefer picotool; if not available, fallback to elf2uf2-rs -d
                 log.push_str(&format!("ELF: {}\n", elf.display()));
-                if let Ok(picotool_path) = which::which("picotool") {
+                if let Some(picotool_path) = find_cargo_tool("picotool") {
+                    log.push_str(&format!("Tool: {}\n", picotool_path.display()));
                     let mut cmd = Command::new(&picotool_path);
                     crate::core::no_window(&mut cmd);
                     ensure_cargo_bin_in_path(&mut cmd);
                     cmd.arg("load").arg("-f").arg("-x").arg(&elf);
                     cmd_opt = Some(cmd);
-                } else if let Ok(elf2uf2_path) = which::which("elf2uf2-rs") {
+                } else if let Some(elf2uf2_path) = find_cargo_tool("elf2uf2-rs") {
                     log.push_str(&format!("Tool: {}\n", elf2uf2_path.display()));
                     let mut cmd = Command::new(&elf2uf2_path);
                     crate::core::no_window(&mut cmd);
@@ -206,13 +219,16 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                     cmd.arg("-d").arg(&elf);
                     cmd_opt = Some(cmd);
                 } else {
-                    log = "❌ フラッシュツールが見つかりません。\n\
-                           以下のいずれかをインストールしてください:\n\
-                           • cargo install elf2uf2-rs\n\
-                           • https://github.com/raspberrypi/picotool から picotool をインストール\n\n\
-                           または Pico を BOOTSEL モード (BOOTSELボタンを押しながら接続) で接続し、\n\
-                           RPI-RP2 ドライブが現れたら dist/ フォルダの .elf ファイルを\n\
-                           uf2conv ツールで変換してコピーしてください。".to_string();
+                    let cargo_bin = dirs::home_dir()
+                        .map(|h| h.join(".cargo").join("bin").to_string_lossy().to_string())
+                        .unwrap_or_else(|| "~/.cargo/bin".to_string());
+                    log = format!(
+                        "❌ フラッシュツールが見つかりません。\n\
+                         確認したパス: {}\n\
+                         以下を実行してインストールしてください:\n\
+                         • cargo install elf2uf2-rs",
+                        cargo_bin
+                    );
                 }
             }
             FlashToolKind::Bossac => {
@@ -272,8 +288,8 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
 }
 
 /// フラッシュコマンドを実行する。
-/// 最初の3秒間に一切応答がなければタイムアウトエラーを返す。
-/// 3秒以内に応答があった場合は、完了するまで待ち続ける。
+/// stdout/stderr を収集しつつ、最大60秒でプロセス終了を待つ。
+/// elf2uf2-rs のように出力なしで終了するツールにも対応。
 fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
     cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
 
@@ -282,7 +298,7 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
         Err(e) => return (false, format!("フラッシャー起動失敗: {}", e)),
     };
 
-    let (tx, rx) = crossbeam_channel::bounded::<()>(1);
+    let (tx, rx) = crossbeam_channel::bounded::<()>(64);
     let log = Arc::new(Mutex::new(String::new()));
     let mut handles = Vec::new();
 
@@ -307,50 +323,46 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
     }
     drop(tx); // 全 sender を落とすと rx が閉じる
 
-    match rx.recv_timeout(Duration::from_secs(3)) {
-        Ok(_) => {
-            // 応答あり — 書き込みが完了するまで待つ
-            let status = child.wait().ok();
-            for h in handles {
-                let _ = h.join();
+    // 出力の有無にかかわらず、最大60秒プロセス終了を待つ
+    let deadline = std::time::Instant::now() + Duration::from_secs(60);
+    loop {
+        match rx.recv_timeout(Duration::from_millis(500)) {
+            Ok(_) => { /* 出力あり — 続けて待つ */ }
+            Err(crossbeam_channel::RecvTimeoutError::Disconnected) => {
+                // パイプが閉じた = プロセスが終了（出力なしでも正常）
+                break;
             }
-            let ok = status.map(|s| s.success()).unwrap_or(false);
-            (ok, log.lock().unwrap_or_else(|e| e.into_inner()).clone())
-        }
-        Err(crossbeam_channel::RecvTimeoutError::Disconnected) => {
-            // ツールが stdout/stderr に何も出力せず正常終了した（elf2uf2-rs など）
-            for h in handles {
-                let _ = h.join();
+            Err(crossbeam_channel::RecvTimeoutError::Timeout) => {
+                if std::time::Instant::now() >= deadline {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    for h in handles { let _ = h.join(); }
+                    return (
+                        false,
+                        "⏱ タイムアウト (60秒): デバイスが応答しませんでした。\n\
+                         Pico は BOOTSEL モードで接続されていましたか？\n\
+                         (BOOTSELボタンを押しながらUSB接続 → RPI-RP2ドライブが現れてから Flash)"
+                            .to_string(),
+                    );
+                }
+                // まだ期限内 — 待機継続
             }
-            let ok = child.wait().ok().map(|s| s.success()).unwrap_or(false);
-            let mut result_log = log.lock().unwrap_or_else(|e| e.into_inner()).clone();
-            if result_log.is_empty() {
-                result_log = if ok {
-                    "✅ フラッシュ成功".to_string()
-                } else {
-                    "❌ フラッシュ失敗（ツールがエラーで終了しました）\n\
-                     Pico が BOOTSEL モードで接続されているか確認してください。\n\
-                     (BOOTSELボタンを押しながらUSB接続 → RPI-RP2ドライブが現れてから Flash)".to_string()
-                };
-            }
-            (ok, result_log)
-        }
-        Err(crossbeam_channel::RecvTimeoutError::Timeout) => {
-            // タイムアウト — デバイスが応答しない
-            let _ = child.kill();
-            let _ = child.wait();
-            for h in handles {
-                let _ = h.join();
-            }
-            (
-                false,
-                "⏱ タイムアウト: 3秒以内にデバイスからの応答がありませんでした。\n\
-                 Pico の場合は BOOTSEL ボタンを押しながら接続し直してください。\n\
-                 RPI-RP2 ドライブが現れたら Flash を再試行してください。"
-                    .to_string(),
-            )
         }
     }
+
+    for h in handles { let _ = h.join(); }
+    let ok = child.wait().ok().map(|s| s.success()).unwrap_or(false);
+    let mut result_log = log.lock().unwrap_or_else(|e| e.into_inner()).clone();
+    if result_log.is_empty() {
+        result_log = if ok {
+            "✅ フラッシュ成功".to_string()
+        } else {
+            "❌ フラッシュ失敗（ツールがエラーで終了しました）\n\
+             Pico が BOOTSEL モードで接続されているか確認してください。\n\
+             (BOOTSELボタンを押しながらUSB接続 → RPI-RP2ドライブが現れてから Flash)".to_string()
+        };
+    }
+    (ok, result_log)
 }
 
 pub struct FlashRequest {
