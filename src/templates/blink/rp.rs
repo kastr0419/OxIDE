@@ -146,7 +146,7 @@ test = false
 bench = false
 
 [dependencies]
-rp235x-hal = "0.2"
+rp235x-hal = { version = "0.2", features = ["critical-section-impl"] }
 cortex-m = "0.7"
 cortex-m-rt = "0.7"
 embedded-hal = "1.0"
