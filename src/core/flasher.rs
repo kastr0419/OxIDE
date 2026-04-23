@@ -18,6 +18,21 @@ pub enum FlashMessage {
     Finished { ok: bool, log: String },
 }
 
+/// ~/.cargo/bin が PATH に含まれていない場合に追加する（GUIアプリ起動時のPATH漏れ対策）
+fn ensure_cargo_bin_in_path(cmd: &mut Command) {
+    let cargo_bin = dirs::home_dir()
+        .map(|h| h.join(".cargo").join("bin"))
+        .filter(|p| p.exists());
+    if let Some(cargo_bin) = cargo_bin {
+        let cargo_bin_str = cargo_bin.to_string_lossy().to_string();
+        let current_path = std::env::var("PATH").unwrap_or_default();
+        if !current_path.contains(&cargo_bin_str) {
+            let new_path = format!("{};{}", cargo_bin_str, current_path);
+            cmd.env("PATH", new_path);
+        }
+    }
+}
+
 /// arm-none-eabi-objcopy / rust-objcopy / llvm-objcopy を順に試してELF→HEX/BIN変換する
 fn run_objcopy(format: &str, elf: &Path, out: &Path) -> std::result::Result<(), String> {
     let candidates = [
@@ -176,28 +191,28 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
             }
             FlashToolKind::Picotool => {
                 // prefer picotool; if not available, fallback to elf2uf2-rs -d
-                let picotool_ok = which::which("picotool").is_ok();
-                if picotool_ok {
-                    let mut cmd = Command::new("picotool");
+                log.push_str(&format!("ELF: {}\n", elf.display()));
+                if let Ok(picotool_path) = which::which("picotool") {
+                    let mut cmd = Command::new(&picotool_path);
                     crate::core::no_window(&mut cmd);
+                    ensure_cargo_bin_in_path(&mut cmd);
                     cmd.arg("load").arg("-f").arg("-x").arg(&elf);
                     cmd_opt = Some(cmd);
+                } else if let Ok(elf2uf2_path) = which::which("elf2uf2-rs") {
+                    log.push_str(&format!("Tool: {}\n", elf2uf2_path.display()));
+                    let mut cmd = Command::new(&elf2uf2_path);
+                    crate::core::no_window(&mut cmd);
+                    ensure_cargo_bin_in_path(&mut cmd);
+                    cmd.arg("-d").arg(&elf);
+                    cmd_opt = Some(cmd);
                 } else {
-                    let elf2uf2_ok = which::which("elf2uf2-rs").is_ok();
-                    if elf2uf2_ok {
-                        let mut cmd = Command::new("elf2uf2-rs");
-                        crate::core::no_window(&mut cmd);
-                        cmd.arg("-d").arg(&elf);
-                        cmd_opt = Some(cmd);
-                    } else {
-                        log = "❌ フラッシュツールが見つかりません。\n\
-                               以下のいずれかをインストールしてください:\n\
-                               • cargo install elf2uf2-rs\n\
-                               • https://github.com/raspberrypi/picotool から picotool をインストール\n\n\
-                               または Pico を BOOTSEL モード (BOOTSELボタンを押しながら接続) で接続し、\n\
-                               RPI-RP2 ドライブが現れたら dist/ フォルダの .elf ファイルを\n\
-                               uf2conv ツールで変換してコピーしてください。".to_string();
-                    }
+                    log = "❌ フラッシュツールが見つかりません。\n\
+                           以下のいずれかをインストールしてください:\n\
+                           • cargo install elf2uf2-rs\n\
+                           • https://github.com/raspberrypi/picotool から picotool をインストール\n\n\
+                           または Pico を BOOTSEL モード (BOOTSELボタンを押しながら接続) で接続し、\n\
+                           RPI-RP2 ドライブが現れたら dist/ フォルダの .elf ファイルを\n\
+                           uf2conv ツールで変換してコピーしてください。".to_string();
                 }
             }
             FlashToolKind::Bossac => {
@@ -247,7 +262,7 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
         let final_log = if let Some(cmd) = cmd_opt {
             let (success, output) = run_with_initial_timeout(cmd);
             ok_flag = success;
-            output
+            if log.is_empty() { output } else { format!("{}{}", log, output) }
         } else {
             if log.is_empty() { "no flashing command".to_string() } else { log }
         };
@@ -308,7 +323,17 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
                 let _ = h.join();
             }
             let ok = child.wait().ok().map(|s| s.success()).unwrap_or(false);
-            (ok, log.lock().unwrap_or_else(|e| e.into_inner()).clone())
+            let mut result_log = log.lock().unwrap_or_else(|e| e.into_inner()).clone();
+            if result_log.is_empty() {
+                result_log = if ok {
+                    "✅ フラッシュ成功".to_string()
+                } else {
+                    "❌ フラッシュ失敗（ツールがエラーで終了しました）\n\
+                     Pico が BOOTSEL モードで接続されているか確認してください。\n\
+                     (BOOTSELボタンを押しながらUSB接続 → RPI-RP2ドライブが現れてから Flash)".to_string()
+                };
+            }
+            (ok, result_log)
         }
         Err(crossbeam_channel::RecvTimeoutError::Timeout) => {
             // タイムアウト — デバイスが応答しない
