@@ -52,6 +52,30 @@ UI の Build & Flash ワークフローに統合されているプリセット:
 
 (ソース参照: src/core/board/presets.rs)
 
+## 🧪 仮想マイコン環境
+
+Board picker で任意のボードを選び、Port に **OxIDE Virtual Board** を指定すると、実機なしで Build → Flash → Serial の操作を確認できます。
+
+仮想環境は、現在 Board picker に表示される全プリセットで利用できます：
+
+- AVR: Arduino Uno / Nano / Mega 2560 / Leonardo
+- Raspberry Pi: Pico / Pico 2 / Zero
+- STM32: F1 / F4 / L4 / F7 / H7 / G0
+- ESP32: ESP32 / S2 / S3 / C3 / C6 / H2
+- Nordic / micro:bit: nRF51822 / nRF52840 / micro:bit V2
+- SAM: SAMD21 / SAMD51 / Arduino Due
+- その他: Teensy 4 / GD32VF103 / CH32V003
+
+| 操作 | 仮想環境での動作 |
+|---|---|
+| Build | 選択したボード用に実際の Cargo ビルドを実行（対応ツールチェーンが必要） |
+| Flash | 成果物の存在を確認し、書き込み成功を模擬。実機には書き込まない |
+| Serial | `sensor:0` ～ `sensor:99` を周期送信し、送信文字列へ `echo:` で応答 |
+| CPU・GPIO・周辺回路 | 未エミュレート |
+| ハードウェアデバッグ | 未対応 |
+
+これは OxIDE の操作フローを試験するための環境であり、ファームウェア自体の命令実行やタイミング検証は行いません。
+
 ## 🗺️ ピン配置ビューア
 
 次のボードに対してピンデータが内蔵されています：

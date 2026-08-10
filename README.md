@@ -54,6 +54,30 @@ These presets include build target, flash tool selection and are wired into the 
 
 (See source: src/core/board/presets.rs)
 
+## 🧪 Virtual MCU environment
+
+Select any board in the Board picker and choose **OxIDE Virtual Board** as the port to exercise the Build → Flash → Serial workflow without hardware.
+
+The virtual environment works with every preset currently shown in the Board picker:
+
+- AVR: Arduino Uno / Nano / Mega 2560 / Leonardo
+- Raspberry Pi: Pico / Pico 2 / Zero
+- STM32: F1 / F4 / L4 / F7 / H7 / G0
+- ESP32: ESP32 / S2 / S3 / C3 / C6 / H2
+- Nordic / micro:bit: nRF51822 / nRF52840 / micro:bit V2
+- SAM: SAMD21 / SAMD51 / Arduino Due
+- Others: Teensy 4 / GD32VF103 / CH32V003
+
+| Action | Virtual behavior |
+|---|---|
+| Build | Runs the real Cargo build for the selected board; its toolchain is still required |
+| Flash | Checks that an artifact exists and simulates a successful write; no hardware is modified |
+| Serial | Emits `sensor:0` through `sensor:99` periodically and replies to input with `echo:` |
+| CPU, GPIO, peripherals | Not emulated |
+| Hardware debugging | Not supported |
+
+This environment tests the OxIDE workflow. It does not execute firmware instructions or validate hardware timing.
+
 ## 🗺️ Pinout viewer
 
 The pinout viewer contains curated pin maps for these boards:
