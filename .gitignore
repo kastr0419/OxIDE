@@ -9,3 +9,4 @@ config.toml
 launch_oxide.vbs
 installer/tools/
 installer/output/
+docs/qiita_article*.md
