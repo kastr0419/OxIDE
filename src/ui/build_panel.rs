@@ -121,32 +121,34 @@ pub fn ui_build_panel(
             == Some(crate::core::serial::VIRTUAL_PORT_NAME);
         if virtual_port {
             if let Some(preset) = crate::core::board::BOARD_PRESETS.get(app.selected_board) {
-                if crate::core::simulator::is_supported(&preset.kind) {
-                    let artifact = app.last_dist_path.as_deref().and_then(find_elf);
-                    if let Some(artifact) = artifact {
-                        if ui
-                            .button("🧠 CPU/GPIO Sim")
-                            .on_hover_text("Renode を使用して CPU と GPIO をシミュレーション")
-                            .clicked()
-                        {
-                            let request = crate::core::simulator::SimulationRequest {
-                                board: preset.kind.clone(),
-                                artifact,
-                            };
-                            match crate::core::simulator::launch(&request) {
-                                Ok(script) => app.build_log.push_str(&format!(
-                                    "\n[SIM] Renode を起動しました: {}\n",
-                                    script.display()
-                                )),
-                                Err(error) => app
-                                    .build_log
-                                    .push_str(&format!("\n[ERROR] CPU/GPIO simulation: {error}\n")),
+                match crate::core::simulator::support(&preset.kind) {
+                    crate::core::simulator::SimulationSupport::Supported { .. } => {
+                        let artifact = app.last_dist_path.as_deref().and_then(find_elf);
+                        if let Some(artifact) = artifact {
+                            if ui
+                                .button("🧠 CPU/GPIO Sim")
+                                .on_hover_text("Renode を使用して CPU と GPIO をシミュレーション")
+                                .clicked()
+                            {
+                                let request = crate::core::simulator::SimulationRequest {
+                                    board: preset.kind.clone(),
+                                    artifact,
+                                };
+                                match crate::core::simulator::launch(&request) {
+                                    Ok(script) => app.build_log.push_str(&format!(
+                                        "\n[SIM] Renode を起動しました: {}\n",
+                                        script.display()
+                                    )),
+                                    Err(error) => app.build_log.push_str(&format!(
+                                        "\n[ERROR] CPU/GPIO simulation: {error}\n"
+                                    )),
+                                }
                             }
                         }
                     }
-                } else {
-                    ui.label("CPU/GPIO simulation: STM32F1のみ対応")
-                        .on_hover_text("実行には Renode が必要です");
+                    crate::core::simulator::SimulationSupport::Unsupported(reason) => {
+                        ui.label("CPU/GPIO Sim: 非対応").on_hover_text(reason);
+                    }
                 }
             }
         }

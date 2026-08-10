@@ -71,11 +71,33 @@ Board picker で任意のボードを選び、Port に **OxIDE Virtual Board** �
 | Build | 選択したボード用に実際の Cargo ビルドを実行（対応ツールチェーンが必要） |
 | Flash | 成果物の存在を確認し、書き込み成功を模擬。実機には書き込まない |
 | Serial | `sensor:0` ～ `sensor:99` を周期送信し、送信文字列へ `echo:` で応答 |
-| CPU・GPIO | STM32F1のみRenodeで実ELFを実行し、PC13 LEDをシミュレーション |
+| CPU・GPIO | 対応ボードではRenodeで実ELFとLED GPIOをシミュレーション |
 | その他の周辺回路 | 未エミュレート |
 | ハードウェアデバッグ | 未対応 |
 
-STM32F1でCPU/GPIOを試すには、[Renode](https://renode.io/) をインストールしてPATHへ追加し、Build後に **CPU/GPIO Sim** を押します。その他のボードではファームウェア命令を実行せず、OxIDEの操作フローだけを模擬します。Renode上のタイミングは実機と同一ではありません。
+CPU/GPIOを試すには、[Renode](https://renode.io/) をインストールしてPATHへ追加し、Build後に **CPU/GPIO Sim** を押します。Renode上のタイミングは実機と同一ではありません。
+
+Renode公式プラットフォームとの照合結果：
+
+| OxIDEプリセット | CPU/GPIO | Renodeモデル / 理由 |
+|---|---|---|
+| SAMD21 | 対応 | `atsamd21j17d-aft.repl`, PA17 |
+| STM32F1 | 対応 | `stm32f103.repl`, PC13 |
+| STM32F7 | 対応 | `stm32f746.repl`, PB7 |
+| STM32H7 | 対応 | `stm32h743.repl`, PB14 |
+| STM32G0 | 対応 | `stm32g0.repl`, PA5 |
+| nRF52840 | 対応 | `nrf52840.repl`, P0.13 |
+| SAMD51 | 非対応 | CPUモデルにGPIOモデルがない |
+| Arduino Uno / Nano / Mega / Leonardo | 非対応 | 対応する公式AVRモデルがない |
+| Raspberry Pi Pico / Pico 2 / Zero | 非対応 | RP2040 / RP2350 / BCM2835の一致モデルがない |
+| Arduino Due | 非対応 | SAM3X8Eの一致モデルがない |
+| STM32F4 / STM32L4 | 非対応 | STM32F411 / STM32L476の一致モデルがない |
+| nRF51822 / micro:bit V2 | 非対応 | nRF51 / nRF52833の一致モデルがない |
+| Teensy 4 | 非対応 | i.MX RT1062の一致モデルがない |
+| ESP32 / S2 / S3 / C3 / C6 / H2 | 非対応 | 一致するESP32モデルがない |
+| GD32VF103 / CH32V003 | 非対応 | 一致する公式MCU/GPIOモデルがない |
+
+非対応ボードでは、従来どおりFlashとSerialの操作フローだけを模擬します。近似MCUモデルは誤判定を避けるため使用しません。
 
 ## 🗺️ ピン配置ビューア
 

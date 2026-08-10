@@ -73,11 +73,33 @@ The virtual environment works with every preset currently shown in the Board pic
 | Build | Runs the real Cargo build for the selected board; its toolchain is still required |
 | Flash | Checks that an artifact exists and simulates a successful write; no hardware is modified |
 | Serial | Emits `sensor:0` through `sensor:99` periodically and replies to input with `echo:` |
-| CPU and GPIO | STM32F1 only: executes the real ELF in Renode and simulates the PC13 LED |
+| CPU and GPIO | Supported boards execute the real ELF and simulate the LED GPIO in Renode |
 | Other peripherals | Not emulated |
 | Hardware debugging | Not supported |
 
-To simulate STM32F1 CPU/GPIO, install [Renode](https://renode.io/), add it to PATH, build the firmware, and click **CPU/GPIO Sim**. Other boards still simulate only the OxIDE workflow and do not execute firmware instructions. Renode timing is not identical to physical hardware.
+To simulate CPU/GPIO, install [Renode](https://renode.io/), add it to PATH, build the firmware, and click **CPU/GPIO Sim**. Renode timing is not identical to physical hardware.
+
+Audit against official Renode platforms:
+
+| OxIDE preset | CPU/GPIO | Renode model / reason |
+|---|---|---|
+| SAMD21 | Supported | `atsamd21j17d-aft.repl`, PA17 |
+| STM32F1 | Supported | `stm32f103.repl`, PC13 |
+| STM32F7 | Supported | `stm32f746.repl`, PB7 |
+| STM32H7 | Supported | `stm32h743.repl`, PB14 |
+| STM32G0 | Supported | `stm32g0.repl`, PA5 |
+| nRF52840 | Supported | `nrf52840.repl`, P0.13 |
+| SAMD51 | Unsupported | CPU platform has no GPIO model |
+| Arduino Uno / Nano / Mega / Leonardo | Unsupported | No matching official AVR model |
+| Raspberry Pi Pico / Pico 2 / Zero | Unsupported | No matching RP2040 / RP2350 / BCM2835 model |
+| Arduino Due | Unsupported | No matching SAM3X8E model |
+| STM32F4 / STM32L4 | Unsupported | No matching STM32F411 / STM32L476 model |
+| nRF51822 / micro:bit V2 | Unsupported | No matching nRF51 / nRF52833 model |
+| Teensy 4 | Unsupported | No matching i.MX RT1062 model |
+| ESP32 / S2 / S3 / C3 / C6 / H2 | Unsupported | No matching ESP32 model |
+| GD32VF103 / CH32V003 | Unsupported | No matching official MCU/GPIO model |
+
+Unsupported boards keep the mock Flash and Serial workflow. Similar but different MCU models are intentionally not used.
 
 ## 🗺️ Pinout viewer
 
