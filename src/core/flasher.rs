@@ -381,6 +381,23 @@ pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<crate::app::
     // board kind から preset を探してflashを呼ぶ
     use crate::core::board::BOARD_PRESETS;
     std::thread::spawn(move || {
+        if req.port == crate::core::serial::VIRTUAL_PORT_NAME {
+            use crate::app::{AppMessage, FlashMsg};
+            tx.send(AppMessage::Flash(FlashMsg::Started)).ok();
+            if !req.artifact.is_file() {
+                tx.send(AppMessage::Flash(FlashMsg::Finished(FlashResult {
+                    success: false,
+                    output: format!("Artifact not found: {}", req.artifact.display()),
+                }))).ok();
+                return;
+            }
+            tx.send(AppMessage::Flash(FlashMsg::Progress("Flashing virtual board".into()))).ok();
+            tx.send(AppMessage::Flash(FlashMsg::Finished(FlashResult {
+                success: true,
+                output: "Virtual flash completed".into(),
+            }))).ok();
+            return;
+        }
         let preset_opt = BOARD_PRESETS.iter().find(|p| std::mem::discriminant(&p.kind) == std::mem::discriminant(&req.board));
         if let Some(preset) = preset_opt {
             let (ftx, frx) = crossbeam_channel::bounded(1);

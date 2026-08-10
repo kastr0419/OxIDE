@@ -38,6 +38,11 @@ pub fn ui_board_picker(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, tx: &cro
             }
         }
     });
+    if app.available_ports.get(app.selected_port).map(String::as_str)
+        == Some(crate::core::serial::VIRTUAL_PORT_NAME)
+    {
+        ui.colored_label(egui::Color32::YELLOW, "仮想環境（実機への書き込みなし）");
+    }
     if ui.button("🔄 Refresh Ports").clicked() {
         app.available_ports = crate::core::serial::list_ports().unwrap_or_default();
         app.selected_port = 0;

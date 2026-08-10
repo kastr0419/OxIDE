@@ -6,6 +6,8 @@ use crossbeam_channel::{bounded, Sender};
 use std::io::{BufRead, BufReader, Write};
 use std::thread;
 
+pub const VIRTUAL_PORT_NAME: &str = "OxIDE Virtual Board";
+
 pub enum SerialEvent {
     Opened,
     Closed,
@@ -28,6 +30,10 @@ pub fn list_ports() -> Result<Vec<String>> {
         if std::path::Path::new(&drive).exists() {
             ports.push(drive);
         }
+    }
+
+    if !ports.iter().any(|port| port == VIRTUAL_PORT_NAME) {
+        ports.push(VIRTUAL_PORT_NAME.to_string());
     }
 
     Ok(ports)
@@ -106,6 +112,10 @@ pub fn connect_async(
     cmd_rx: crossbeam_channel::Receiver<SerialCommand>,
 ) {
     std::thread::spawn(move || {
+        if settings.port_name == VIRTUAL_PORT_NAME {
+            run_virtual_serial(app_tx, cmd_rx);
+            return;
+        }
         let (event_tx, event_rx) = bounded(32);
         match connect(&settings.port_name, settings.baud_rate, event_tx) {
             Ok(handle) => {
@@ -138,4 +148,31 @@ pub fn connect_async(
             }
         }
     });
+}
+
+fn run_virtual_serial(
+    app_tx: crossbeam_channel::Sender<crate::app::AppMessage>,
+    cmd_rx: crossbeam_channel::Receiver<SerialCommand>,
+) {
+    use crate::app::{AppMessage, SerialMsg};
+    use std::time::Duration;
+
+    app_tx.send(AppMessage::Serial(SerialMsg::Connected)).ok();
+    let ticker = crossbeam_channel::tick(Duration::from_millis(250));
+    let mut sample = 0;
+    loop {
+        crossbeam_channel::select! {
+            recv(cmd_rx) -> command => match command {
+                Ok(SerialCommand::Send(text)) => {
+                    app_tx.send(AppMessage::Serial(SerialMsg::Line(format!("echo:{}", text)))).ok();
+                }
+                Ok(SerialCommand::Disconnect) | Err(_) => break,
+            },
+            recv(ticker) -> _ => {
+                app_tx.send(AppMessage::Serial(SerialMsg::Line(format!("sensor:{}", sample)))).ok();
+                sample = (sample + 1) % 100;
+            }
+        }
+    }
+    app_tx.send(AppMessage::Serial(SerialMsg::Disconnected)).ok();
 }
