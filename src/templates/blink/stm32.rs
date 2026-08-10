@@ -80,12 +80,14 @@ rustflags = [
 channel = "stable"
 targets = ["thumbv7m-none-eabi"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 64K
   RAM   : ORIGIN = 0x20000000, LENGTH = 20K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -157,12 +159,14 @@ rustflags = [
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 512K
   RAM   : ORIGIN = 0x20000000, LENGTH = 96K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -239,12 +243,14 @@ rustflags = [
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 256K
   RAM   : ORIGIN = 0x20000000, LENGTH = 64K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -321,12 +327,14 @@ rustflags = [
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 2M
   RAM   : ORIGIN = 0x20000000, LENGTH = 320K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -403,12 +411,14 @@ rustflags = [
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 2M
   RAM   : ORIGIN = 0x24000000, LENGTH = 512K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -485,12 +495,14 @@ rustflags = [
 channel = "stable"
 targets = ["thumbv6m-none-eabi"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 64K
   RAM   : ORIGIN = 0x20000000, LENGTH = 8K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,

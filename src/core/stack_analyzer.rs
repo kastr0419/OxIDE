@@ -44,11 +44,16 @@ pub fn analyze_stack(elf_path: &Path) -> anyhow::Result<StackReport> {
         for line in text.lines() {
             // Expect lines like: 00000000 0000001c T function_name
             let parts: Vec<&str> = line.split_whitespace().collect();
-            if parts.len() < 4 { continue; }
+            if parts.len() < 4 {
+                continue;
+            }
             // size may be at index 1
             if let Ok(size) = u64::from_str_radix(parts[1], 16) {
                 let name = parts[3..].join(" ");
-                frames.push(StackFrame { function: name.clone(), stack_usage: Some(size) });
+                frames.push(StackFrame {
+                    function: name.clone(),
+                    stack_usage: Some(size),
+                });
                 total = total.saturating_add(size);
             }
         }
@@ -60,5 +65,9 @@ pub fn analyze_stack(elf_path: &Path) -> anyhow::Result<StackReport> {
         warnings.push("No symbol size information found".to_string());
     }
 
-    Ok(StackReport { total_estimate: total, frames, warnings })
+    Ok(StackReport {
+        total_estimate: total,
+        frames,
+        warnings,
+    })
 }

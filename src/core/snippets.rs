@@ -6,10 +6,10 @@ use crate::core::board::BoardKind;
 /// スニペット1件
 #[derive(Debug, Clone)]
 pub struct Snippet {
-    pub trigger: &'static str,      // トリガーキーワード（例: "gpio_out")
-    pub label: &'static str,        // 表示名（例: "GPIO Output Pin")
-    pub description: &'static str,  // 説明
-    pub code: &'static str,         // 挿入コード
+    pub trigger: &'static str,     // トリガーキーワード（例: "gpio_out")
+    pub label: &'static str,       // 表示名（例: "GPIO Output Pin")
+    pub description: &'static str, // 説明
+    pub code: &'static str,        // 挿入コード
     pub category: SnippetCategory,
 }
 
@@ -38,8 +38,12 @@ pub fn get_snippets(board: &BoardKind) -> Vec<&'static Snippet> {
         BoardKind::ArduinoLeonardo => AVR_SNIPPETS,
         BoardKind::Esp32 | BoardKind::Esp32S2 | BoardKind::Esp32S3 => ESP_XTENSA_SNIPPETS,
         BoardKind::Esp32C3 | BoardKind::Esp32C6 | BoardKind::Esp32H2 => ESP_RISCV_SNIPPETS,
-        BoardKind::Stm32F4 | BoardKind::Stm32F1 | BoardKind::Stm32L4
-        | BoardKind::Stm32F7 | BoardKind::Stm32H7 | BoardKind::Stm32G0 => STM32_SNIPPETS,
+        BoardKind::Stm32F4
+        | BoardKind::Stm32F1
+        | BoardKind::Stm32L4
+        | BoardKind::Stm32F7
+        | BoardKind::Stm32H7
+        | BoardKind::Stm32G0 => STM32_SNIPPETS,
         BoardKind::RpiPico | BoardKind::RpiPico2 => RPI_PICO_SNIPPETS,
         BoardKind::NrF52840 | BoardKind::MicroBitV2 => NRF_SNIPPETS,
         BoardKind::Samd21 | BoardKind::Samd51 => SAMD_SNIPPETS,
@@ -52,14 +56,13 @@ pub fn get_snippets(board: &BoardKind) -> Vec<&'static Snippet> {
 
 /// トリガー文字列でフィルタリング（予測変換用）
 pub fn filter_snippets(board: &BoardKind, query: &str) -> Vec<&'static Snippet> {
-    if query.is_empty() { return vec![]; }
+    if query.is_empty() {
+        return vec![];
+    }
     let q = query.to_lowercase();
     get_snippets(board)
         .into_iter()
-        .filter(|s| {
-            s.trigger.contains(q.as_str())
-            || s.label.to_lowercase().contains(q.as_str())
-        })
+        .filter(|s| s.trigger.contains(q.as_str()) || s.label.to_lowercase().contains(q.as_str()))
         .collect()
 }
 
@@ -541,12 +544,11 @@ let uart = Uarte::new(p.UARTE0, nrf52840_hal::uarte::Pins {
 
 // ─── SAMD (atsamd-hal) ──────────────────────────────────
 
-static SAMD_SNIPPETS: &[Snippet] = &[
-    Snippet {
-        trigger: "samd_init",
-        label: "SAMD21 HAL 初期化",
-        description: "atsamd-hal エントリーポイント",
-        code: r#"#![no_std]
+static SAMD_SNIPPETS: &[Snippet] = &[Snippet {
+    trigger: "samd_init",
+    label: "SAMD21 HAL 初期化",
+    description: "atsamd-hal エントリーポイント",
+    code: r#"#![no_std]
 #![no_main]
 
 use atsamd_hal as hal;
@@ -564,9 +566,8 @@ fn main() -> ! {
     );
     loop {}
 }"#,
-        category: SnippetCategory::Main,
-    },
-];
+    category: SnippetCategory::Main,
+}];
 
 // ─── 汎用 Cortex-M ──────────────────────────────────────
 

@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
-
-
 /// Result from arm-none-eabi-size or avr-size
 #[derive(Clone, Debug)]
 pub struct BuildStats {
-    pub flash_used: u64,  // text + data
-    pub ram_used: u64,    // data + bss
+    pub flash_used: u64, // text + data
+    pub ram_used: u64,   // data + bss
     pub flash_total: u64,
     pub ram_total: u64,
 }
@@ -41,12 +39,16 @@ impl BuildStats {
     }
 
     pub fn flash_percent(&self) -> f32 {
-        if self.flash_total == 0 { return 0.0; }
+        if self.flash_total == 0 {
+            return 0.0;
+        }
         (self.flash_used as f32 / self.flash_total as f32).min(1.0)
     }
 
     pub fn ram_percent(&self) -> f32 {
-        if self.ram_total == 0 { return 0.0; }
+        if self.ram_total == 0 {
+            return 0.0;
+        }
         (self.ram_used as f32 / self.ram_total as f32).min(1.0)
     }
 }
@@ -77,19 +79,29 @@ pub fn analyze_elf(
             BoardKind::MicroBitV2 | BoardKind::Stm32F4 => (524_288u64, 131_072u64),
             _ => (flash_total, ram_total),
         };
-        if flash_total == 0 { flash_total = f; }
-        if ram_total == 0 { ram_total = r; }
+        if flash_total == 0 {
+            flash_total = f;
+        }
+        if ram_total == 0 {
+            ram_total = r;
+        }
     }
 
     BuildStats::parse(&stdout, flash_total, ram_total)
         .ok_or_else(|| anyhow::anyhow!("Failed to parse size output"))
 }
 
-pub fn find_elf(target_dir: &std::path::Path, board: &crate::core::board::BoardPreset) -> Option<std::path::PathBuf> {
+pub fn find_elf(
+    target_dir: &std::path::Path,
+    board: &crate::core::board::BoardPreset,
+) -> Option<std::path::PathBuf> {
     // Look in common target directories for the board's target triple and debug folders
     let candidates = [
         target_dir.join(board.target_triple).join("debug"),
-        target_dir.join(board.target_triple).join("debug").join("deps"),
+        target_dir
+            .join(board.target_triple)
+            .join("debug")
+            .join("deps"),
         target_dir.join("debug"),
         target_dir.join("debug").join("deps"),
     ];

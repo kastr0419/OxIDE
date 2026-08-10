@@ -55,7 +55,7 @@ fn main() -> ! {
         }
     }
 }
-"#, 
+"#,
         cargo_toml: r#"[package]
 name = "blink"
 version = "0.1.0"
@@ -76,7 +76,7 @@ panic-halt = "0.2"
 [profile.release]
 lto = true
 opt-level = "s"
-"#, 
+"#,
         cargo_config: r#"[build]
 target = "thumbv7em-none-eabihf"
 
@@ -90,19 +90,23 @@ rustflags = [
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
     FLASH : ORIGIN = 0x00000000, LENGTH = 512K
     RAM   : ORIGIN = 0x20000000, LENGTH = 128K
 }
-"#),
-        build_rs: Some(r#"use std::env; use std::fs::File; use std::io::Write; use std::path::PathBuf;
+"#,
+        ),
+        build_rs: Some(
+            r#"use std::env; use std::fs::File; use std::io::Write; use std::path::PathBuf;
 fn main() {
     let out = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
     File::create(out.join("memory.x")).unwrap().write_all(include_bytes!("memory.x")).unwrap();
     println!("cargo:rustc-link-search={}", out.display());
     println!("cargo:rerun-if-changed=memory.x");
-}"#),
+}"#,
+        ),
         linker_ld: None,
         target_json: None,
     }

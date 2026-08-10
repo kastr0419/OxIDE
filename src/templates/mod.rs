@@ -17,8 +17,8 @@ pub fn create_blink_project(workspace: &Path, board: &crate::core::board::BoardK
     fs::create_dir_all(workspace.join(".cargo"))?;
 
     // ファイルを書き出す
-    fs::write(workspace.join("src/main.rs"),        tmpl.main_rs)?;
-    fs::write(workspace.join("Cargo.toml"),         tmpl.cargo_toml)?;
+    fs::write(workspace.join("src/main.rs"), tmpl.main_rs)?;
+    fs::write(workspace.join("Cargo.toml"), tmpl.cargo_toml)?;
     fs::write(workspace.join(".cargo/config.toml"), tmpl.cargo_config)?;
     fs::write(workspace.join("rust-toolchain.toml"), tmpl.rust_toolchain)?;
 
@@ -42,8 +42,9 @@ pub fn create_blink_project(workspace: &Path, board: &crate::core::board::BoardK
 #[allow(dead_code)]
 pub fn create_template(workspace: &Path, board: &str) -> Result<()> {
     // board文字列からBoardKindを解決して委譲
-    use crate::core::board::{BOARD_PRESETS, BoardKind};
-    let kind = BOARD_PRESETS.iter()
+    use crate::core::board::{BoardKind, BOARD_PRESETS};
+    let kind = BOARD_PRESETS
+        .iter()
         .find(|p| p.display_name.to_lowercase().contains(board))
         .map(|p| p.kind.clone())
         .unwrap_or(BoardKind::ArduinoUno);

@@ -351,4 +351,3 @@ profile = "minimal"
         target_json: Some(("avr-atmega32u4.json", ATMEGA32U4_JSON)),
     }
 }
-

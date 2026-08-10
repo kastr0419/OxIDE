@@ -44,7 +44,7 @@ pub enum LspMessage {
 #[derive(Debug, Clone)]
 pub struct CompletionItem {
     pub label: String,
-    pub detail: Option<String>,      // 型情報
+    pub detail: Option<String>, // 型情報
     #[allow(dead_code)]
     pub documentation: Option<String>, // ドキュメント（将来のホバー表示で使用）
     pub insert_text: Option<String>, // 挿入テキスト（スニペット）
@@ -73,7 +73,12 @@ pub struct Diagnostic {
 }
 
 #[derive(Debug, Clone)]
-pub enum DiagSeverity { Error, Warning, Info, Hint }
+pub enum DiagSeverity {
+    Error,
+    Warning,
+    Info,
+    Hint,
+}
 
 /// LSP の `Content-Length: N\r\n\r\nBODY` フレームとして書き込む
 fn write_message(stdin: &mut ChildStdin, msg: &Value) -> std::io::Result<()> {
@@ -84,7 +89,11 @@ fn write_message(stdin: &mut ChildStdin, msg: &Value) -> std::io::Result<()> {
 }
 
 /// rust-analyzer を起動して LspClient を返す
-pub fn start_lsp(workspace: PathBuf, tx_to_ui: Sender<LspMessage>, ra_path_override: Option<PathBuf>) -> Option<LspClient> {
+pub fn start_lsp(
+    workspace: PathBuf,
+    tx_to_ui: Sender<LspMessage>,
+    ra_path_override: Option<PathBuf>,
+) -> Option<LspClient> {
     let ra_path = ra_path_override
         .filter(|p| p.exists())
         .or_else(|| which::which("rust-analyzer").ok())?;
@@ -109,11 +118,15 @@ pub fn start_lsp(workspace: PathBuf, tx_to_ui: Sender<LspMessage>, ra_path_overr
             match serde_json::from_str::<Value>(&msg_str) {
                 Ok(v) => {
                     if let Err(e) = write_message(&mut child_stdin, &v) {
-                        let _ = ui_tx_for_stdin.send(LspMessage::Error(format!("LSP stdin write error: {}", e)));
+                        let _ = ui_tx_for_stdin
+                            .send(LspMessage::Error(format!("LSP stdin write error: {}", e)));
                     }
                 }
                 Err(e) => {
-                    let _ = ui_tx_for_stdin.send(LspMessage::Error(format!("Invalid JSON for LSP stdin: {}", e)));
+                    let _ = ui_tx_for_stdin.send(LspMessage::Error(format!(
+                        "Invalid JSON for LSP stdin: {}",
+                        e
+                    )));
                 }
             }
         }
@@ -135,9 +148,13 @@ pub fn start_lsp(workspace: PathBuf, tx_to_ui: Sender<LspMessage>, ra_path_overr
                 continue;
             }
             let content_len: usize = header
-                .split(':').nth(1).unwrap_or("0")
-                .trim().parse().unwrap_or(0);
-            
+                .split(':')
+                .nth(1)
+                .unwrap_or("0")
+                .trim()
+                .parse()
+                .unwrap_or(0);
+
             // 空行を読み飛ばす
             let mut blank = String::new();
             let _ = reader.read_line(&mut blank);
@@ -145,20 +162,35 @@ pub fn start_lsp(workspace: PathBuf, tx_to_ui: Sender<LspMessage>, ra_path_overr
             // ボディ読み込み
             let mut body = vec![0u8; content_len];
             use std::io::Read;
-            if reader.read_exact(&mut body).is_err() { break; }
+            if reader.read_exact(&mut body).is_err() {
+                break;
+            }
 
-            let Ok(json) = serde_json::from_slice::<Value>(&body) else { continue };
-            
+            let Ok(json) = serde_json::from_slice::<Value>(&body) else {
+                continue;
+            };
+
             // initialize レスポンスを検出したら initialized 通知を送る
-            if json.get("id").is_some() && json.get("result").map(|r| r.get("capabilities").is_some()).unwrap_or(false) && json.get("method").is_none() {
+            if json.get("id").is_some()
+                && json
+                    .get("result")
+                    .map(|r| r.get("capabilities").is_some())
+                    .unwrap_or(false)
+                && json.get("method").is_none()
+            {
                 let init_notif = json!({
                     "jsonrpc": "2.0",
                     "method": "initialized",
                     "params": {}
                 });
                 match serde_json::to_string(&init_notif) {
-                    Ok(s) => { let _ = stdin_tx_clone.send(s); }
-                    Err(e) => { let _ = tx_clone.send(LspMessage::Error(format!("LSP serialize error: {}", e))); }
+                    Ok(s) => {
+                        let _ = stdin_tx_clone.send(s);
+                    }
+                    Err(e) => {
+                        let _ =
+                            tx_clone.send(LspMessage::Error(format!("LSP serialize error: {}", e)));
+                    }
                 }
                 let _ = tx_clone.send(LspMessage::Initialized);
                 continue;
@@ -203,9 +235,16 @@ pub fn start_lsp(workspace: PathBuf, tx_to_ui: Sender<LspMessage>, ra_path_overr
     });
     if let Ok(s) = serde_json::to_string(&init_msg) {
         stdin_tx.send(s).ok()?;
-    } else { return None; }
+    } else {
+        return None;
+    }
 
-    Some(LspClient { stdin_tx, response_rx: crossbeam_channel::unbounded().1, ui_tx: tx_to_ui.clone(), _child: child })
+    Some(LspClient {
+        stdin_tx,
+        response_rx: crossbeam_channel::unbounded().1,
+        ui_tx: tx_to_ui.clone(),
+        _child: child,
+    })
 }
 
 // ── ヘルパー: LspClient のメソッド ────────────────────────
@@ -227,8 +266,14 @@ impl LspClient {
             }
         });
         match serde_json::to_string(&msg) {
-            Ok(s) => { let _ = self.stdin_tx.send(s); }
-            Err(e) => { let _ = self.ui_tx.send(LspMessage::Error(format!("LSP serialize error: {}", e))); }
+            Ok(s) => {
+                let _ = self.stdin_tx.send(s);
+            }
+            Err(e) => {
+                let _ = self
+                    .ui_tx
+                    .send(LspMessage::Error(format!("LSP serialize error: {}", e)));
+            }
         }
     }
 
@@ -242,8 +287,14 @@ impl LspClient {
             }
         });
         match serde_json::to_string(&msg) {
-            Ok(s) => { let _ = self.stdin_tx.send(s); }
-            Err(e) => { let _ = self.ui_tx.send(LspMessage::Error(format!("LSP serialize error: {}", e))); }
+            Ok(s) => {
+                let _ = self.stdin_tx.send(s);
+            }
+            Err(e) => {
+                let _ = self
+                    .ui_tx
+                    .send(LspMessage::Error(format!("LSP serialize error: {}", e)));
+            }
         }
     }
 
@@ -259,41 +310,58 @@ impl LspClient {
             }
         });
         match serde_json::to_string(&msg) {
-            Ok(s) => { let _ = self.stdin_tx.send(s); }
-            Err(e) => { let _ = self.ui_tx.send(LspMessage::Error(format!("LSP serialize error: {}", e))); }
+            Ok(s) => {
+                let _ = self.stdin_tx.send(s);
+            }
+            Err(e) => {
+                let _ = self
+                    .ui_tx
+                    .send(LspMessage::Error(format!("LSP serialize error: {}", e)));
+            }
         }
     }
 }
 
 /// completion レスポンスをパース
 fn parse_completion_response(json: &Value) -> Option<Vec<CompletionItem>> {
-    let items_json = json.get("result")
+    let items_json = json
+        .get("result")
         .and_then(|r| r.get("items").or(Some(r)))
         .and_then(|v| v.as_array())?;
 
-    let items = items_json.iter().map(|item| {
-        let label = item["label"].as_str().unwrap_or("").to_string();
-        let detail = item["detail"].as_str().map(|s| s.to_string());
-        let documentation = item["documentation"]
-            .as_str()
-            .or_else(|| item["documentation"]["value"].as_str())
-            .map(|s| s.to_string());
-        let insert_text = item["insertText"].as_str()
-            .or_else(|| item["textEdit"]["newText"].as_str())
-            .map(|s| s.to_string());
-        let kind = match item["kind"].as_u64().unwrap_or(0) {
-            3  => CompletionKind::Function,
-            2  => CompletionKind::Method,
-            7  => CompletionKind::Struct,
-            13 => CompletionKind::Enum,
-            21 => CompletionKind::Constant,
-            9  => CompletionKind::Module,
-            14 => CompletionKind::Keyword,
-            15 => CompletionKind::Snippet,
-            _  => CompletionKind::Other,
-        };
-        CompletionItem { label, detail, documentation, insert_text, kind }
-    }).collect();
+    let items = items_json
+        .iter()
+        .map(|item| {
+            let label = item["label"].as_str().unwrap_or("").to_string();
+            let detail = item["detail"].as_str().map(|s| s.to_string());
+            let documentation = item["documentation"]
+                .as_str()
+                .or_else(|| item["documentation"]["value"].as_str())
+                .map(|s| s.to_string());
+            let insert_text = item["insertText"]
+                .as_str()
+                .or_else(|| item["textEdit"]["newText"].as_str())
+                .map(|s| s.to_string());
+            let kind = match item["kind"].as_u64().unwrap_or(0) {
+                3 => CompletionKind::Function,
+                2 => CompletionKind::Method,
+                7 => CompletionKind::Struct,
+                13 => CompletionKind::Enum,
+                21 => CompletionKind::Constant,
+                9 => CompletionKind::Module,
+                14 => CompletionKind::Keyword,
+                15 => CompletionKind::Snippet,
+                _ => CompletionKind::Other,
+            };
+            CompletionItem {
+                label,
+                detail,
+                documentation,
+                insert_text,
+                kind,
+            }
+        })
+        .collect();
 
     Some(items)
 }
@@ -301,21 +369,31 @@ fn parse_completion_response(json: &Value) -> Option<Vec<CompletionItem>> {
 /// diagnostics をパース
 fn parse_diagnostics(json: &Value) -> Option<Vec<Diagnostic>> {
     let method = json.get("method")?.as_str()?;
-    if method != "textDocument/publishDiagnostics" { return None; }
+    if method != "textDocument/publishDiagnostics" {
+        return None;
+    }
     let diags_json = json["params"]["diagnostics"].as_array()?;
 
-    let diags = diags_json.iter().map(|d| {
-        let line = d["range"]["start"]["line"].as_u64().unwrap_or(0) as u32;
-        let col  = d["range"]["start"]["character"].as_u64().unwrap_or(0) as u32;
-        let message = d["message"].as_str().unwrap_or("").to_string();
-        let severity = match d["severity"].as_u64().unwrap_or(1) {
-            1 => DiagSeverity::Error,
-            2 => DiagSeverity::Warning,
-            3 => DiagSeverity::Info,
-            _ => DiagSeverity::Hint,
-        };
-        Diagnostic { line, col, message, severity }
-    }).collect();
+    let diags = diags_json
+        .iter()
+        .map(|d| {
+            let line = d["range"]["start"]["line"].as_u64().unwrap_or(0) as u32;
+            let col = d["range"]["start"]["character"].as_u64().unwrap_or(0) as u32;
+            let message = d["message"].as_str().unwrap_or("").to_string();
+            let severity = match d["severity"].as_u64().unwrap_or(1) {
+                1 => DiagSeverity::Error,
+                2 => DiagSeverity::Warning,
+                3 => DiagSeverity::Info,
+                _ => DiagSeverity::Hint,
+            };
+            Diagnostic {
+                line,
+                col,
+                message,
+                severity,
+            }
+        })
+        .collect();
 
     Some(diags)
 }

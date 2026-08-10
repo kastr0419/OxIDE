@@ -4,10 +4,18 @@
 pub fn ui_file_explorer(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         ui.label(egui::RichText::new("📁 Files").strong());
-        if ui.small_button("🔄").on_hover_text("ファイル一覧を更新").clicked() {
+        if ui
+            .small_button("🔄")
+            .on_hover_text("ファイル一覧を更新")
+            .clicked()
+        {
             app.refresh_workspace_files();
         }
-        if ui.small_button("➕").on_hover_text("新規 .rs ファイル作成").clicked() {
+        if ui
+            .small_button("➕")
+            .on_hover_text("新規 .rs ファイル作成")
+            .clicked()
+        {
             app.new_file_name = String::new();
             app.show_new_file_dialog = true;
         }
@@ -33,9 +41,7 @@ pub fn ui_file_explorer(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
         .max_height(180.0)
         .show(ui, |ui| {
             if files.is_empty() {
-                ui.label(
-                    egui::RichText::new("（ファイルなし）").small().weak(),
-                );
+                ui.label(egui::RichText::new("（ファイルなし）").small().weak());
                 return;
             }
             let mut delete_target: Option<std::path::PathBuf> = None;
@@ -44,13 +50,17 @@ pub fn ui_file_explorer(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
                 let is_active = active_path.as_ref() == Some(path);
 
                 let name = rel.to_string_lossy();
-                let icon = if name.ends_with(".rs") { "📄" } else if name.ends_with(".toml") { "⚙" } else { "📃" };
+                let icon = if name.ends_with(".rs") {
+                    "📄"
+                } else if name.ends_with(".toml") {
+                    "⚙"
+                } else {
+                    "📃"
+                };
                 let display = format!("{} {}", icon, name);
 
-                let resp = ui.selectable_label(
-                    is_active,
-                    egui::RichText::new(&display).small().monospace(),
-                );
+                let resp = ui
+                    .selectable_label(is_active, egui::RichText::new(&display).small().monospace());
                 if resp.clicked() {
                     app.open_file_in_tab(path.clone());
                 }

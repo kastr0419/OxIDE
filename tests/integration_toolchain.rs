@@ -3,9 +3,7 @@
 
 //! rust-analyzer ツールチェーン管理の統合テスト
 
-use oxide::core::toolchain::{
-    check_rust_analyzer, validate_custom_path, home_cargo_bin,
-};
+use oxide::core::toolchain::{check_rust_analyzer, home_cargo_bin, validate_custom_path};
 use std::path::PathBuf;
 
 #[test]
@@ -27,7 +25,9 @@ fn ra_status_path_is_none_when_not_installed() {
 
 #[test]
 fn validate_rejects_nonexistent_path() {
-    assert!(!validate_custom_path(&PathBuf::from("C:/nonexistent/rust-analyzer-zzz.exe")));
+    assert!(!validate_custom_path(&PathBuf::from(
+        "C:/nonexistent/rust-analyzer-zzz.exe"
+    )));
 }
 
 #[test]
@@ -38,7 +38,11 @@ fn validate_rejects_directory() {
 #[test]
 fn validate_accepts_real_executable() {
     if let Ok(exe) = std::env::current_exe() {
-        assert!(validate_custom_path(&exe), "current exe should be valid: {:?}", exe);
+        assert!(
+            validate_custom_path(&exe),
+            "current exe should be valid: {:?}",
+            exe
+        );
     }
 }
 

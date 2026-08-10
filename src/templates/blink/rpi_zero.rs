@@ -10,7 +10,7 @@ pub fn rpi_zero() -> BlinkTemplate {
         memory_x: None,
         build_rs: None,
         linker_ld: Some(LINKER_LD),
-        target_json: Some(("armv6-rpi-zero.json", TARGET_JSON)), 
+        target_json: Some(("armv6-rpi-zero.json", TARGET_JSON)),
     }
 }
 

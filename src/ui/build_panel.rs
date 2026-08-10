@@ -18,30 +18,53 @@ fn open_dist_folder(path: &std::path::Path) {
     let _ = std::process::Command::new("open").arg(path).spawn();
 }
 
-pub fn ui_build_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, tx: &crossbeam_channel::Sender<crate::app::AppMessage>) {
+pub fn ui_build_panel(
+    app: &mut crate::app::IdeApp,
+    ui: &mut egui::Ui,
+    tx: &crossbeam_channel::Sender<crate::app::AppMessage>,
+) {
     ui.horizontal(|ui| {
         let build_btn = ui.add_enabled(!app.is_building, egui::Button::new("▶ Build"));
         if build_btn.clicked() {
             save_editor_to_disk(app);
             app.is_building = true;
-            let req = crate::core::compiler::BuildRequest { project_dir: app.config.workspace_dir.clone(), target_triple: crate::core::board::BOARD_PRESETS.get(app.selected_board).map(|p| p.target_triple.to_string()).unwrap_or_default(), release: false, board: crate::core::board::BOARD_PRESETS.get(app.selected_board).map(|p| p.kind.clone()) };
+            let req = crate::core::compiler::BuildRequest {
+                project_dir: app.config.workspace_dir.clone(),
+                target_triple: crate::core::board::BOARD_PRESETS
+                    .get(app.selected_board)
+                    .map(|p| p.target_triple.to_string())
+                    .unwrap_or_default(),
+                release: false,
+                board: crate::core::board::BOARD_PRESETS
+                    .get(app.selected_board)
+                    .map(|p| p.kind.clone()),
+            };
             crate::core::compiler::build_async(req, tx.clone());
         }
 
-        let flash_btn= ui.add_enabled(!app.is_flashing, egui::Button::new("⚡ Flash"));
+        let flash_btn = ui.add_enabled(!app.is_flashing, egui::Button::new("⚡ Flash"));
         if flash_btn.clicked() {
             app.is_flashing = true;
             // last_dist_path からELFを検索してflash_asyncを呼ぶ
             let elf_path = app.last_dist_path.as_ref().and_then(|dist| {
                 std::fs::read_dir(dist).ok()?.find_map(|e| {
                     let p = e.ok()?.path();
-                    if p.extension().map(|x| x == "elf").unwrap_or(false) { Some(p) } else { None }
+                    if p.extension().map(|x| x == "elf").unwrap_or(false) {
+                        Some(p)
+                    } else {
+                        None
+                    }
                 })
             });
             match elf_path {
                 Some(artifact) => {
-                    if let Some(preset) = crate::core::board::BOARD_PRESETS.get(app.selected_board) {
-                        let port = app.available_ports.get(app.selected_port).cloned().unwrap_or_default();
+                    if let Some(preset) = crate::core::board::BOARD_PRESETS.get(app.selected_board)
+                    {
+                        let port = app
+                            .available_ports
+                            .get(app.selected_port)
+                            .cloned()
+                            .unwrap_or_default();
                         let flash_req = crate::core::flasher::FlashRequest {
                             board: preset.kind.clone(),
                             artifact,
@@ -55,7 +78,9 @@ pub fn ui_build_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, tx: &cros
                 }
                 None => {
                     app.is_flashing = false;
-                    app.build_log = "[ERROR] ビルド成果物が見つかりません。先に Build を実行してください。".to_string();
+                    app.build_log =
+                        "[ERROR] ビルド成果物が見つかりません。先に Build を実行してください。"
+                            .to_string();
                 }
             }
         }
@@ -64,11 +89,23 @@ pub fn ui_build_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, tx: &cros
             save_editor_to_disk(app);
             app.is_building = true;
             app.auto_flash_after_build = true;
-            let req = crate::core::compiler::BuildRequest { project_dir: app.config.workspace_dir.clone(), target_triple: crate::core::board::BOARD_PRESETS.get(app.selected_board).map(|p| p.target_triple.to_string()).unwrap_or_default(), release: false, board: crate::core::board::BOARD_PRESETS.get(app.selected_board).map(|p| p.kind.clone()) };
+            let req = crate::core::compiler::BuildRequest {
+                project_dir: app.config.workspace_dir.clone(),
+                target_triple: crate::core::board::BOARD_PRESETS
+                    .get(app.selected_board)
+                    .map(|p| p.target_triple.to_string())
+                    .unwrap_or_default(),
+                release: false,
+                board: crate::core::board::BOARD_PRESETS
+                    .get(app.selected_board)
+                    .map(|p| p.kind.clone()),
+            };
             crate::core::compiler::build_async(req, tx.clone());
         }
 
-        if app.is_building { ui.spinner(); }
+        if app.is_building {
+            ui.spinner();
+        }
     });
 
     ui.horizontal(|ui| {
@@ -86,8 +123,16 @@ pub fn ui_build_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, tx: &cros
     if let Some(ref dist) = app.last_dist_path.clone() {
         ui.horizontal(|ui| {
             ui.label("📦 成果物:");
-            ui.label(egui::RichText::new(dist.to_string_lossy()).monospace().weak());
-            if ui.button("📁 開く").on_hover_text("エクスプローラーでフォルダを開く").clicked() {
+            ui.label(
+                egui::RichText::new(dist.to_string_lossy())
+                    .monospace()
+                    .weak(),
+            );
+            if ui
+                .button("📁 開く")
+                .on_hover_text("エクスプローラーでフォルダを開く")
+                .clicked()
+            {
                 open_dist_folder(dist);
             }
         });
@@ -101,13 +146,23 @@ pub fn ui_build_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, tx: &cros
 
     ui.horizontal(|ui| {
         ui.label("Build Log:");
-        if ui.button("📋 Copy").on_hover_text("ビルドログをクリップボードにコピー").clicked() {
+        if ui
+            .button("📋 Copy")
+            .on_hover_text("ビルドログをクリップボードにコピー")
+            .clicked()
+        {
             ui.ctx().copy_text(app.build_log.clone());
         }
     });
-    egui::ScrollArea::vertical().stick_to_bottom(true).show(ui, |ui| {
-        ui.add(egui::TextEdit::multiline(&mut app.build_log).desired_rows(10).interactive(false));
-    });
+    egui::ScrollArea::vertical()
+        .stick_to_bottom(true)
+        .show(ui, |ui| {
+            ui.add(
+                egui::TextEdit::multiline(&mut app.build_log)
+                    .desired_rows(10)
+                    .interactive(false),
+            );
+        });
 
     // Flash/RAM usage meter
     if let Some(ref stats) = app.build_stats {
@@ -127,9 +182,12 @@ pub fn ui_build_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, tx: &cros
                 .desired_width(160.0)
                 .fill(flash_color);
             ui.add(bar);
-            ui.label(format!("{} / {} B ({:.1}%)",
-                stats.flash_used, stats.flash_total,
-                stats.flash_percent() * 100.0));
+            ui.label(format!(
+                "{} / {} B ({:.1}%)",
+                stats.flash_used,
+                stats.flash_total,
+                stats.flash_percent() * 100.0
+            ));
         });
 
         ui.horizontal(|ui| {
@@ -145,9 +203,12 @@ pub fn ui_build_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, tx: &cros
                 .desired_width(160.0)
                 .fill(ram_color);
             ui.add(bar);
-            ui.label(format!("{} / {} B ({:.1}%)",
-                stats.ram_used, stats.ram_total,
-                stats.ram_percent() * 100.0));
+            ui.label(format!(
+                "{} / {} B ({:.1}%)",
+                stats.ram_used,
+                stats.ram_total,
+                stats.ram_percent() * 100.0
+            ));
         });
     }
 }

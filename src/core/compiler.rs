@@ -36,9 +36,10 @@ pub fn build_async(req: BuildRequest, tx: crossbeam_channel::Sender<crate::app::
             // ボードプリセットから rustflags と memory.x を自動注入
             if let Some(ref board_kind) = req.board {
                 use crate::core::board::BOARD_PRESETS;
-                if let Some(preset) = BOARD_PRESETS.iter().find(|p| {
-                    std::mem::discriminant(&p.kind) == std::mem::discriminant(board_kind)
-                }) {
+                if let Some(preset) = BOARD_PRESETS
+                    .iter()
+                    .find(|p| std::mem::discriminant(&p.kind) == std::mem::discriminant(board_kind))
+                {
                     // RUSTFLAGS 注入
                     if !preset.rustflags.is_empty() {
                         let existing = std::env::var("RUSTFLAGS").unwrap_or_default();
@@ -70,32 +71,74 @@ pub fn build_async(req: BuildRequest, tx: crossbeam_channel::Sender<crate::app::
             // .cargo/config.toml が存在する → 設定はそちらに任せる
         }
 
-        if req.release { cmd.arg("--release"); }
-        match cmd.output() {
-            Ok(output) => {
-                let success = output.status.success();
-                let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-                let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        if req.release {
+            cmd.arg("--release");
+        }
+        cmd.stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped());
+        match cmd.spawn() {
+            Ok(mut child) => {
+                let read_output =
+                    |stream: Box<dyn std::io::Read + Send>,
+                     tx: crossbeam_channel::Sender<crate::app::AppMessage>| {
+                        std::thread::spawn(move || {
+                            use std::io::BufRead;
+                            let mut output = String::new();
+                            for line in std::io::BufReader::new(stream)
+                                .lines()
+                                .map_while(Result::ok)
+                            {
+                                output.push_str(&line);
+                                output.push('\n');
+                                tx.send(crate::app::AppMessage::Build(
+                                    crate::app::BuildMsg::Progress(line),
+                                ))
+                                .ok();
+                            }
+                            output
+                        })
+                    };
+                let stdout_handle = read_output(Box::new(child.stdout.take().unwrap()), tx.clone());
+                let stderr_handle = read_output(Box::new(child.stderr.take().unwrap()), tx.clone());
+                let success = child.wait().map(|status| status.success()).unwrap_or(false);
+                let stdout = stdout_handle.join().unwrap_or_default();
+                let stderr = stderr_handle.join().unwrap_or_default();
                 let artifact_path = if success {
                     let mut p = req.project_dir.clone();
                     p.push("target");
                     p.push(&req.target_triple);
                     p.push(if req.release { "release" } else { "debug" });
                     Some(p)
-                } else { None };
+                } else {
+                    None
+                };
                 let dist_path = if success {
                     copy_artifacts_to_dist(&req.project_dir, &req.target_triple, req.release)
-                } else { None };
-                tx.send(crate::app::AppMessage::Build(crate::app::BuildMsg::Finished(BuildResult { success, stdout, stderr, artifact_path, dist_path }))).ok();
+                } else {
+                    None
+                };
+                tx.send(crate::app::AppMessage::Build(
+                    crate::app::BuildMsg::Finished(BuildResult {
+                        success,
+                        stdout,
+                        stderr,
+                        artifact_path,
+                        dist_path,
+                    }),
+                ))
+                .ok();
             }
             Err(e) => {
-                tx.send(crate::app::AppMessage::Build(crate::app::BuildMsg::Finished(BuildResult {
-                    success: false,
-                    stdout: String::new(),
-                    stderr: format!("cargo not found: {}", e),
-                    artifact_path: None,
-                    dist_path: None,
-                }))).ok();
+                tx.send(crate::app::AppMessage::Build(
+                    crate::app::BuildMsg::Finished(BuildResult {
+                        success: false,
+                        stdout: String::new(),
+                        stderr: format!("cargo not found: {}", e),
+                        artifact_path: None,
+                        dist_path: None,
+                    }),
+                ))
+                .ok();
             }
         }
     });
@@ -111,8 +154,14 @@ fn get_package_name(project_dir: &std::path::Path) -> String {
         .find_map(|line| {
             let line = line.trim();
             if line.starts_with("name") && line.contains('=') {
-                let val = line.split_once('=').map(|(_, v)| v.trim().trim_matches('"'))?;
-                if !val.is_empty() { Some(val.to_string()) } else { None }
+                let val = line
+                    .split_once('=')
+                    .map(|(_, v)| v.trim().trim_matches('"'))?;
+                if !val.is_empty() {
+                    Some(val.to_string())
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -148,7 +197,8 @@ fn copy_artifacts_to_dist(
         for tool in &["arm-none-eabi-objcopy", "rust-objcopy", "llvm-objcopy"] {
             let mut c = std::process::Command::new(tool);
             if crate::core::no_window(&mut c)
-                .arg("-O").arg("ihex")
+                .arg("-O")
+                .arg("ihex")
                 .arg(&elf_src)
                 .arg(&hex_src)
                 .output()
@@ -161,7 +211,14 @@ fn copy_artifacts_to_dist(
     }
 
     // 成果物の拡張子候補（空文字 = ELF）
-    let candidates = [("", ".elf"), (".elf", ".elf"), (".hex", ".hex"), (".bin", ".bin"), (".uf2", ".uf2"), (".img", ".img")];
+    let candidates = [
+        ("", ".elf"),
+        (".elf", ".elf"),
+        (".hex", ".hex"),
+        (".bin", ".bin"),
+        (".uf2", ".uf2"),
+        (".img", ".img"),
+    ];
     let mut copied = false;
     for (src_ext, dst_ext) in &candidates {
         let src = artifact_dir.join(format!("{}{}", pkg_name, src_ext));
@@ -173,7 +230,11 @@ fn copy_artifacts_to_dist(
         }
     }
 
-    if copied { Some(dist_dir) } else { None }
+    if copied {
+        Some(dist_dir)
+    } else {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -211,7 +272,8 @@ mod tests {
         // .cargo/config.toml が存在するディレクトリでは --target を渡さない判定を確認する
         let tmp = std::env::temp_dir().join("test_cargo_config_check");
         let _ = std::fs::remove_dir_all(&tmp);
-        std::fs::create_dir_all(tmp.join(".cargo")).expect("create .cargo directory in test failed");
+        std::fs::create_dir_all(tmp.join(".cargo"))
+            .expect("create .cargo directory in test failed");
 
         // .cargo/config.toml なし → has_cargo_config = false
         let has_config = tmp.join(".cargo").join("config.toml").exists()
@@ -219,7 +281,11 @@ mod tests {
         assert!(!has_config);
 
         // .cargo/config.toml あり → has_cargo_config = true
-        std::fs::write(tmp.join(".cargo").join("config.toml"), "[build]\ntarget = \"thumbv7em-none-eabihf\"\n").expect("write .cargo/config.toml in test failed");
+        std::fs::write(
+            tmp.join(".cargo").join("config.toml"),
+            "[build]\ntarget = \"thumbv7em-none-eabihf\"\n",
+        )
+        .expect("write .cargo/config.toml in test failed");
         let has_config = tmp.join(".cargo").join("config.toml").exists()
             || tmp.join(".cargo").join("config").exists();
         assert!(has_config);

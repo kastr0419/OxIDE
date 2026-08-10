@@ -37,7 +37,9 @@ fn build_result_success() {
         success: true,
         stdout: "Compiling rust-embedded-ide v0.1.0".to_string(),
         stderr: String::new(),
-        artifact_path: Some(PathBuf::from("target/thumbv7em-none-eabihf/release/rust-embedded-ide")),
+        artifact_path: Some(PathBuf::from(
+            "target/thumbv7em-none-eabihf/release/rust-embedded-ide",
+        )),
         dist_path: None,
     };
     assert!(r.success);

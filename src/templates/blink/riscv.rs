@@ -63,13 +63,15 @@ target = "riscv32imac-unknown-none-elf"
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["riscv32imac-unknown-none-elf"]
-"#, 
-        memory_x: Some(r#"MEMORY
+"#,
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 128K
   RAM : ORIGIN = 0x20000000, LENGTH = 32K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -119,17 +121,19 @@ panic-halt = "0.2"
 "#,
         cargo_config: r#"[build]
 target = "riscv32imc-unknown-none-elf"
-"#, 
+"#,
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["riscv32imc-unknown-none-elf"]
-"#, 
-        memory_x: Some(r#"MEMORY
+"#,
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x08000000, LENGTH = 16K
   RAM : ORIGIN = 0x20000000, LENGTH = 2K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,

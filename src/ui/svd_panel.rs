@@ -6,7 +6,7 @@ pub fn ui_svd_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         if ui.button("📂 Load SVD").clicked() {
             if let Some(path) = rfd::FileDialog::new()
-                .add_filter("SVD", &["svd", "SVD"]) 
+                .add_filter("SVD", &["svd", "SVD"])
                 .pick_file()
             {
                 match std::fs::read_to_string(&path) {
@@ -47,7 +47,11 @@ pub fn ui_svd_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
             ).small().color(egui::Color32::GRAY));
         }
         Some(device) => {
-            ui.label(egui::RichText::new(format!("📦 {}", device.name)).strong().small());
+            ui.label(
+                egui::RichText::new(format!("📦 {}", device.name))
+                    .strong()
+                    .small(),
+            );
             ui.separator();
 
             egui::ScrollArea::vertical().show(ui, |ui| {
@@ -58,7 +62,10 @@ pub fn ui_svd_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
                     if !search.is_empty()
                         && !periph.name.to_lowercase().contains(&search)
                         && !periph.description.to_lowercase().contains(&search)
-                        && !periph.registers.iter().any(|r| r.name.to_lowercase().contains(&search))
+                        && !periph
+                            .registers
+                            .iter()
+                            .any(|r| r.name.to_lowercase().contains(&search))
                     {
                         continue;
                     }
@@ -67,38 +74,58 @@ pub fn ui_svd_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
                     let header = format!("⚡ {}  0x{:08X}", periph.name, periph.base_address);
 
                     let resp = egui::CollapsingHeader::new(
-                        egui::RichText::new(&header).monospace().small()
+                        egui::RichText::new(&header).monospace().small(),
                     )
                     .id_salt(&periph.name)
                     .default_open(is_expanded)
                     .show(ui, |ui| {
                         if !periph.description.is_empty() {
-                            ui.label(egui::RichText::new(&periph.description).small().color(egui::Color32::GRAY));
+                            ui.label(
+                                egui::RichText::new(&periph.description)
+                                    .small()
+                                    .color(egui::Color32::GRAY),
+                            );
                         }
                         for reg in &periph.registers {
                             let abs_addr = periph.base_address + reg.address_offset;
-                            let reg_label = format!("  {} +0x{:X}  [{}]", reg.name, reg.address_offset, reg.access);
+                            let reg_label = format!(
+                                "  {} +0x{:X}  [{}]",
+                                reg.name, reg.address_offset, reg.access
+                            );
 
                             ui.horizontal(|ui| {
                                 ui.label(egui::RichText::new(&reg_label).monospace().small());
-                                if ui.small_button("📋").on_hover_text(format!("Copy 0x{:08X}", abs_addr)).clicked() {
+                                if ui
+                                    .small_button("📋")
+                                    .on_hover_text(format!("Copy 0x{:08X}", abs_addr))
+                                    .clicked()
+                                {
                                     ui.ctx().copy_text(format!("0x{:08X}", abs_addr));
                                 }
                             });
 
                             if !reg.description.is_empty() {
-                                ui.label(egui::RichText::new(format!("    {}", reg.description)).small().color(egui::Color32::GRAY));
+                                ui.label(
+                                    egui::RichText::new(format!("    {}", reg.description))
+                                        .small()
+                                        .color(egui::Color32::GRAY),
+                                );
                             }
 
                             // Show fields
                             for field in &reg.fields {
-                                let field_label = format!("    [{}:{}] {} — {}",
+                                let field_label = format!(
+                                    "    [{}:{}] {} — {}",
                                     field.bit_offset + field.bit_width - 1,
                                     field.bit_offset,
                                     field.name,
                                     field.description
                                 );
-                                ui.label(egui::RichText::new(&field_label).small().color(egui::Color32::from_gray(160)));
+                                ui.label(
+                                    egui::RichText::new(&field_label)
+                                        .small()
+                                        .color(egui::Color32::from_gray(160)),
+                                );
                             }
                         }
                     });

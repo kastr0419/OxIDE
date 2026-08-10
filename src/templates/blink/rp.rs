@@ -90,7 +90,7 @@ targets = ["thumbv6m-none-eabi"]
     }
 }
 
-pub fn rpi_pico2()-> BlinkTemplate {
+pub fn rpi_pico2() -> BlinkTemplate {
     BlinkTemplate {
         main_rs: r#"//! Raspberry Pi Pico 2 Lチカ
 //! LED: GPIO25 (オンボードLED, RP2350)
@@ -169,12 +169,14 @@ rustflags = [
 channel = "stable"
 targets = ["thumbv8m.main-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
     FLASH : ORIGIN = 0x10000000, LENGTH = 4M
     RAM   : ORIGIN = 0x20000000, LENGTH = 520K
 }
-"#),
+"#,
+        ),
         build_rs: None,
         linker_ld: None,
         target_json: None,

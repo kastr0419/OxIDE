@@ -7,17 +7,17 @@ use crate::core::board::{BoardKind, FlashToolKind, BOARD_PRESETS};
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(dead_code)]
 pub enum DetectionConfidence {
-    Low,     // ヒューリスティック（ポート名推定）
-    Medium,  // USB VID のみ一致
-    High,    // USB VID + PID 完全一致
-    Exact,   // 外部ツール（probe-rs / esptool）がチップ名を確定
+    Low,    // ヒューリスティック（ポート名推定）
+    Medium, // USB VID のみ一致
+    High,   // USB VID + PID 完全一致
+    Exact,  // 外部ツール（probe-rs / esptool）がチップ名を確定
 }
 
 /// 検出されたボード情報
 #[derive(Debug, Clone)]
 pub struct DetectedBoard {
     pub port_name: String,
-    pub board_index: usize,       // BOARD_PRESETS のインデックス
+    pub board_index: usize, // BOARD_PRESETS のインデックス
     pub confidence: DetectionConfidence,
     pub description: String,
     #[allow(dead_code)]
@@ -66,8 +66,6 @@ pub fn detect_rp_bootloader() -> Vec<DetectedBoard> {
     results
 }
 
-
-
 /// USB VID/PID を使ってボードを検出する。
 /// serialport::SerialPortType::UsbPort から VID/PID を取得し、
 /// BOARD_PRESETS の usb_ids テーブルと照合する。
@@ -91,14 +89,20 @@ pub fn detect_by_usb_id() -> Vec<DetectedBoard> {
 
         // 1. VID+PID 完全一致 → High
         let exact = BOARD_PRESETS.iter().enumerate().find_map(|(idx, preset)| {
-            preset.usb_ids.iter().find(|u| u.vid == vid && u.pid == pid)
+            preset
+                .usb_ids
+                .iter()
+                .find(|u| u.vid == vid && u.pid == pid)
                 .map(|u| (idx, DetectionConfidence::High, u.description))
         });
 
         // 2. VID のみ一致 → Medium（フォールバック）
         let vid_only = || {
             BOARD_PRESETS.iter().enumerate().find_map(|(idx, preset)| {
-                preset.usb_ids.iter().find(|u| u.vid == vid)
+                preset
+                    .usb_ids
+                    .iter()
+                    .find(|u| u.vid == vid)
                     .map(|u| (idx, DetectionConfidence::Medium, u.description))
             })
         };
@@ -132,7 +136,10 @@ pub fn detect_by_usb_id() -> Vec<DetectedBoard> {
 pub fn detect_by_probe_rs() -> Vec<DetectedBoard> {
     let mut results = Vec::new();
     let mut probe_cmd = std::process::Command::new("probe-rs");
-    let output = match crate::core::no_window(&mut probe_cmd).args(["list"]).output() {
+    let output = match crate::core::no_window(&mut probe_cmd)
+        .args(["list"])
+        .output()
+    {
         Ok(o) => o,
         Err(_) => return results, // probe-rs 未インストール → スキップ
     };
@@ -159,7 +166,10 @@ pub fn detect_by_probe_rs() -> Vec<DetectedBoard> {
             Some(BoardKind::Stm32F4)
         } else if lower.contains("nrf52840") {
             Some(BoardKind::NrF52840)
-        } else if lower.contains("nrf52833") || lower.contains("micro:bit") || lower.contains("microbit") {
+        } else if lower.contains("nrf52833")
+            || lower.contains("micro:bit")
+            || lower.contains("microbit")
+        {
             Some(BoardKind::MicroBitV2)
         } else if lower.contains("nrf51") {
             Some(BoardKind::NrF51822)
@@ -176,10 +186,14 @@ pub fn detect_by_probe_rs() -> Vec<DetectedBoard> {
         if let Some(kind) = board_kind {
             if let Some(idx) = BOARD_PRESETS.iter().position(|p| p.kind == kind) {
                 // STM32 型番不明は Medium、それ以外は Exact
-                let confidence = if lower.contains("stm32") && !lower.contains("stm32f4")
-                    && !lower.contains("stm32f1") && !lower.contains("stm32f7")
-                    && !lower.contains("stm32h7") && !lower.contains("stm32l4")
-                    && !lower.contains("stm32g0") {
+                let confidence = if lower.contains("stm32")
+                    && !lower.contains("stm32f4")
+                    && !lower.contains("stm32f1")
+                    && !lower.contains("stm32f7")
+                    && !lower.contains("stm32h7")
+                    && !lower.contains("stm32l4")
+                    && !lower.contains("stm32g0")
+                {
                     DetectionConfidence::Medium
                 } else {
                     DetectionConfidence::Exact
@@ -236,10 +250,7 @@ pub fn detect_by_esptool(port: &str) -> Option<DetectedBoard> {
         port_name: port.to_string(),
         board_index: idx,
         confidence: DetectionConfidence::Exact,
-        description: format!(
-            "esptool: {:?} on {}",
-            kind, port
-        ),
+        description: format!("esptool: {:?} on {}", kind, port),
         chip_info: Some(combined.trim().to_string()),
     })
 }
@@ -268,7 +279,8 @@ pub fn detect_by_port_hint() -> Vec<DetectedBoard> {
 
         for (idx, preset) in BOARD_PRESETS.iter().enumerate() {
             // display_name の先頭単語でマッチ（例: "Arduino", "Raspberry", "STM32"）
-            let hint = preset.display_name
+            let hint = preset
+                .display_name
                 .split_whitespace()
                 .next()
                 .unwrap_or("")
@@ -313,12 +325,17 @@ pub fn auto_detect(tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
             let mut seen = std::collections::HashSet::new();
             all.iter()
                 .filter(|r| {
-                    BOARD_PRESETS.get(r.board_index)
+                    BOARD_PRESETS
+                        .get(r.board_index)
                         .map(|p| matches!(p.flash_tool, FlashToolKind::Esptool))
                         .unwrap_or(false)
                 })
                 .filter_map(|r| {
-                    if seen.insert(r.port_name.clone()) { Some(r.port_name.clone()) } else { None }
+                    if seen.insert(r.port_name.clone()) {
+                        Some(r.port_name.clone())
+                    } else {
+                        None
+                    }
                 })
                 .collect()
         };
@@ -370,8 +387,8 @@ mod tests {
 
     #[test]
     fn test_detection_confidence_ordering() {
-        assert!(DetectionConfidence::Exact  > DetectionConfidence::High);
-        assert!(DetectionConfidence::High   > DetectionConfidence::Medium);
+        assert!(DetectionConfidence::Exact > DetectionConfidence::High);
+        assert!(DetectionConfidence::High > DetectionConfidence::Medium);
         assert!(DetectionConfidence::Medium > DetectionConfidence::Low);
     }
 
@@ -406,7 +423,12 @@ mod tests {
             } else {
                 None
             };
-            assert_eq!(kind, Some(expected_kind), "chip='{}' not mapped correctly", chip_str);
+            assert_eq!(
+                kind,
+                Some(expected_kind),
+                "chip='{}' not mapped correctly",
+                chip_str
+            );
         }
     }
 }

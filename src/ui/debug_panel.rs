@@ -15,7 +15,10 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
     let is_arm = matches!(board_kind, BoardKind::MicroBitV2 | BoardKind::Stm32F4);
 
     if !is_arm {
-        ui.colored_label(egui::Color32::YELLOW, "⚠ Hardware debug not supported for this target.");
+        ui.colored_label(
+            egui::Color32::YELLOW,
+            "⚠ Hardware debug not supported for this target.",
+        );
         ui.label("Use avr-gdb or esptool with external GDB for AVR/ESP32.");
         return;
     }
@@ -31,7 +34,9 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
         if !connected {
             if ui.button("🔌 Connect").clicked() {
                 if let Some(ref tx) = app.debug_cmd_tx {
-                    let _ = tx.send(DebugCommand::Connect { chip: app.debug_chip_name.clone() });
+                    let _ = tx.send(DebugCommand::Connect {
+                        chip: app.debug_chip_name.clone(),
+                    });
                 }
             }
         } else {
@@ -69,12 +74,20 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
 
     // ステータス
     let status_color = if app.debug_connected {
-        if app.debug_halted { egui::Color32::YELLOW } else { egui::Color32::GREEN }
+        if app.debug_halted {
+            egui::Color32::YELLOW
+        } else {
+            egui::Color32::GREEN
+        }
     } else {
         egui::Color32::GRAY
     };
     let status_text = if app.debug_connected {
-        if app.debug_halted { "● Halted" } else { "● Running" }
+        if app.debug_halted {
+            "● Halted"
+        } else {
+            "● Running"
+        }
     } else {
         "○ Disconnected"
     };
@@ -89,31 +102,42 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
     // RTT panel
     crate::ui::rtt_panel::ui_rtt_panel(app, ui);
 
-
     // ─ レジスタテーブル ─
     ui.label(egui::RichText::new("CPU Registers").strong());
     if app.debug_registers.is_empty() {
-        ui.label(egui::RichText::new("(no data — halt target to read registers)").small().color(egui::Color32::GRAY));
+        ui.label(
+            egui::RichText::new("(no data — halt target to read registers)")
+                .small()
+                .color(egui::Color32::GRAY),
+        );
     } else {
-        egui::ScrollArea::vertical().id_salt("debug_regs_scroll").max_height(280.0).show(ui, |ui| {
-            egui::Grid::new("reg_grid")
-                .striped(true)
-                .min_col_width(60.0)
-                .show(ui, |ui| {
-                    // Header
-                    ui.label(egui::RichText::new("Name").strong().small());
-                    ui.label(egui::RichText::new("Hex").strong().small());
-                    ui.label(egui::RichText::new("Dec").strong().small());
-                    ui.end_row();
-
-                    for reg in &app.debug_registers {
-                        ui.label(egui::RichText::new(&reg.name).monospace().small());
-                        ui.label(egui::RichText::new(reg.hex()).monospace().small().color(egui::Color32::from_rgb(100, 200, 255)));
-                        ui.label(egui::RichText::new(reg.dec()).monospace().small());
+        egui::ScrollArea::vertical()
+            .id_salt("debug_regs_scroll")
+            .max_height(280.0)
+            .show(ui, |ui| {
+                egui::Grid::new("reg_grid")
+                    .striped(true)
+                    .min_col_width(60.0)
+                    .show(ui, |ui| {
+                        // Header
+                        ui.label(egui::RichText::new("Name").strong().small());
+                        ui.label(egui::RichText::new("Hex").strong().small());
+                        ui.label(egui::RichText::new("Dec").strong().small());
                         ui.end_row();
-                    }
-                });
-        });
+
+                        for reg in &app.debug_registers {
+                            ui.label(egui::RichText::new(&reg.name).monospace().small());
+                            ui.label(
+                                egui::RichText::new(reg.hex())
+                                    .monospace()
+                                    .small()
+                                    .color(egui::Color32::from_rgb(100, 200, 255)),
+                            );
+                            ui.label(egui::RichText::new(reg.dec()).monospace().small());
+                            ui.end_row();
+                        }
+                    });
+            });
     }
 
     ui.separator();
@@ -125,8 +149,10 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
         ui.text_edit_singleline(&mut app.debug_watch_addr);
         if ui.button("Read").clicked() {
             if let Ok(addr) = u64::from_str_radix(
-                app.debug_watch_addr.trim_start_matches("0x").trim_start_matches("0X"),
-                16
+                app.debug_watch_addr
+                    .trim_start_matches("0x")
+                    .trim_start_matches("0X"),
+                16,
             ) {
                 if let Some(ref tx) = app.debug_cmd_tx {
                     let _ = tx.send(DebugCommand::ReadMemory { addr, len: 32 });
@@ -135,9 +161,21 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
         }
     });
     if !app.debug_memory.is_empty() {
-        ui.label(egui::RichText::new(format!("@ 0x{:08X}:", app.debug_memory_addr)).monospace().small());
-        let hex_str: String = app.debug_memory.chunks(4)
-            .map(|chunk| chunk.iter().map(|b| format!("{:02X}", b)).collect::<Vec<_>>().join(" "))
+        ui.label(
+            egui::RichText::new(format!("@ 0x{:08X}:", app.debug_memory_addr))
+                .monospace()
+                .small(),
+        );
+        let hex_str: String = app
+            .debug_memory
+            .chunks(4)
+            .map(|chunk| {
+                chunk
+                    .iter()
+                    .map(|b| format!("{:02X}", b))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            })
             .collect::<Vec<_>>()
             .join("  ");
         ui.label(egui::RichText::new(hex_str).monospace().small());
@@ -146,7 +184,11 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
     ui.separator();
     ui.label(egui::RichText::new("🔴 Breakpoints").strong());
     if app.breakpoints.is_empty() {
-        ui.label(egui::RichText::new("(none — click gutter to add)").small().color(egui::Color32::GRAY));
+        ui.label(
+            egui::RichText::new("(none — click gutter to add)")
+                .small()
+                .color(egui::Color32::GRAY),
+        );
     } else {
         let mut to_remove: Option<usize> = None;
         let mut sorted: Vec<usize> = app.breakpoints.iter().copied().collect();

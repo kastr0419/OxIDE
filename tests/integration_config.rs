@@ -17,9 +17,9 @@ fn config_roundtrip_toml() {
     let s = toml::to_string_pretty(&cfg).unwrap();
     let cfg2: AppConfig = toml::from_str(&s).unwrap();
     assert_eq!(cfg.last_board, cfg2.last_board);
-    assert_eq!(cfg.last_port,  cfg2.last_port);
-    assert_eq!(cfg.workspace,  cfg2.workspace);
-    assert_eq!(cfg.theme,      cfg2.theme);
+    assert_eq!(cfg.last_port, cfg2.last_port);
+    assert_eq!(cfg.workspace, cfg2.workspace);
+    assert_eq!(cfg.theme, cfg2.theme);
 }
 
 #[test]

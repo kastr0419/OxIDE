@@ -28,10 +28,26 @@ fn blink_templates_have_required_fields() {
         let tmpl = get_blink_template(&preset.kind)
             .unwrap_or_else(|| panic!("No template for {}", preset.display_name));
 
-        assert!(!tmpl.main_rs.is_empty(),       "{}: main_rs が空", preset.display_name);
-        assert!(!tmpl.cargo_toml.is_empty(),    "{}: cargo_toml が空", preset.display_name);
-        assert!(!tmpl.cargo_config.is_empty(),  "{}: cargo_config が空", preset.display_name);
-        assert!(!tmpl.rust_toolchain.is_empty(),"{}: rust_toolchain が空", preset.display_name);
+        assert!(
+            !tmpl.main_rs.is_empty(),
+            "{}: main_rs が空",
+            preset.display_name
+        );
+        assert!(
+            !tmpl.cargo_toml.is_empty(),
+            "{}: cargo_toml が空",
+            preset.display_name
+        );
+        assert!(
+            !tmpl.cargo_config.is_empty(),
+            "{}: cargo_config が空",
+            preset.display_name
+        );
+        assert!(
+            !tmpl.rust_toolchain.is_empty(),
+            "{}: rust_toolchain が空",
+            preset.display_name
+        );
     }
 }
 
@@ -66,16 +82,16 @@ fn blink_cargo_toml_has_package_section() {
 #[test]
 fn stm32_templates_have_memory_x() {
     let stm32_boards = [
-        BoardKind::Stm32F1, BoardKind::Stm32F4, BoardKind::Stm32L4,
-        BoardKind::Stm32F7, BoardKind::Stm32H7, BoardKind::Stm32G0,
+        BoardKind::Stm32F1,
+        BoardKind::Stm32F4,
+        BoardKind::Stm32L4,
+        BoardKind::Stm32F7,
+        BoardKind::Stm32H7,
+        BoardKind::Stm32G0,
     ];
     for board in &stm32_boards {
         let tmpl = get_blink_template(board).unwrap();
-        assert!(
-            tmpl.memory_x.is_some(),
-            "{:?}: memory.x がない",
-            board
-        );
+        assert!(tmpl.memory_x.is_some(), "{:?}: memory.x がない", board);
     }
 }
 
@@ -85,13 +101,18 @@ fn create_blink_project_writes_files() {
     let tmp = std::env::temp_dir().join("rust_embedded_test_blink");
     let _ = std::fs::remove_dir_all(&tmp);
 
-    create_blink_project(&tmp, &BoardKind::ArduinoUno)
-        .expect("create_blink_project が失敗");
+    create_blink_project(&tmp, &BoardKind::ArduinoUno).expect("create_blink_project が失敗");
 
-    assert!(tmp.join("src/main.rs").exists(),          "src/main.rs が存在しない");
-    assert!(tmp.join("Cargo.toml").exists(),           "Cargo.toml が存在しない");
-    assert!(tmp.join(".cargo/config.toml").exists(),   ".cargo/config.toml が存在しない");
-    assert!(tmp.join("rust-toolchain.toml").exists(),  "rust-toolchain.toml が存在しない");
+    assert!(tmp.join("src/main.rs").exists(), "src/main.rs が存在しない");
+    assert!(tmp.join("Cargo.toml").exists(), "Cargo.toml が存在しない");
+    assert!(
+        tmp.join(".cargo/config.toml").exists(),
+        ".cargo/config.toml が存在しない"
+    );
+    assert!(
+        tmp.join("rust-toolchain.toml").exists(),
+        "rust-toolchain.toml が存在しない"
+    );
 
     std::fs::remove_dir_all(&tmp).ok();
 }
@@ -126,18 +147,26 @@ fn create_blink_project_writes_cargo_config() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).unwrap();
 
-    let result = oxide::templates::create_blink_project(
-        &tmp,
-        &oxide::core::board::BoardKind::Stm32F4,
+    let result =
+        oxide::templates::create_blink_project(&tmp, &oxide::core::board::BoardKind::Stm32F4);
+    assert!(
+        result.is_ok(),
+        "create_blink_project failed: {:?}",
+        result.err()
     );
-    assert!(result.is_ok(), "create_blink_project failed: {:?}", result.err());
 
     // .cargo/config.toml が書き出されていること
-    assert!(tmp.join(".cargo").join("config.toml").exists(), ".cargo/config.toml not written");
+    assert!(
+        tmp.join(".cargo").join("config.toml").exists(),
+        ".cargo/config.toml not written"
+    );
 
     // cargo build 時に使われる target が config.toml に含まれていること
     let config_content = std::fs::read_to_string(tmp.join(".cargo").join("config.toml")).unwrap();
-    assert!(config_content.contains("thumbv7em-none-eabihf"), "target not in config.toml");
+    assert!(
+        config_content.contains("thumbv7em-none-eabihf"),
+        "target not in config.toml"
+    );
 
     let _ = std::fs::remove_dir_all(&tmp);
 }
@@ -148,14 +177,15 @@ fn create_blink_project_avr_has_no_memory_x() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).unwrap();
 
-    let result = oxide::templates::create_blink_project(
-        &tmp,
-        &oxide::core::board::BoardKind::ArduinoUno,
-    );
+    let result =
+        oxide::templates::create_blink_project(&tmp, &oxide::core::board::BoardKind::ArduinoUno);
     assert!(result.is_ok());
 
     // AVR は memory.x なし
-    assert!(!tmp.join("memory.x").exists(), "AVR should not have memory.x");
+    assert!(
+        !tmp.join("memory.x").exists(),
+        "AVR should not have memory.x"
+    );
 
     let _ = std::fs::remove_dir_all(&tmp);
 }
@@ -166,10 +196,8 @@ fn create_blink_project_stm32_has_memory_x() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).unwrap();
 
-    let result = oxide::templates::create_blink_project(
-        &tmp,
-        &oxide::core::board::BoardKind::Stm32F4,
-    );
+    let result =
+        oxide::templates::create_blink_project(&tmp, &oxide::core::board::BoardKind::Stm32F4);
     assert!(result.is_ok());
 
     // STM32 は memory.x あり

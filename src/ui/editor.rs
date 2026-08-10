@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
-pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbeam_channel::Sender<crate::app::AppMessage>) {
+pub fn ui_editor(
+    app: &mut crate::app::IdeApp,
+    ui: &mut egui::Ui,
+    _tx: &crossbeam_channel::Sender<crate::app::AppMessage>,
+) {
     // ─ タブバー ─
     if !app.open_tabs.is_empty() {
         let mut switch_to: Option<usize> = None;
@@ -12,7 +16,9 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     for (i, tab) in app.open_tabs.iter().enumerate() {
-                        let name = tab.path.file_name()
+                        let name = tab
+                            .path
+                            .file_name()
                             .and_then(|n| n.to_str())
                             .unwrap_or("untitled");
                         let dirty = tab.is_dirty || (i == app.active_tab && app.is_dirty);
@@ -22,14 +28,13 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                             name.to_string()
                         };
                         let is_active = i == app.active_tab;
-                        let resp = ui.selectable_label(
-                            is_active,
-                            egui::RichText::new(&label).small(),
-                        );
+                        let resp =
+                            ui.selectable_label(is_active, egui::RichText::new(&label).small());
                         if resp.clicked() && !is_active {
                             switch_to = Some(i);
                         }
-                        if ui.small_button("×")
+                        if ui
+                            .small_button("×")
                             .on_hover_text("タブを閉じる（自動保存）")
                             .clicked()
                         {
@@ -60,7 +65,7 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
     ui.horizontal(|ui| {
         if ui.button("📂 Open").clicked() {
             if let Some(path) = rfd::FileDialog::new()
-                .add_filter("Rust", &["rs"]) 
+                .add_filter("Rust", &["rs"])
                 .add_filter("All", &["*"])
                 .pick_file()
             {
@@ -90,9 +95,7 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
         }
         ui.separator();
         if let Some(ref p) = app.file_path {
-            let name = p.file_name()
-                .and_then(|n| n.to_str())
-                .unwrap_or("untitled");
+            let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("untitled");
             let label = if app.is_dirty {
                 format!("● {}", name)
             } else {
@@ -100,7 +103,11 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
             };
             ui.label(egui::RichText::new(label).small());
         } else {
-            ui.label(egui::RichText::new("untitled.rs").small().color(egui::Color32::GRAY));
+            ui.label(
+                egui::RichText::new("untitled.rs")
+                    .small()
+                    .color(egui::Color32::GRAY),
+            );
         }
     });
     ui.separator();
@@ -176,15 +183,25 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                     false // consume
                 }
                 // Intercept text events to detect opening brackets, but let TextEdit insert the character
-                egui::Event::Text(s) => {
-                    match s.as_str() {
-                        "{" => { close_bracket = Some('}'); true }
-                        "(" => { close_bracket = Some(')'); true }
-                        "[" => { close_bracket = Some(']'); true }
-                        "\"" => { close_bracket = Some('\"'); true }
-                        _ => true
+                egui::Event::Text(s) => match s.as_str() {
+                    "{" => {
+                        close_bracket = Some('}');
+                        true
                     }
-                }
+                    "(" => {
+                        close_bracket = Some(')');
+                        true
+                    }
+                    "[" => {
+                        close_bracket = Some(']');
+                        true
+                    }
+                    "\"" => {
+                        close_bracket = Some('\"');
+                        true
+                    }
+                    _ => true,
+                },
                 _ => true,
             }
         });
@@ -206,7 +223,9 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
         // Update TextEdit cursor state so the cursor appears in the right place
         let mut state = egui::TextEdit::load_state(ui.ctx(), te_id).unwrap_or_default();
         let cursor = egui::text::CCursor::new(app.cursor_char_idx);
-        state.cursor.set_char_range(Some(egui::text::CCursorRange::one(cursor)));
+        state
+            .cursor
+            .set_char_range(Some(egui::text::CCursorRange::one(cursor)));
         egui::TextEdit::store_state(ui.ctx(), te_id, state);
     }
 
@@ -217,21 +236,24 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
             let resp = ui.horizontal_top(|ui| {
                 // ── 行番号ガター ──
                 let total_h = (row_height * line_count as f32 + 6.0).max(ui.available_height());
-                let (gutter_rect, _) = ui.allocate_exact_size(
-                    egui::vec2(gutter_width, total_h),
-                    egui::Sense::hover(),
-                );
-                ui.painter().rect_filled(gutter_rect, 0.0, egui::Color32::from_gray(28));
+                let (gutter_rect, _) =
+                    ui.allocate_exact_size(egui::vec2(gutter_width, total_h), egui::Sense::hover());
+                ui.painter()
+                    .rect_filled(gutter_rect, 0.0, egui::Color32::from_gray(28));
                 for i in 0..line_count {
                     let y = gutter_rect.min.y + 2.0 + i as f32 * row_height;
                     let line_num = i + 1;
 
                     // Clickable area for this line in gutter
                     let line_rect = egui::Rect::from_min_size(
-                        egui::pos2(gutter_rect.min.x, gutter_rect.min.y + 2.0 + i as f32 * row_height),
+                        egui::pos2(
+                            gutter_rect.min.x,
+                            gutter_rect.min.y + 2.0 + i as f32 * row_height,
+                        ),
                         egui::vec2(gutter_width, row_height),
                     );
-                    let line_resp = ui.interact(line_rect, egui::Id::new(("bp", i)), egui::Sense::click());
+                    let line_resp =
+                        ui.interact(line_rect, egui::Id::new(("bp", i)), egui::Sense::click());
                     if line_resp.clicked() {
                         if app.breakpoints.contains(&line_num) {
                             app.breakpoints.remove(&line_num);
@@ -256,7 +278,7 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                         format!("{:>w$}", line_num, w = num_digits),
                         egui::FontId::monospace(font_size),
                         if app.breakpoints.contains(&line_num) {
-                            egui::Color32::from_rgb(255, 150, 150)  // highlight line number in red too
+                            egui::Color32::from_rgb(255, 150, 150) // highlight line number in red too
                         } else {
                             egui::Color32::from_gray(110)
                         },
@@ -278,7 +300,8 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                     let char_idx = cr.primary.ccursor.index;
                     let before: String = app.editor_text.chars().take(char_idx).collect();
                     app.cursor_line = before.chars().filter(|&c| c == '\n').count() + 1;
-                    app.cursor_col = before.rfind('\n')
+                    app.cursor_col = before
+                        .rfind('\n')
                         .map(|p| before[p + 1..].chars().count() + 1)
                         .unwrap_or_else(|| before.chars().count() + 1);
                     app.cursor_char_idx = char_idx;
@@ -293,9 +316,12 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                         // If next char is already the closer, just move cursor over it
                         if chars.get(idx) == Some(&closer) {
                             app.cursor_char_idx = idx + 1;
-                            let mut state = egui::TextEdit::load_state(ui.ctx(), te_id).unwrap_or_default();
+                            let mut state =
+                                egui::TextEdit::load_state(ui.ctx(), te_id).unwrap_or_default();
                             let cursor = egui::text::CCursor::new(app.cursor_char_idx);
-                            state.cursor.set_char_range(Some(egui::text::CCursorRange::one(cursor)));
+                            state
+                                .cursor
+                                .set_char_range(Some(egui::text::CCursorRange::one(cursor)));
                             egui::TextEdit::store_state(ui.ctx(), te_id, state);
                         } else {
                             // Insert the closer after the cursor, leaving cursor between pair
@@ -312,7 +338,9 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                 }
 
                 // ── ブラケットペアハイライト ──
-                if let Some((open_idx, close_idx)) = bracket_pair_at_cursor(&app.editor_text, app.cursor_char_idx) {
+                if let Some((open_idx, close_idx)) =
+                    bracket_pair_at_cursor(&app.editor_text, app.cursor_char_idx)
+                {
                     let highlight_color = egui::Color32::from_rgb(0, 212, 212);
                     let painter = ui.painter();
                     for &idx in &[open_idx, close_idx] {
@@ -322,21 +350,36 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                         let screen_min = te_output.galley_pos + rel_rect.min.to_vec2();
                         // Width of one char ≈ font_size * 0.62 (monospace approximation)
                         let char_w = font_size * 0.62;
-                        let char_rect = egui::Rect::from_min_size(screen_min, egui::vec2(char_w, rel_rect.height()));
-                        painter.rect_stroke(char_rect, 0.0, egui::Stroke::new(1.0, highlight_color), egui::StrokeKind::Inside);
+                        let char_rect = egui::Rect::from_min_size(
+                            screen_min,
+                            egui::vec2(char_w, rel_rect.height()),
+                        );
+                        painter.rect_stroke(
+                            char_rect,
+                            0.0,
+                            egui::Stroke::new(1.0, highlight_color),
+                            egui::StrokeKind::Inside,
+                        );
                     }
                 }
 
                 // 選択テキスト取得（右クリックメニュー用）
-                let copy_text = cursor_range.as_ref().and_then(|cr| {
-                    let a = cr.primary.ccursor.index.min(cr.secondary.ccursor.index);
-                    let b = cr.primary.ccursor.index.max(cr.secondary.ccursor.index);
-                    if a == b { return None; }
-                    let chars: Vec<char> = app.editor_text.chars().collect();
-                    let end = b.min(chars.len());
-                    if a > end { return None; }
-                    Some(chars[a..end].iter().collect::<String>())
-                }).unwrap_or_else(|| app.editor_text.clone());
+                let copy_text = cursor_range
+                    .as_ref()
+                    .and_then(|cr| {
+                        let a = cr.primary.ccursor.index.min(cr.secondary.ccursor.index);
+                        let b = cr.primary.ccursor.index.max(cr.secondary.ccursor.index);
+                        if a == b {
+                            return None;
+                        }
+                        let chars: Vec<char> = app.editor_text.chars().collect();
+                        let end = b.min(chars.len());
+                        if a > end {
+                            return None;
+                        }
+                        Some(chars[a..end].iter().collect::<String>())
+                    })
+                    .unwrap_or_else(|| app.editor_text.clone());
 
                 // 右クリックコンテキストメニュー
                 te_output.response.context_menu(|ui| {
@@ -345,10 +388,26 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                         ui.close_menu();
                     }
                     ui.separator();
-                    ui.label(egui::RichText::new("Cut:       Ctrl+X").small().color(egui::Color32::GRAY));
-                    ui.label(egui::RichText::new("Paste:     Ctrl+V").small().color(egui::Color32::GRAY));
-                    ui.label(egui::RichText::new("Select All: Ctrl+A").small().color(egui::Color32::GRAY));
-                    ui.label(egui::RichText::new("Undo:      Ctrl+Z").small().color(egui::Color32::GRAY));
+                    ui.label(
+                        egui::RichText::new("Cut:       Ctrl+X")
+                            .small()
+                            .color(egui::Color32::GRAY),
+                    );
+                    ui.label(
+                        egui::RichText::new("Paste:     Ctrl+V")
+                            .small()
+                            .color(egui::Color32::GRAY),
+                    );
+                    ui.label(
+                        egui::RichText::new("Select All: Ctrl+A")
+                            .small()
+                            .color(egui::Color32::GRAY),
+                    );
+                    ui.label(
+                        egui::RichText::new("Undo:      Ctrl+Z")
+                            .small()
+                            .color(egui::Color32::GRAY),
+                    );
                 });
 
                 te_output.response.changed()
@@ -366,17 +425,23 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
         }
         app.doc_version += 1;
         if let Some(ref lsp) = app.lsp_client {
-            let uri = app.file_path.as_ref()
+            let uri = app
+                .file_path
+                .as_ref()
                 .map(|p| format!("file:///{}", p.to_string_lossy().replace('\\', "/")))
                 .unwrap_or_else(|| "file:///untitled.rs".to_string());
             lsp.did_change(&uri, app.doc_version, &app.editor_text);
             let line = app.cursor_line.saturating_sub(1) as u32;
-            let col  = app.cursor_col.saturating_sub(1) as u32;
+            let col = app.cursor_col.saturating_sub(1) as u32;
 
             // Only request completion on word characters, '_' or '.' or ':'
             let _word = word_before_cursor(&app.editor_text, app.cursor_char_idx);
-            let last_char = app.editor_text.chars().nth(app.cursor_char_idx.saturating_sub(1));
-            let should_complete = last_char.is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '.' || c == ':');
+            let last_char = app
+                .editor_text
+                .chars()
+                .nth(app.cursor_char_idx.saturating_sub(1));
+            let should_complete =
+                last_char.is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '.' || c == ':');
 
             if should_complete {
                 lsp.request_completion(&uri, line, col);
@@ -388,15 +453,17 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
     }
 
     // Ctrl+Space / Tab(単語途中) で補完強制表示
-    let want_completion = ui.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Space))
-        || tab_trigger_completion;
+    let want_completion =
+        ui.input(|i| i.modifiers.ctrl && i.key_pressed(egui::Key::Space)) || tab_trigger_completion;
     if want_completion {
         if let Some(ref lsp) = app.lsp_client {
-            let uri = app.file_path.as_ref()
+            let uri = app
+                .file_path
+                .as_ref()
                 .map(|p| format!("file:///{}", p.to_string_lossy().replace('\\', "/")))
                 .unwrap_or_else(|| "file:///untitled.rs".to_string());
             let line = app.cursor_line.saturating_sub(1) as u32;
-            let col  = app.cursor_col.saturating_sub(1) as u32;
+            let col = app.cursor_col.saturating_sub(1) as u32;
             lsp.request_completion(&uri, line, col);
         }
         app.show_completion = true;
@@ -430,90 +497,116 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                         .shadow(egui::epaint::Shadow::NONE)
                         .show(ui, |ui| {
                             ui.set_max_width(320.0);
-                            egui::ScrollArea::vertical().max_height(200.0).show(ui, |ui| {
-                                // Clone current completion items for local filtering
-                                let items = app.lsp_completions.clone();
+                            egui::ScrollArea::vertical()
+                                .max_height(200.0)
+                                .show(ui, |ui| {
+                                    // Clone current completion items for local filtering
+                                    let items = app.lsp_completions.clone();
 
-                                // Get current word prefix for filtering
-                                let word_prefix: String = {
-                                    let chars: Vec<char> = app.editor_text.chars().collect();
-                                    let end = app.cursor_char_idx.min(chars.len());
-                                    let start = chars[..end].iter()
-                                        .rposition(|c| !c.is_alphanumeric() && *c != '_')
-                                        .map(|i| i + 1)
-                                        .unwrap_or(0);
-                                    chars[start..end].iter().collect()
-                                };
-
-                                // Filter completions by prefix (case-insensitive)
-                                let filtered_items: Vec<(usize, crate::core::lsp::CompletionItem)> = items.into_iter().enumerate()
-                                    .filter(|(_, item)| {
-                                        if word_prefix.is_empty() {
-                                            true
-                                        } else {
-                                            item.label.to_lowercase().starts_with(&word_prefix.to_lowercase())
-                                        }
-                                    })
-                                    .collect();
-
-                                // Hide popup if no matches
-                                if filtered_items.is_empty() {
-                                    app.show_completion = false;
-                                    return;
-                                }
-
-                                // Clamp selection
-                                if app.completion_selected >= filtered_items.len() {
-                                    app.completion_selected = 0;
-                                }
-
-                                let max_show = 12usize;
-                                let show_len = filtered_items.len().min(max_show);
-
-                                for (i, (_orig_idx, item)) in filtered_items.iter().enumerate().take(show_len) {
-                                    let icon = match item.kind {
-                                        crate::core::lsp::CompletionKind::Function |
-                                        crate::core::lsp::CompletionKind::Method   => "fn ",
-                                        crate::core::lsp::CompletionKind::Struct   => "st ",
-                                        crate::core::lsp::CompletionKind::Enum     => "en ",
-                                        crate::core::lsp::CompletionKind::Module   => "mo ",
-                                        crate::core::lsp::CompletionKind::Snippet  => "✂ ",
-                                        _                                           => "   ",
-                                    };
-                                    let label = format!("{}{}", icon, item.label);
-                                    let selected = i == app.completion_selected;
-                                    let resp = ui.selectable_label(selected, &label);
-                                    if selected {
-                                        if let Some(ref detail) = item.detail {
-                                            ui.label(egui::RichText::new(detail).small().color(egui::Color32::GRAY));
-                                        }
-                                    }
-                                    if resp.clicked() {
-                                        let insert = item.insert_text.as_ref().unwrap_or(&item.label).clone();
-                                        // カーソル位置の手前の単語を補完テキストで置き換える
-                                        let char_idx = app.cursor_char_idx;
+                                    // Get current word prefix for filtering
+                                    let word_prefix: String = {
                                         let chars: Vec<char> = app.editor_text.chars().collect();
-                                        let end = char_idx.min(chars.len());
-                                        // 単語の開始位置を探す（英数字とアンダースコア以外で区切る）
-                                        let word_start = chars[..end].iter()
+                                        let end = app.cursor_char_idx.min(chars.len());
+                                        let start = chars[..end]
+                                            .iter()
                                             .rposition(|c| !c.is_alphanumeric() && *c != '_')
                                             .map(|i| i + 1)
                                             .unwrap_or(0);
-                                        let before: String = chars[..word_start].iter().collect();
-                                        let after: String = chars[end..].iter().collect();
-                                        let new_cursor_idx = word_start + insert.chars().count();
-                                        app.editor_text = format!("{}{}{}", before, insert, after);
-                                        app.cursor_char_idx = new_cursor_idx;
+                                        chars[start..end].iter().collect()
+                                    };
+
+                                    // Filter completions by prefix (case-insensitive)
+                                    let filtered_items: Vec<(
+                                        usize,
+                                        crate::core::lsp::CompletionItem,
+                                    )> = items
+                                        .into_iter()
+                                        .enumerate()
+                                        .filter(|(_, item)| {
+                                            if word_prefix.is_empty() {
+                                                true
+                                            } else {
+                                                item.label
+                                                    .to_lowercase()
+                                                    .starts_with(&word_prefix.to_lowercase())
+                                            }
+                                        })
+                                        .collect();
+
+                                    // Hide popup if no matches
+                                    if filtered_items.is_empty() {
                                         app.show_completion = false;
-                                        // タブの内容を同期
-                                        if let Some(tab) = app.open_tabs.get_mut(app.active_tab) {
-                                            tab.content = app.editor_text.clone();
-                                            tab.is_dirty = true;
-                                        }
-                                        app.is_dirty = true;
+                                        return;
                                     }
-                                }
-                            });
+
+                                    // Clamp selection
+                                    if app.completion_selected >= filtered_items.len() {
+                                        app.completion_selected = 0;
+                                    }
+
+                                    let max_show = 12usize;
+                                    let show_len = filtered_items.len().min(max_show);
+
+                                    for (i, (_orig_idx, item)) in
+                                        filtered_items.iter().enumerate().take(show_len)
+                                    {
+                                        let icon = match item.kind {
+                                            crate::core::lsp::CompletionKind::Function
+                                            | crate::core::lsp::CompletionKind::Method => "fn ",
+                                            crate::core::lsp::CompletionKind::Struct => "st ",
+                                            crate::core::lsp::CompletionKind::Enum => "en ",
+                                            crate::core::lsp::CompletionKind::Module => "mo ",
+                                            crate::core::lsp::CompletionKind::Snippet => "✂ ",
+                                            _ => "   ",
+                                        };
+                                        let label = format!("{}{}", icon, item.label);
+                                        let selected = i == app.completion_selected;
+                                        let resp = ui.selectable_label(selected, &label);
+                                        if selected {
+                                            if let Some(ref detail) = item.detail {
+                                                ui.label(
+                                                    egui::RichText::new(detail)
+                                                        .small()
+                                                        .color(egui::Color32::GRAY),
+                                                );
+                                            }
+                                        }
+                                        if resp.clicked() {
+                                            let insert = item
+                                                .insert_text
+                                                .as_ref()
+                                                .unwrap_or(&item.label)
+                                                .clone();
+                                            // カーソル位置の手前の単語を補完テキストで置き換える
+                                            let char_idx = app.cursor_char_idx;
+                                            let chars: Vec<char> =
+                                                app.editor_text.chars().collect();
+                                            let end = char_idx.min(chars.len());
+                                            // 単語の開始位置を探す（英数字とアンダースコア以外で区切る）
+                                            let word_start = chars[..end]
+                                                .iter()
+                                                .rposition(|c| !c.is_alphanumeric() && *c != '_')
+                                                .map(|i| i + 1)
+                                                .unwrap_or(0);
+                                            let before: String =
+                                                chars[..word_start].iter().collect();
+                                            let after: String = chars[end..].iter().collect();
+                                            let new_cursor_idx =
+                                                word_start + insert.chars().count();
+                                            app.editor_text =
+                                                format!("{}{}{}", before, insert, after);
+                                            app.cursor_char_idx = new_cursor_idx;
+                                            app.show_completion = false;
+                                            // タブの内容を同期
+                                            if let Some(tab) = app.open_tabs.get_mut(app.active_tab)
+                                            {
+                                                tab.content = app.editor_text.clone();
+                                                tab.is_dirty = true;
+                                            }
+                                            app.is_dirty = true;
+                                        }
+                                    }
+                                });
 
                             // Key handling inside popup: Escape to hide
                             if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
@@ -527,29 +620,35 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
                                 let word_prefix: String = {
                                     let chars: Vec<char> = app.editor_text.chars().collect();
                                     let end = app.cursor_char_idx.min(chars.len());
-                                    let start = chars[..end].iter()
+                                    let start = chars[..end]
+                                        .iter()
                                         .rposition(|c| !c.is_alphanumeric() && *c != '_')
                                         .map(|i| i + 1)
                                         .unwrap_or(0);
                                     chars[start..end].iter().collect()
                                 };
-                                let filtered_items: Vec<crate::core::lsp::CompletionItem> = items.into_iter()
+                                let filtered_items: Vec<crate::core::lsp::CompletionItem> = items
+                                    .into_iter()
                                     .filter(|item| {
                                         if word_prefix.is_empty() {
                                             true
                                         } else {
-                                            item.label.to_lowercase().starts_with(&word_prefix.to_lowercase())
+                                            item.label
+                                                .to_lowercase()
+                                                .starts_with(&word_prefix.to_lowercase())
                                         }
                                     })
                                     .collect();
                                 if !filtered_items.is_empty() {
                                     let idx = app.completion_selected.min(filtered_items.len() - 1);
                                     let item = &filtered_items[idx];
-                                    let insert = item.insert_text.as_ref().unwrap_or(&item.label).clone();
+                                    let insert =
+                                        item.insert_text.as_ref().unwrap_or(&item.label).clone();
                                     let char_idx = app.cursor_char_idx;
                                     let chars: Vec<char> = app.editor_text.chars().collect();
                                     let end = char_idx.min(chars.len());
-                                    let word_start = chars[..end].iter()
+                                    let word_start = chars[..end]
+                                        .iter()
                                         .rposition(|c| !c.is_alphanumeric() && *c != '_')
                                         .map(|i| i + 1)
                                         .unwrap_or(0);
@@ -576,16 +675,23 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
         let word_prefix: String = {
             let chars: Vec<char> = app.editor_text.chars().collect();
             let end = app.cursor_char_idx.min(chars.len());
-            let start = chars[..end].iter()
+            let start = chars[..end]
+                .iter()
                 .rposition(|c| !c.is_alphanumeric() && *c != '_')
                 .map(|i| i + 1)
                 .unwrap_or(0);
             chars[start..end].iter().collect()
         };
-        let filtered: Vec<crate::core::lsp::CompletionItem> = app.lsp_completions.clone().into_iter()
+        let filtered: Vec<crate::core::lsp::CompletionItem> = app
+            .lsp_completions
+            .clone()
+            .into_iter()
             .filter(|item| {
-                word_prefix.is_empty() ||
-                item.label.to_lowercase().starts_with(&word_prefix.to_lowercase())
+                word_prefix.is_empty()
+                    || item
+                        .label
+                        .to_lowercase()
+                        .starts_with(&word_prefix.to_lowercase())
             })
             .collect();
         if !filtered.is_empty() {
@@ -595,7 +701,8 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
             let char_idx = app.cursor_char_idx;
             let chars: Vec<char> = app.editor_text.chars().collect();
             let end = char_idx.min(chars.len());
-            let word_start = chars[..end].iter()
+            let word_start = chars[..end]
+                .iter()
                 .rposition(|c| !c.is_alphanumeric() && *c != '_')
                 .map(|i| i + 1)
                 .unwrap_or(0);
@@ -613,7 +720,9 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
             // カーソル位置をTextEditに反映
             let mut state = egui::TextEdit::load_state(ui.ctx(), te_id).unwrap_or_default();
             let cursor = egui::text::CCursor::new(new_cursor_idx);
-            state.cursor.set_char_range(Some(egui::text::CCursorRange::one(cursor)));
+            state
+                .cursor
+                .set_char_range(Some(egui::text::CCursorRange::one(cursor)));
             egui::TextEdit::store_state(ui.ctx(), te_id, state);
         }
     }
@@ -631,26 +740,34 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
 
     let matched = crate::core::snippets::filter_snippets(board, &app.snippet_query);
     if !matched.is_empty() {
-        egui::ScrollArea::vertical().max_height(150.0).show(ui, |ui| {
-            for snippet in matched.iter().take(10) {
-                ui.horizontal(|ui| {
-                    let cat_color = match snippet.category {
-                        crate::core::snippets::SnippetCategory::Gpio => egui::Color32::GREEN,
-                        crate::core::snippets::SnippetCategory::Uart => egui::Color32::YELLOW,
-                        crate::core::snippets::SnippetCategory::Spi |
-                        crate::core::snippets::SnippetCategory::I2c => egui::Color32::LIGHT_BLUE,
-                        crate::core::snippets::SnippetCategory::Timer => egui::Color32::GOLD,
-                        _ => egui::Color32::GRAY,
-                    };
-                    ui.colored_label(cat_color, format!("[{}]", snippet.trigger));
-                    if ui.button(snippet.label).on_hover_text(snippet.description).clicked() {
-                        app.editor_text.push_str("\n\n");
-                        app.editor_text.push_str(snippet.code);
-                        app.is_dirty = true;
-                    }
-                });
-            }
-        });
+        egui::ScrollArea::vertical()
+            .max_height(150.0)
+            .show(ui, |ui| {
+                for snippet in matched.iter().take(10) {
+                    ui.horizontal(|ui| {
+                        let cat_color = match snippet.category {
+                            crate::core::snippets::SnippetCategory::Gpio => egui::Color32::GREEN,
+                            crate::core::snippets::SnippetCategory::Uart => egui::Color32::YELLOW,
+                            crate::core::snippets::SnippetCategory::Spi
+                            | crate::core::snippets::SnippetCategory::I2c => {
+                                egui::Color32::LIGHT_BLUE
+                            }
+                            crate::core::snippets::SnippetCategory::Timer => egui::Color32::GOLD,
+                            _ => egui::Color32::GRAY,
+                        };
+                        ui.colored_label(cat_color, format!("[{}]", snippet.trigger));
+                        if ui
+                            .button(snippet.label)
+                            .on_hover_text(snippet.description)
+                            .clicked()
+                        {
+                            app.editor_text.push_str("\n\n");
+                            app.editor_text.push_str(snippet.code);
+                            app.is_dirty = true;
+                        }
+                    });
+                }
+            });
     }
 
     // ─ Diagnostics ─
@@ -659,13 +776,20 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
         ui.label(egui::RichText::new("⚠ Diagnostics").small());
         for diag in app.lsp_diagnostics.iter().take(5) {
             let color = match diag.severity {
-                crate::core::lsp::DiagSeverity::Error   => egui::Color32::RED,
+                crate::core::lsp::DiagSeverity::Error => egui::Color32::RED,
                 crate::core::lsp::DiagSeverity::Warning => egui::Color32::YELLOW,
-                _                                        => egui::Color32::GRAY,
+                _ => egui::Color32::GRAY,
             };
-            ui.label(egui::RichText::new(
-                format!("  L{}:{} {}", diag.line + 1, diag.col + 1, diag.message)
-            ).small().color(color));
+            ui.label(
+                egui::RichText::new(format!(
+                    "  L{}:{} {}",
+                    diag.line + 1,
+                    diag.col + 1,
+                    diag.message
+                ))
+                .small()
+                .color(color),
+            );
         }
     }
 }
@@ -673,30 +797,49 @@ pub fn ui_editor(app: &mut crate::app::IdeApp, ui: &mut egui::Ui, _tx: &crossbea
 fn word_before_cursor(text: &str, char_idx: usize) -> &str {
     let chars: Vec<char> = text.chars().collect();
     let end = char_idx.min(chars.len());
-    let start = chars[..end].iter()
+    let start = chars[..end]
+        .iter()
         .rposition(|c| !c.is_alphanumeric() && *c != '_')
         .map(|i| i + 1)
         .unwrap_or(0);
     // return as str slice
     let byte_start: usize = text.chars().take(start).map(|c| c.len_utf8()).sum();
-    let byte_end:   usize = text.chars().take(end).map(|c| c.len_utf8()).sum();
+    let byte_end: usize = text.chars().take(end).map(|c| c.len_utf8()).sum();
     &text[byte_start..byte_end]
 }
 
 // ── Bracket matching helpers for bracket pair highlighting ──
-fn find_matching_bracket(text: &[char], pos: usize, open: char, close: char, forward: bool) -> Option<usize> {
+fn find_matching_bracket(
+    text: &[char],
+    pos: usize,
+    open: char,
+    close: char,
+    forward: bool,
+) -> Option<usize> {
     let mut depth = 1i32;
     if forward {
         for (i, ch) in text.iter().enumerate().skip(pos + 1) {
-            if *ch == open  { depth += 1; }
-            if *ch == close { depth -= 1; }
-            if depth == 0 { return Some(i); }
+            if *ch == open {
+                depth += 1;
+            }
+            if *ch == close {
+                depth -= 1;
+            }
+            if depth == 0 {
+                return Some(i);
+            }
         }
     } else {
         for (i, ch) in text[..pos].iter().enumerate().rev() {
-            if *ch == close { depth += 1; }
-            if *ch == open  { depth -= 1; }
-            if depth == 0 { return Some(i); }
+            if *ch == close {
+                depth += 1;
+            }
+            if *ch == open {
+                depth -= 1;
+            }
+            if depth == 0 {
+                return Some(i);
+            }
         }
     }
     None
@@ -707,7 +850,9 @@ fn bracket_pair_at_cursor(text: &str, cursor_idx: usize) -> Option<(usize, usize
     let len = chars.len();
     // Check cursor pos and one before
     for &pos in &[cursor_idx, cursor_idx.saturating_sub(1)] {
-        if pos >= len { continue; }
+        if pos >= len {
+            continue;
+        }
         match chars[pos] {
             '{' => {
                 if let Some(m) = find_matching_bracket(&chars, pos, '{', '}', true) {

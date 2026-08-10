@@ -4,7 +4,11 @@
 pub fn ui_serial_plotter(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
     // Controls
     ui.horizontal(|ui| {
-        let pause_label = if app.plot_paused { "▶ Resume" } else { "⏸ Pause" };
+        let pause_label = if app.plot_paused {
+            "▶ Resume"
+        } else {
+            "⏸ Pause"
+        };
         if ui.button(pause_label).clicked() {
             app.plot_paused = !app.plot_paused;
         }
@@ -13,7 +17,10 @@ pub fn ui_serial_plotter(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
         }
         ui.label("Max points:");
         let mut max_pts = app.plot_max_points as f32;
-        if ui.add(egui::Slider::new(&mut max_pts, 50.0..=1000.0).integer()).changed() {
+        if ui
+            .add(egui::Slider::new(&mut max_pts, 50.0..=1000.0).integer())
+            .changed()
+        {
             app.plot_max_points = max_pts as usize;
         }
     });
@@ -26,20 +33,20 @@ pub fn ui_serial_plotter(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
     }
 
     // Plot
-    use egui_plot::{Plot, Line, PlotPoints};
-    
+    use egui_plot::{Line, Plot, PlotPoints};
+
     Plot::new("serial_plot")
         .height(ui.available_height() - 10.0)
         .legend(egui_plot::Legend::default())
         .show(ui, |plot_ui| {
             for (name, channel) in &app.plot_channels {
-                let points: PlotPoints = channel.values.iter().enumerate()
+                let points: PlotPoints = channel
+                    .values
+                    .iter()
+                    .enumerate()
                     .map(|(i, &v)| [i as f64, v])
                     .collect();
-                let line = Line::new(points)
-                    .name(name)
-                    .color(channel.color)
-                    .width(1.5);
+                let line = Line::new(points).name(name).color(channel.color).width(1.5);
                 plot_ui.line(line);
             }
         });

@@ -2,21 +2,21 @@
 // Copyright 2026 rust-embedded-ide contributors
 
 pub mod board;
-pub mod compiler;
 pub mod build_analyzer;
-pub mod flasher;
-pub mod serial;
-pub mod detector;
+pub mod compiler;
 pub mod config;
-pub mod snippets;
-pub mod lsp;
-pub mod toolchain;
-pub mod project;
 pub mod debugger;
-pub mod svd_parser;
+pub mod detector;
 pub mod elf_analyzer;
+pub mod flasher;
+pub mod lsp;
 pub mod pinout;
+pub mod project;
+pub mod serial;
+pub mod snippets;
 pub mod stack_analyzer;
+pub mod svd_parser;
+pub mod toolchain;
 
 /// Windows でコンソールウィンドウを表示しないよう CREATE_NO_WINDOW フラグを設定する。
 /// 他OSでは何もしない。

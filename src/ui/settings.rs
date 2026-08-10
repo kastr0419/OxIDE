@@ -19,7 +19,11 @@ pub fn ui_settings(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
     ui.heading("Appearance");
     let mut dark = app.config.theme.as_deref() == Some("dark");
     if ui.checkbox(&mut dark, "Dark Theme").changed() {
-        app.config.theme = if dark { Some("dark".to_string()) } else { Some("light".to_string()) };
+        app.config.theme = if dark {
+            Some("dark".to_string())
+        } else {
+            Some("light".to_string())
+        };
     }
 
     // ─ rust-analyzer ─
@@ -28,23 +32,29 @@ pub fn ui_settings(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
 
     // インストール状態の表示
     if app.ra_status.is_installed {
-        let path_str = app.ra_status.path.as_ref()
+        let path_str = app
+            .ra_status
+            .path
+            .as_ref()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_default();
-        ui.label(egui::RichText::new(format!("✅ Installed: {}", path_str))
-            .color(egui::Color32::GREEN));
+        ui.label(
+            egui::RichText::new(format!("✅ Installed: {}", path_str)).color(egui::Color32::GREEN),
+        );
         if let Some(ref ver) = app.ra_status.version {
             ui.label(egui::RichText::new(ver).small().color(egui::Color32::GRAY));
         }
     } else {
-        ui.label(egui::RichText::new("❌ Not installed / not found in PATH")
-            .color(egui::Color32::RED));
+        ui.label(
+            egui::RichText::new("❌ Not installed / not found in PATH").color(egui::Color32::RED),
+        );
     }
 
     ui.horizontal(|ui| {
         // rustup でインストール
         ui.add_enabled_ui(!app.ra_installing, |ui| {
-            if ui.button("⬇ Install via rustup")
+            if ui
+                .button("⬇ Install via rustup")
                 .on_hover_text("rustup component add rust-analyzer を実行してインストール")
                 .clicked()
             {
@@ -59,7 +69,8 @@ pub fn ui_settings(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
         }
 
         // 手動でパスを指定
-        if ui.button("📂 Locate manually")
+        if ui
+            .button("📂 Locate manually")
             .on_hover_text("rust-analyzer の実行ファイルを手動で指定してパスを保存")
             .clicked()
         {
@@ -76,7 +87,8 @@ pub fn ui_settings(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
                     };
                     let _ = app.config.save();
                 } else {
-                    app.ra_install_log = "❌ 無効なパスです（実行可能ファイルではありません）".to_string();
+                    app.ra_install_log =
+                        "❌ 無効なパスです（実行可能ファイルではありません）".to_string();
                 }
             }
         }
@@ -100,10 +112,21 @@ pub fn ui_settings(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
         if let Some(ref p) = app.ra_status.path {
             if let Some(dir) = p.parent() {
                 let dir_str = dir.to_string_lossy();
-                if !std::env::var("PATH").unwrap_or_default().contains(dir_str.as_ref()) {
+                if !std::env::var("PATH")
+                    .unwrap_or_default()
+                    .contains(dir_str.as_ref())
+                {
                     ui.separator();
-                    ui.label(egui::RichText::new("⚠ PATHが通っていない可能性があります").color(egui::Color32::YELLOW).small());
-                    ui.label(egui::RichText::new(format!("以下をPATHに追加してください: {}", dir_str)).small().color(egui::Color32::GRAY));
+                    ui.label(
+                        egui::RichText::new("⚠ PATHが通っていない可能性があります")
+                            .color(egui::Color32::YELLOW)
+                            .small(),
+                    );
+                    ui.label(
+                        egui::RichText::new(format!("以下をPATHに追加してください: {}", dir_str))
+                            .small()
+                            .color(egui::Color32::GRAY),
+                    );
                 }
             }
         }

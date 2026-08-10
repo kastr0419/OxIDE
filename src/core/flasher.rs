@@ -15,6 +15,7 @@ use std::time::Duration;
 
 pub enum FlashMessage {
     Started,
+    Progress(String),
     Finished { ok: bool, log: String },
 }
 
@@ -24,7 +25,11 @@ fn find_cargo_tool(name: &str) -> Option<std::path::PathBuf> {
     if let Ok(path) = which::which(name) {
         return Some(path);
     }
-    let exe_name = if cfg!(windows) { format!("{}.exe", name) } else { name.to_string() };
+    let exe_name = if cfg!(windows) {
+        format!("{}.exe", name)
+    } else {
+        name.to_string()
+    };
     dirs::home_dir()
         .map(|h| h.join(".cargo").join("bin").join(&exe_name))
         .filter(|p| p.exists())
@@ -36,11 +41,17 @@ fn ensure_cargo_bin_in_path(cmd: &mut Command) {
         .map(|h| h.join(".cargo").join("bin"))
         .filter(|p| p.exists());
     if let Some(cargo_bin) = cargo_bin {
-        let cargo_bin_str = cargo_bin.to_string_lossy().to_string();
-        let current_path = std::env::var("PATH").unwrap_or_default();
-        if !current_path.contains(&cargo_bin_str) {
-            let new_path = format!("{};{}", cargo_bin_str, current_path);
-            cmd.env("PATH", new_path);
+        let mut paths: Vec<_> = std::env::var_os("PATH")
+            .as_deref()
+            .map(std::env::split_paths)
+            .into_iter()
+            .flatten()
+            .collect();
+        if !paths.contains(&cargo_bin) {
+            paths.insert(0, cargo_bin);
+            if let Ok(path) = std::env::join_paths(paths) {
+                cmd.env("PATH", path);
+            }
         }
     }
 }
@@ -58,10 +69,13 @@ fn run_objcopy(format: &str, elf: &Path, out: &Path) -> std::result::Result<(), 
         ),
     ];
     for tool in &candidates {
-        if tool.is_empty() { continue; }
+        if tool.is_empty() {
+            continue;
+        }
         let mut c = std::process::Command::new(tool);
         let result = crate::core::no_window(&mut c)
-            .arg("-O").arg(format)
+            .arg("-O")
+            .arg(format)
             .arg(elf)
             .arg(out)
             .output();
@@ -96,17 +110,15 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                 kernel_img.set_extension("img");
                 let dest = std::path::Path::new(&port).join("kernel.img");
                 match run_objcopy("binary", &elf, &kernel_img) {
-                    Ok(()) => {
-                        match std::fs::copy(&kernel_img, &dest) {
-                            Ok(_) => {
-                                log = format!("kernel.img copied to {}", dest.display());
-                                ok_flag = true;
-                            }
-                            Err(e) => {
-                                log = format!("copy failed: {}", e);
-                            }
+                    Ok(()) => match std::fs::copy(&kernel_img, &dest) {
+                        Ok(_) => {
+                            log = format!("kernel.img copied to {}", dest.display());
+                            ok_flag = true;
                         }
-                    }
+                        Err(e) => {
+                            log = format!("copy failed: {}", e);
+                        }
+                    },
                     Err(e) => {
                         log = e;
                     }
@@ -119,7 +131,18 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                 let mut cmd = Command::new("avrdude");
                 crate::core::no_window(&mut cmd);
                 let mcu = preset.avrdude_mcu.unwrap_or("m328p");
-                cmd.args(["-p", mcu, "-c", "arduino", "-P", &port, "-b", "115200", "-U", &format!("flash:w:{}:i", hex.display())]);
+                cmd.args([
+                    "-p",
+                    mcu,
+                    "-c",
+                    "arduino",
+                    "-P",
+                    &port,
+                    "-b",
+                    "115200",
+                    "-U",
+                    &format!("flash:w:{}:i", hex.display()),
+                ]);
                 cmd_opt = Some(cmd);
             }
             FlashToolKind::Esptool => {
@@ -128,7 +151,7 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                 match run_objcopy("binary", &elf, &bin) {
                     Ok(()) => {
                         let chip_str = match preset.kind {
-                            crate::core::board::BoardKind::Esp32   => "esp32",
+                            crate::core::board::BoardKind::Esp32 => "esp32",
                             crate::core::board::BoardKind::Esp32S2 => "esp32s2",
                             crate::core::board::BoardKind::Esp32S3 => "esp32s3",
                             crate::core::board::BoardKind::Esp32C3 => "esp32c3",
@@ -138,8 +161,10 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                         };
                         let mut cmd = Command::new("esptool.py");
                         crate::core::no_window(&mut cmd);
-                        cmd.arg("--chip").arg(chip_str)
-                            .arg("--port").arg(&port)
+                        cmd.arg("--chip")
+                            .arg(chip_str)
+                            .arg("--port")
+                            .arg(&port)
                             .arg("write_flash")
                             .arg(format!("0x{:x}", preset.flash_offset))
                             .arg(&bin);
@@ -195,7 +220,10 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
             FlashToolKind::ProbeRs => {
                 let mut cmd = Command::new("probe-rs");
                 crate::core::no_window(&mut cmd);
-                cmd.arg("download").arg("--chip").arg(preset.probe_rs_chip).arg(&elf);
+                cmd.arg("download")
+                    .arg("--chip")
+                    .arg(preset.probe_rs_chip)
+                    .arg(&elf);
                 cmd_opt = Some(cmd);
             }
             FlashToolKind::OpenOcd => {
@@ -276,13 +304,25 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
             }
         }
         let final_log = if let Some(cmd) = cmd_opt {
-            let (success, output) = run_with_initial_timeout(cmd);
+            let (success, output) = run_with_initial_timeout(cmd, tx.clone());
             ok_flag = success;
-            if log.is_empty() { output } else { format!("{}{}", log, output) }
+            if log.is_empty() {
+                output
+            } else {
+                format!("{}{}", log, output)
+            }
         } else {
-            if log.is_empty() { "no flashing command".to_string() } else { log }
+            if log.is_empty() {
+                "no flashing command".to_string()
+            } else {
+                log
+            }
         };
-        tx.send(FlashMessage::Finished { ok: ok_flag, log: final_log }).ok();
+        tx.send(FlashMessage::Finished {
+            ok: ok_flag,
+            log: final_log,
+        })
+        .ok();
     });
     Ok(())
 }
@@ -290,7 +330,7 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
 /// フラッシュコマンドを実行する。
 /// stdout/stderr を収集しつつ、最大60秒でプロセス終了を待つ。
 /// elf2uf2-rs のように出力なしで終了するツールにも対応。
-fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
+fn run_with_initial_timeout(mut cmd: Command, progress_tx: Sender<FlashMessage>) -> (bool, String) {
     cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
 
     let mut child = match cmd.spawn() {
@@ -303,18 +343,26 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
     let mut handles = Vec::new();
 
     for stream in [
-        child.stdout.take().map(|s| Box::new(s) as Box<dyn std::io::Read + Send>),
-        child.stderr.take().map(|s| Box::new(s) as Box<dyn std::io::Read + Send>),
+        child
+            .stdout
+            .take()
+            .map(|s| Box::new(s) as Box<dyn std::io::Read + Send>),
+        child
+            .stderr
+            .take()
+            .map(|s| Box::new(s) as Box<dyn std::io::Read + Send>),
     ]
     .into_iter()
     .flatten()
     {
         let log = log.clone();
         let tx = tx.clone();
+        let progress_tx = progress_tx.clone();
         handles.push(thread::spawn(move || {
             let reader = std::io::BufReader::new(stream);
             for line in reader.lines().map_while(Result::ok) {
                 tx.send(()).ok();
+                progress_tx.send(FlashMessage::Progress(line.clone())).ok();
                 let mut l = log.lock().unwrap_or_else(|e| e.into_inner());
                 l.push_str(&line);
                 l.push('\n');
@@ -336,7 +384,9 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
                 if std::time::Instant::now() >= deadline {
                     let _ = child.kill();
                     let _ = child.wait();
-                    for h in handles { let _ = h.join(); }
+                    for h in handles {
+                        let _ = h.join();
+                    }
                     return (
                         false,
                         "⏱ タイムアウト (60秒): デバイスが応答しませんでした。\n\
@@ -350,7 +400,9 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
         }
     }
 
-    for h in handles { let _ = h.join(); }
+    for h in handles {
+        let _ = h.join();
+    }
     let ok = child.wait().ok().map(|s| s.success()).unwrap_or(false);
     let mut result_log = log.lock().unwrap_or_else(|e| e.into_inner()).clone();
     if result_log.is_empty() {
@@ -359,7 +411,8 @@ fn run_with_initial_timeout(mut cmd: Command) -> (bool, String) {
         } else {
             "❌ フラッシュ失敗（ツールがエラーで終了しました）\n\
              Pico が BOOTSEL モードで接続されているか確認してください。\n\
-             (BOOTSELボタンを押しながらUSB接続 → RPI-RP2ドライブが現れてから Flash)".to_string()
+             (BOOTSELボタンを押しながらUSB接続 → RPI-RP2ドライブが現れてから Flash)"
+                .to_string()
         };
     }
     (ok, result_log)
@@ -388,14 +441,19 @@ pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<crate::app::
                 tx.send(AppMessage::Flash(FlashMsg::Finished(FlashResult {
                     success: false,
                     output: format!("Artifact not found: {}", req.artifact.display()),
-                }))).ok();
+                })))
+                .ok();
                 return;
             }
-            tx.send(AppMessage::Flash(FlashMsg::Progress("Flashing virtual board".into()))).ok();
+            tx.send(AppMessage::Flash(FlashMsg::Progress(
+                "Flashing virtual board".into(),
+            )))
+            .ok();
             tx.send(AppMessage::Flash(FlashMsg::Finished(FlashResult {
                 success: true,
                 output: "Virtual flash completed".into(),
-            }))).ok();
+            })))
+            .ok();
             return;
         }
         let preset_opt = BOARD_PRESETS.iter().find(|p| std::mem::discriminant(&p.kind) == std::mem::discriminant(&req.board));
@@ -403,13 +461,68 @@ pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<crate::app::
             let (ftx, frx) = crossbeam_channel::bounded(1);
             let _ = flash(preset, &req.port, &req.artifact, ftx);
             while let Ok(msg) = frx.recv() {
-                if let FlashMessage::Finished { ok, log } = msg {
-                    tx.send(crate::app::AppMessage::Flash(crate::app::FlashMsg::Finished(FlashResult { success: ok, output: log }))).ok();
-                    break;
+                match msg {
+                    FlashMessage::Progress(line) => {
+                        tx.send(crate::app::AppMessage::Flash(
+                            crate::app::FlashMsg::Progress(line),
+                        ))
+                        .ok();
+                    }
+                    FlashMessage::Finished { ok, log } => {
+                        tx.send(crate::app::AppMessage::Flash(
+                            crate::app::FlashMsg::Finished(FlashResult {
+                                success: ok,
+                                output: log,
+                            }),
+                        ))
+                        .ok();
+                        break;
+                    }
+                    FlashMessage::Started => {}
                 }
             }
         } else {
-            tx.send(crate::app::AppMessage::Flash(crate::app::FlashMsg::Finished(FlashResult { success: false, output: "Board not found".to_string() }))).ok();
+            tx.send(crate::app::AppMessage::Flash(
+                crate::app::FlashMsg::Finished(FlashResult {
+                    success: false,
+                    output: "Board not found".to_string(),
+                }),
+            ))
+            .ok();
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn streams_stdout_and_stderr() {
+        let cmd = if cfg!(windows) {
+            let mut cmd = Command::new("cmd");
+            cmd.args(["/C", "echo stdout & echo stderr 1>&2"]);
+            cmd
+        } else {
+            let mut cmd = Command::new("sh");
+            cmd.args(["-c", "echo stdout; echo stderr >&2"]);
+            cmd
+        };
+        let (tx, rx) = crossbeam_channel::unbounded();
+
+        let (ok, log) = run_with_initial_timeout(cmd, tx);
+        let progress: Vec<_> = rx
+            .try_iter()
+            .filter_map(|message| match message {
+                FlashMessage::Progress(line) => Some(line),
+                _ => None,
+            })
+            .collect();
+
+        assert!(ok);
+        assert!(log.contains("stdout") && log.contains("stderr"));
+        assert!(progress.iter().any(|line| line.trim() == "stdout"));
+        assert!(progress.iter().any(|line| line.trim() == "stderr"));
+    }
+
 }

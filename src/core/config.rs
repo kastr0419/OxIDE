@@ -37,7 +37,10 @@ impl AppConfig {
                 match toml::from_str::<AppConfig>(&s) {
                     Ok(cfg) => return Ok(cfg),
                     Err(e) => {
-                        eprintln!("Warning: config.toml parse error (falling back to default): {}", e);
+                        eprintln!(
+                            "Warning: config.toml parse error (falling back to default): {}",
+                            e
+                        );
                         return Ok(AppConfig::default());
                     }
                 }

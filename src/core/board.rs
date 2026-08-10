@@ -6,17 +6,17 @@
 /// CPUアーキテクチャファミリー（表示・フィルタ用）
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CpuArch {
-    AvrMega,       // AVR 8-bit ATmega
-    AvrTiny,       // AVR 8-bit ATtiny
-    CortexM0,      // ARM Cortex-M0 / M0+
-    CortexM3,      // ARM Cortex-M3
-    CortexM4,      // ARM Cortex-M4 / M4F
-    CortexM7,      // ARM Cortex-M7
-    CortexM33,     // ARM Cortex-M33 (v8-M)
-    XtensaLx6,     // ESP32 Xtensa LX6
-    XtensaLx7,     // ESP32-S2/S3 Xtensa LX7
-    RiscV32,       // RISC-V 32-bit
-    ArmV6Arm11,    // ARM1176JZF-S (Raspberry Pi Zero)
+    AvrMega,    // AVR 8-bit ATmega
+    AvrTiny,    // AVR 8-bit ATtiny
+    CortexM0,   // ARM Cortex-M0 / M0+
+    CortexM3,   // ARM Cortex-M3
+    CortexM4,   // ARM Cortex-M4 / M4F
+    CortexM7,   // ARM Cortex-M7
+    CortexM33,  // ARM Cortex-M33 (v8-M)
+    XtensaLx6,  // ESP32 Xtensa LX6
+    XtensaLx7,  // ESP32-S2/S3 Xtensa LX7
+    RiscV32,    // RISC-V 32-bit
+    ArmV6Arm11, // ARM1176JZF-S (Raspberry Pi Zero)
 }
 
 /// ボード識別子
@@ -110,7 +110,7 @@ pub struct BoardPreset {
     pub probe_rs_chip: &'static str,
     /// ビルド時に注入する RUSTFLAGS（.cargo/config.toml が存在しない場合）
     pub rustflags: &'static [&'static str],
-    pub flash_offset: u32,  // esptool 書き込みオフセット（非ESP系は 0）
+    pub flash_offset: u32, // esptool 書き込みオフセット（非ESP系は 0）
     /// memory.x 自動生成用メモリレイアウト（Cortex-M/RISC-V 等で必要）
     pub memory_layout: Option<MemoryLayout>,
 }
@@ -118,88 +118,226 @@ pub struct BoardPreset {
 // ─── USB ID 定数 ─────────────────────────────────────────
 
 const UNO_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x2341, pid: 0x0043, description: "Arduino Uno R3 (genuine)" },
-    UsbId { vid: 0x2341, pid: 0x0001, description: "Arduino Uno (genuine, old)" },
-    UsbId { vid: 0x1A86, pid: 0x7523, description: "Arduino Uno Clone (CH340)" },
-    UsbId { vid: 0x10C4, pid: 0xEA60, description: "Arduino Uno Clone (CP2102)" },
+    UsbId {
+        vid: 0x2341,
+        pid: 0x0043,
+        description: "Arduino Uno R3 (genuine)",
+    },
+    UsbId {
+        vid: 0x2341,
+        pid: 0x0001,
+        description: "Arduino Uno (genuine, old)",
+    },
+    UsbId {
+        vid: 0x1A86,
+        pid: 0x7523,
+        description: "Arduino Uno Clone (CH340)",
+    },
+    UsbId {
+        vid: 0x10C4,
+        pid: 0xEA60,
+        description: "Arduino Uno Clone (CP2102)",
+    },
 ];
 
 const NANO_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x2341, pid: 0x0043, description: "Arduino Nano (genuine)" },
-    UsbId { vid: 0x1A86, pid: 0x7523, description: "Arduino Nano Clone (CH340)" },
-    UsbId { vid: 0x1A86, pid: 0x55D4, description: "Arduino Nano Clone (CH9102)" },
-    UsbId { vid: 0x0403, pid: 0x6001, description: "Arduino Nano (FTDI)" },
+    UsbId {
+        vid: 0x2341,
+        pid: 0x0043,
+        description: "Arduino Nano (genuine)",
+    },
+    UsbId {
+        vid: 0x1A86,
+        pid: 0x7523,
+        description: "Arduino Nano Clone (CH340)",
+    },
+    UsbId {
+        vid: 0x1A86,
+        pid: 0x55D4,
+        description: "Arduino Nano Clone (CH9102)",
+    },
+    UsbId {
+        vid: 0x0403,
+        pid: 0x6001,
+        description: "Arduino Nano (FTDI)",
+    },
 ];
 
 const MEGA_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x2341, pid: 0x0010, description: "Arduino Mega 2560 (genuine)" },
-    UsbId { vid: 0x1A86, pid: 0x7523, description: "Arduino Mega Clone (CH340)" },
+    UsbId {
+        vid: 0x2341,
+        pid: 0x0010,
+        description: "Arduino Mega 2560 (genuine)",
+    },
+    UsbId {
+        vid: 0x1A86,
+        pid: 0x7523,
+        description: "Arduino Mega Clone (CH340)",
+    },
 ];
 
 const LEONARDO_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x2341, pid: 0x8036, description: "Arduino Leonardo" },
-    UsbId { vid: 0x2341, pid: 0x0036, description: "Arduino Leonardo (bootloader)" },
+    UsbId {
+        vid: 0x2341,
+        pid: 0x8036,
+        description: "Arduino Leonardo",
+    },
+    UsbId {
+        vid: 0x2341,
+        pid: 0x0036,
+        description: "Arduino Leonardo (bootloader)",
+    },
 ];
 
 const RPI_PICO_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x2E8A, pid: 0x000A, description: "Raspberry Pi Pico (RP2040)" },
-    UsbId { vid: 0x2E8A, pid: 0x0004, description: "Raspberry Pi Pico (UF2 bootloader)" },
+    UsbId {
+        vid: 0x2E8A,
+        pid: 0x000A,
+        description: "Raspberry Pi Pico (RP2040)",
+    },
+    UsbId {
+        vid: 0x2E8A,
+        pid: 0x0004,
+        description: "Raspberry Pi Pico (UF2 bootloader)",
+    },
 ];
 
-const RPI_PICO2_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x2E8A, pid: 0x000F, description: "Raspberry Pi Pico 2 (RP2350)" },
-];
+const RPI_PICO2_USB_IDS: &[UsbId] = &[UsbId {
+    vid: 0x2E8A,
+    pid: 0x000F,
+    description: "Raspberry Pi Pico 2 (RP2350)",
+}];
 
 const SAMD21_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x239A, pid: 0x800B, description: "Adafruit Feather M0 (SAMD21)" },
-    UsbId { vid: 0x239A, pid: 0x8015, description: "Adafruit Metro M0 (SAMD21)" },
+    UsbId {
+        vid: 0x239A,
+        pid: 0x800B,
+        description: "Adafruit Feather M0 (SAMD21)",
+    },
+    UsbId {
+        vid: 0x239A,
+        pid: 0x8015,
+        description: "Adafruit Metro M0 (SAMD21)",
+    },
 ];
 
 const ARDUINO_DUE_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x2341, pid: 0x003E, description: "Arduino Due (Programming port)" },
-    UsbId { vid: 0x2341, pid: 0x003D, description: "Arduino Due (Native port)" },
+    UsbId {
+        vid: 0x2341,
+        pid: 0x003E,
+        description: "Arduino Due (Programming port)",
+    },
+    UsbId {
+        vid: 0x2341,
+        pid: 0x003D,
+        description: "Arduino Due (Native port)",
+    },
 ];
 
 const STM32_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x0483, pid: 0x374B, description: "ST-Link/V2-1" },
-    UsbId { vid: 0x0483, pid: 0x3748, description: "ST-Link/V2" },
-    UsbId { vid: 0x0483, pid: 0x374F, description: "ST-Link/V3" },
-    UsbId { vid: 0x0483, pid: 0x5740, description: "STM32 Virtual COM (CDC)" },
+    UsbId {
+        vid: 0x0483,
+        pid: 0x374B,
+        description: "ST-Link/V2-1",
+    },
+    UsbId {
+        vid: 0x0483,
+        pid: 0x3748,
+        description: "ST-Link/V2",
+    },
+    UsbId {
+        vid: 0x0483,
+        pid: 0x374F,
+        description: "ST-Link/V3",
+    },
+    UsbId {
+        vid: 0x0483,
+        pid: 0x5740,
+        description: "STM32 Virtual COM (CDC)",
+    },
 ];
 
 const NRF52840_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x1915, pid: 0x521F, description: "nRF52840 (Nordic USB)" },
-    UsbId { vid: 0x239A, pid: 0x8029, description: "Adafruit nRF52840 Feather" },
+    UsbId {
+        vid: 0x1915,
+        pid: 0x521F,
+        description: "nRF52840 (Nordic USB)",
+    },
+    UsbId {
+        vid: 0x239A,
+        pid: 0x8029,
+        description: "Adafruit nRF52840 Feather",
+    },
 ];
 
-const MICROBIT_V2_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x0D28, pid: 0x0204, description: "BBC micro:bit v2 (CMSIS-DAP)" },
-];
+const MICROBIT_V2_USB_IDS: &[UsbId] = &[UsbId {
+    vid: 0x0D28,
+    pid: 0x0204,
+    description: "BBC micro:bit v2 (CMSIS-DAP)",
+}];
 
 const SAMD51_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x239A, pid: 0x8022, description: "Adafruit Feather M4 (SAMD51)" },
-    UsbId { vid: 0x239A, pid: 0x8020, description: "Adafruit Metro M4 (SAMD51)" },
+    UsbId {
+        vid: 0x239A,
+        pid: 0x8022,
+        description: "Adafruit Feather M4 (SAMD51)",
+    },
+    UsbId {
+        vid: 0x239A,
+        pid: 0x8020,
+        description: "Adafruit Metro M4 (SAMD51)",
+    },
 ];
 
 const ESP32_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x10C4, pid: 0xEA60, description: "ESP32 (CP2102)" },
-    UsbId { vid: 0x1A86, pid: 0x7523, description: "ESP32 Clone (CH340)" },
-    UsbId { vid: 0x0403, pid: 0x6010, description: "ESP32 (FT2232H)" },
+    UsbId {
+        vid: 0x10C4,
+        pid: 0xEA60,
+        description: "ESP32 (CP2102)",
+    },
+    UsbId {
+        vid: 0x1A86,
+        pid: 0x7523,
+        description: "ESP32 Clone (CH340)",
+    },
+    UsbId {
+        vid: 0x0403,
+        pid: 0x6010,
+        description: "ESP32 (FT2232H)",
+    },
 ];
 
 const ESP32S3_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x303A, pid: 0x1001, description: "ESP32-S3 (built-in USB)" },
-    UsbId { vid: 0x10C4, pid: 0xEA60, description: "ESP32-S3 (CP2102)" },
+    UsbId {
+        vid: 0x303A,
+        pid: 0x1001,
+        description: "ESP32-S3 (built-in USB)",
+    },
+    UsbId {
+        vid: 0x10C4,
+        pid: 0xEA60,
+        description: "ESP32-S3 (CP2102)",
+    },
 ];
 
 const ESP32C3_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x303A, pid: 0x1001, description: "ESP32-C3 (built-in USB)" },
-    UsbId { vid: 0x10C4, pid: 0xEA60, description: "ESP32-C3 (CP2102)" },
+    UsbId {
+        vid: 0x303A,
+        pid: 0x1001,
+        description: "ESP32-C3 (built-in USB)",
+    },
+    UsbId {
+        vid: 0x10C4,
+        pid: 0xEA60,
+        description: "ESP32-C3 (CP2102)",
+    },
 ];
 
-const TEENSY4_USB_IDS: &[UsbId] = &[
-    UsbId { vid: 0x16C0, pid: 0x0483, description: "Teensy 4.0 / 4.1" },
-];
+const TEENSY4_USB_IDS: &[UsbId] = &[UsbId {
+    vid: 0x16C0,
+    pid: 0x0483,
+    description: "Teensy 4.0 / 4.1",
+}];
 
 // ─── BOARD_PRESETS ───────────────────────────────────────-
 
@@ -284,7 +422,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "RP2040",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x10000000, flash_length_kb: 2048, ram_origin: 0x20000000, ram_length_kb: 264 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x10000000,
+            flash_length_kb: 2048,
+            ram_origin: 0x20000000,
+            ram_length_kb: 264,
+        }),
     },
     BoardPreset {
         kind: BoardKind::RpiPico2,
@@ -300,7 +443,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "RP2350",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x10000000, flash_length_kb: 4096, ram_origin: 0x20000000, ram_length_kb: 520 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x10000000,
+            flash_length_kb: 4096,
+            ram_origin: 0x20000000,
+            ram_length_kb: 520,
+        }),
     },
     BoardPreset {
         kind: BoardKind::RpiZero,
@@ -312,7 +460,9 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         default_baud: 115200,
         default_port_hint: None,
         usb_ids: &[],
-        toolchain_note: Some("arm-none-eabi-gcc + objcopy required; custom target JSON: armv6-rpi-zero.json"),
+        toolchain_note: Some(
+            "arm-none-eabi-gcc + objcopy required; custom target JSON: armv6-rpi-zero.json",
+        ),
         probe_rs_chip: "",
         rustflags: &[],
         flash_offset: 0,
@@ -332,7 +482,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x00000000, flash_length_kb: 256, ram_origin: 0x20000000, ram_length_kb: 32 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x00000000,
+            flash_length_kb: 256,
+            ram_origin: 0x20000000,
+            ram_length_kb: 32,
+        }),
     },
     BoardPreset {
         kind: BoardKind::ArduinoDue,
@@ -348,7 +503,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x00080000, flash_length_kb: 512, ram_origin: 0x20000000, ram_length_kb: 96 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x00080000,
+            flash_length_kb: 512,
+            ram_origin: 0x20000000,
+            ram_length_kb: 96,
+        }),
     },
     // ── ARM Cortex-M3 ─────────────────────────────────────
     BoardPreset {
@@ -365,7 +525,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "STM32F103C8",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x08000000, flash_length_kb: 64, ram_origin: 0x20000000, ram_length_kb: 20 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x08000000,
+            flash_length_kb: 64,
+            ram_origin: 0x20000000,
+            ram_length_kb: 20,
+        }),
     },
     // ── ARM Cortex-M4 / M4F ───────────────────────────────
     BoardPreset {
@@ -382,7 +547,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "STM32F411RETx",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x08000000, flash_length_kb: 512, ram_origin: 0x20000000, ram_length_kb: 128 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x08000000,
+            flash_length_kb: 512,
+            ram_origin: 0x20000000,
+            ram_length_kb: 128,
+        }),
     },
     BoardPreset {
         kind: BoardKind::Stm32L4,
@@ -398,7 +568,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "STM32L476RGTx",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x08000000, flash_length_kb: 1024, ram_origin: 0x20000000, ram_length_kb: 128 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x08000000,
+            flash_length_kb: 1024,
+            ram_origin: 0x20000000,
+            ram_length_kb: 128,
+        }),
     },
     BoardPreset {
         kind: BoardKind::NrF52840,
@@ -414,7 +589,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "nRF52840_xxAA",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x00000000, flash_length_kb: 1024, ram_origin: 0x20000000, ram_length_kb: 256 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x00000000,
+            flash_length_kb: 1024,
+            ram_origin: 0x20000000,
+            ram_length_kb: 256,
+        }),
     },
     BoardPreset {
         kind: BoardKind::MicroBitV2,
@@ -430,7 +610,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "nRF52833_xxAA",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x00000000, flash_length_kb: 512, ram_origin: 0x20000000, ram_length_kb: 128 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x00000000,
+            flash_length_kb: 512,
+            ram_origin: 0x20000000,
+            ram_length_kb: 128,
+        }),
     },
     BoardPreset {
         kind: BoardKind::Samd51,
@@ -446,7 +631,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x00000000, flash_length_kb: 512, ram_origin: 0x20000000, ram_length_kb: 192 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x00000000,
+            flash_length_kb: 512,
+            ram_origin: 0x20000000,
+            ram_length_kb: 192,
+        }),
     },
     // ── ARM Cortex-M7 ─────────────────────────────────────
     BoardPreset {
@@ -463,7 +653,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "STM32F746NGHx",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x08000000, flash_length_kb: 1024, ram_origin: 0x20000000, ram_length_kb: 320 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x08000000,
+            flash_length_kb: 1024,
+            ram_origin: 0x20000000,
+            ram_length_kb: 320,
+        }),
     },
     BoardPreset {
         kind: BoardKind::Stm32H7,
@@ -479,7 +674,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "STM32H743ZITx",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x08000000, flash_length_kb: 2048, ram_origin: 0x24000000, ram_length_kb: 512 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x08000000,
+            flash_length_kb: 2048,
+            ram_origin: 0x24000000,
+            ram_length_kb: 512,
+        }),
     },
     BoardPreset {
         kind: BoardKind::Teensy4,
@@ -495,7 +695,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x60000000, flash_length_kb: 8192, ram_origin: 0x20200000, ram_length_kb: 1024 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x60000000,
+            flash_length_kb: 8192,
+            ram_origin: 0x20200000,
+            ram_length_kb: 1024,
+        }),
     },
     // ── ARM Cortex-M33 ───────────────────────────────────-
     BoardPreset {
@@ -512,7 +717,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "STM32G031K8Tx",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x08000000, flash_length_kb: 64, ram_origin: 0x20000000, ram_length_kb: 8 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x08000000,
+            flash_length_kb: 64,
+            ram_origin: 0x20000000,
+            ram_length_kb: 8,
+        }),
     },
     // ── Xtensa (ESP32系) ─────────────────────────────────-
     BoardPreset {
@@ -626,7 +836,12 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x08000000, flash_length_kb: 128, ram_origin: 0x20000000, ram_length_kb: 32 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x08000000,
+            flash_length_kb: 128,
+            ram_origin: 0x20000000,
+            ram_length_kb: 32,
+        }),
     },
     BoardPreset {
         kind: BoardKind::Ch32V003,
@@ -642,9 +857,14 @@ pub const BOARD_PRESETS: &[BoardPreset] = &[
         probe_rs_chip: "",
         rustflags: &["-C", "link-arg=-Tlink.x"],
         flash_offset: 0,
-        memory_layout: Some(MemoryLayout { flash_origin: 0x08000000, flash_length_kb: 16, ram_origin: 0x20000000, ram_length_kb: 2 }),
+        memory_layout: Some(MemoryLayout {
+            flash_origin: 0x08000000,
+            flash_length_kb: 16,
+            ram_origin: 0x20000000,
+            ram_length_kb: 2,
+        }),
     },
- ];
+];
 
 impl BoardPreset {
     pub fn flash_bytes(&self) -> u64 {
@@ -652,9 +872,16 @@ impl BoardPreset {
             mem.flash_length_kb as u64 * 1024
         } else {
             match self.kind {
-                BoardKind::ArduinoUno | BoardKind::ArduinoNano | BoardKind::ArduinoMega | BoardKind::ArduinoLeonardo => 32_768u64,
+                BoardKind::ArduinoUno
+                | BoardKind::ArduinoNano
+                | BoardKind::ArduinoMega
+                | BoardKind::ArduinoLeonardo => 32_768u64,
                 BoardKind::Esp32 | BoardKind::Esp32S2 | BoardKind::Esp32S3 => 4_194_304u64,
-                BoardKind::MicroBitV2 | BoardKind::Stm32F4 | BoardKind::Stm32L4 | BoardKind::Stm32F7 | BoardKind::Stm32H7 => 524_288u64,
+                BoardKind::MicroBitV2
+                | BoardKind::Stm32F4
+                | BoardKind::Stm32L4
+                | BoardKind::Stm32F7
+                | BoardKind::Stm32H7 => 524_288u64,
                 _ => 0u64,
             }
         }
@@ -665,9 +892,16 @@ impl BoardPreset {
             mem.ram_length_kb as u64 * 1024
         } else {
             match self.kind {
-                BoardKind::ArduinoUno | BoardKind::ArduinoNano | BoardKind::ArduinoMega | BoardKind::ArduinoLeonardo => 2_048u64,
+                BoardKind::ArduinoUno
+                | BoardKind::ArduinoNano
+                | BoardKind::ArduinoMega
+                | BoardKind::ArduinoLeonardo => 2_048u64,
                 BoardKind::Esp32 | BoardKind::Esp32S2 | BoardKind::Esp32S3 => 532_480u64,
-                BoardKind::MicroBitV2 | BoardKind::Stm32F4 | BoardKind::Stm32L4 | BoardKind::Stm32F7 | BoardKind::Stm32H7 => 131_072u64,
+                BoardKind::MicroBitV2
+                | BoardKind::Stm32F4
+                | BoardKind::Stm32L4
+                | BoardKind::Stm32F7
+                | BoardKind::Stm32H7 => 131_072u64,
                 _ => 0u64,
             }
         }
@@ -686,46 +920,71 @@ mod tests {
     #[test]
     fn test_all_presets_have_display_name() {
         for p in BOARD_PRESETS {
-            assert!(!p.display_name.is_empty(), "Board {:?} has empty display_name", p.kind);
+            assert!(
+                !p.display_name.is_empty(),
+                "Board {:?} has empty display_name",
+                p.kind
+            );
         }
     }
 
     #[test]
     fn test_all_presets_have_target_triple() {
         for p in BOARD_PRESETS {
-            assert!(!p.target_triple.is_empty(), "Board {:?} has empty target_triple", p.kind);
+            assert!(
+                !p.target_triple.is_empty(),
+                "Board {:?} has empty target_triple",
+                p.kind
+            );
         }
     }
 
     #[test]
     fn test_arduino_uno_exists() {
-        let uno = BOARD_PRESETS.iter().find(|p| matches!(p.kind, BoardKind::ArduinoUno));
+        let uno = BOARD_PRESETS
+            .iter()
+            .find(|p| matches!(p.kind, BoardKind::ArduinoUno));
         assert!(uno.is_some(), "Arduino Uno must be in BOARD_PRESETS");
         let uno = uno.unwrap();
-        assert!(uno.target_triple.contains("avr"), "Arduino Uno target must contain 'avr'");
+        assert!(
+            uno.target_triple.contains("avr"),
+            "Arduino Uno target must contain 'avr'"
+        );
         assert!(matches!(uno.flash_tool, FlashToolKind::Avrdude));
     }
 
     #[test]
     fn test_esp32_exists() {
-        let esp = BOARD_PRESETS.iter().find(|p| matches!(p.kind, BoardKind::Esp32));
+        let esp = BOARD_PRESETS
+            .iter()
+            .find(|p| matches!(p.kind, BoardKind::Esp32));
         assert!(esp.is_some());
         let esp = esp.unwrap();
-        assert!(esp.target_triple.contains("esp32"), "ESP32 target must contain 'esp32'");
+        assert!(
+            esp.target_triple.contains("esp32"),
+            "ESP32 target must contain 'esp32'"
+        );
         assert!(matches!(esp.flash_tool, FlashToolKind::Esptool));
     }
 
     #[test]
     fn test_stm32f4_exists() {
-        let stm = BOARD_PRESETS.iter().find(|p| matches!(p.kind, BoardKind::Stm32F4));
+        let stm = BOARD_PRESETS
+            .iter()
+            .find(|p| matches!(p.kind, BoardKind::Stm32F4));
         assert!(stm.is_some());
         let stm = stm.unwrap();
-        assert!(stm.target_triple.contains("thumbv7em"), "STM32F4 target must be thumbv7em");
+        assert!(
+            stm.target_triple.contains("thumbv7em"),
+            "STM32F4 target must be thumbv7em"
+        );
     }
 
     #[test]
     fn test_rpi_pico_exists() {
-        let pico = BOARD_PRESETS.iter().find(|p| matches!(p.kind, BoardKind::RpiPico));
+        let pico = BOARD_PRESETS
+            .iter()
+            .find(|p| matches!(p.kind, BoardKind::RpiPico));
         assert!(pico.is_some(), "Raspberry Pi Pico must exist");
         let pico = pico.unwrap();
         assert_eq!(pico.target_triple, "thumbv6m-none-eabi");
@@ -734,7 +993,8 @@ mod tests {
     #[test]
     fn test_usb_vid_pid_unique_per_board() {
         // 同一VID/PIDが複数の異なるBoardKindにHighで登録されていないか確認
-        let mut vid_pid_map: std::collections::HashMap<(u16,u16), &str> = std::collections::HashMap::new();
+        let mut vid_pid_map: std::collections::HashMap<(u16, u16), &str> =
+            std::collections::HashMap::new();
         for preset in BOARD_PRESETS {
             for uid in preset.usb_ids {
                 let key = (uid.vid, uid.pid);

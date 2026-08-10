@@ -65,17 +65,19 @@ target = "thumbv7em-none-eabihf"
 
 [target.thumbv7em-none-eabihf]
 runner = "probe-rs run --chip nRF52840_xxAA"
-"#, 
+"#,
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x00000000, LENGTH = 1024K
   RAM :   ORIGIN = 0x20000000, LENGTH = 256K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -127,17 +129,19 @@ target = "thumbv6m-none-eabi"
 
 [target.thumbv6m-none-eabi]
 runner = "probe-rs run --chip nRF51422_xxAC"
-"#, 
+"#,
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["thumbv6m-none-eabi"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x00000000, LENGTH = 256K
   RAM : ORIGIN = 0x20000000, LENGTH = 16K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,

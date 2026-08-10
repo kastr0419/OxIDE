@@ -25,7 +25,11 @@ pub fn check_rust_analyzer() -> RustAnalyzerStatus {
                 .and_then(|o| String::from_utf8(o.stdout).ok())
                 .map(|s| s.trim().to_string())
         };
-        return RustAnalyzerStatus { is_installed: true, path: Some(path), version };
+        return RustAnalyzerStatus {
+            is_installed: true,
+            path: Some(path),
+            version,
+        };
     }
     // ~/.cargo/bin を直接確認（PATH が通っていない場合）
     if let Some(bin_dir) = home_cargo_bin() {
@@ -38,7 +42,11 @@ pub fn check_rust_analyzer() -> RustAnalyzerStatus {
             };
         }
     }
-    RustAnalyzerStatus { is_installed: false, path: None, version: None }
+    RustAnalyzerStatus {
+        is_installed: false,
+        path: None,
+        version: None,
+    }
 }
 
 /// 指定パスが実行可能ファイルとして有効か検証する
@@ -89,7 +97,11 @@ pub fn home_cargo_bin() -> Option<PathBuf> {
 }
 
 fn rust_analyzer_bin_name() -> &'static str {
-    if cfg!(windows) { "rust-analyzer.exe" } else { "rust-analyzer" }
+    if cfg!(windows) {
+        "rust-analyzer.exe"
+    } else {
+        "rust-analyzer"
+    }
 }
 
 #[cfg(test)]
@@ -109,7 +121,9 @@ mod tests {
 
     #[test]
     fn validate_rejects_nonexistent_path() {
-        assert!(!validate_custom_path(&PathBuf::from("/nonexistent/rust-analyzer-fake-xyz")));
+        assert!(!validate_custom_path(&PathBuf::from(
+            "/nonexistent/rust-analyzer-fake-xyz"
+        )));
     }
 
     #[test]
@@ -120,7 +134,11 @@ mod tests {
     #[test]
     fn validate_accepts_real_executable() {
         if let Ok(exe) = std::env::current_exe() {
-            assert!(validate_custom_path(&exe), "current exe should be valid: {:?}", exe);
+            assert!(
+                validate_custom_path(&exe),
+                "current exe should be valid: {:?}",
+                exe
+            );
         }
     }
 

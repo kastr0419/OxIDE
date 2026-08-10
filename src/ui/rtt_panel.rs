@@ -24,7 +24,9 @@ pub fn ui_rtt_panel(app: &mut IdeApp, ui: &mut Ui) {
             if !app.rtt_running {
                 if ui.button("Start RTT").clicked() {
                     if let Some(ref tx) = app.debug_cmd_tx {
-                        let _ = tx.send(DebugCommand::StartRtt { channel: app.rtt_channel });
+                        let _ = tx.send(DebugCommand::StartRtt {
+                            channel: app.rtt_channel,
+                        });
                         app.rtt_running = true;
                     }
                 }
@@ -48,15 +50,20 @@ pub fn ui_rtt_panel(app: &mut IdeApp, ui: &mut Ui) {
     ui.add_space(6.0);
 
     if !app.debug_connected {
-        ui.colored_label(egui::Color32::YELLOW, "デバッガに接続してからRTTを開始してください");
+        ui.colored_label(
+            egui::Color32::YELLOW,
+            "デバッガに接続してからRTTを開始してください",
+        );
         return;
     }
 
-    egui::ScrollArea::vertical().stick_to_bottom(true).show(ui, |ui| {
-        ui.vertical(|ui| {
-            for (ch, line) in &app.rtt_log {
-                ui.label(format!("[ch{}] {}", ch, line));
-            }
+    egui::ScrollArea::vertical()
+        .stick_to_bottom(true)
+        .show(ui, |ui| {
+            ui.vertical(|ui| {
+                for (ch, line) in &app.rtt_log {
+                    ui.label(format!("[ch{}] {}", ch, line));
+                }
+            });
         });
-    });
 }

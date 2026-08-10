@@ -64,17 +64,19 @@ target = "thumbv7em-none-eabihf"
 
 [target.thumbv7em-none-eabihf]
 runner = "teensy_loader_cli --mcu=TEENSY40 -w"
-"#, 
+"#,
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x60000000, LENGTH = 1984K
   RAM : ORIGIN = 0x20200000, LENGTH = 512K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,

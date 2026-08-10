@@ -74,12 +74,14 @@ target = "thumbv6m-none-eabi"
 channel = "stable"
 targets = ["thumbv6m-none-eabi"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x00000000, LENGTH = 256K
   RAM : ORIGIN = 0x20000000, LENGTH = 32K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -144,12 +146,14 @@ target = "thumbv7em-none-eabihf"
 channel = "stable"
 targets = ["thumbv7em-none-eabihf"]
 "#,
-        memory_x: Some(r#"MEMORY
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x00000000, LENGTH = 512K
   RAM : ORIGIN = 0x20000000, LENGTH = 192K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,
@@ -175,7 +179,7 @@ fn main() -> ! {
         asm::delay(8_000_000);
     }
 }
-"#, 
+"#,
         cargo_toml: r#"[package]
 name = "blink"
 version = "0.1.0"
@@ -194,17 +198,19 @@ panic-halt = "0.2"
 "#,
         cargo_config: r#"[build]
 target = "thumbv7m-none-eabi"
-"#, 
+"#,
         rust_toolchain: r#"[toolchain]
 channel = "stable"
 targets = ["thumbv7m-none-eabi"]
-"#, 
-        memory_x: Some(r#"MEMORY
+"#,
+        memory_x: Some(
+            r#"MEMORY
 {
   FLASH : ORIGIN = 0x00080000, LENGTH = 512K
   RAM : ORIGIN = 0x20000000, LENGTH = 96K
 }
-"#),
+"#,
+        ),
         build_rs: Some(BUILD_RS),
         linker_ld: None,
         target_json: None,

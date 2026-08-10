@@ -3,8 +3,8 @@
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
-use std::path::PathBuf;
 use std::collections::VecDeque;
+use std::path::PathBuf;
 
 pub fn write_or_log(path: &std::path::Path, content: &str, log: &mut String) {
     if let Err(e) = std::fs::write(path, content) {
@@ -12,6 +12,17 @@ pub fn write_or_log(path: &std::path::Path, content: &str, log: &mut String) {
     }
 }
 
+fn append_log_once(log: &mut String, text: &str) {
+    for line in text.lines() {
+        if !log.lines().any(|existing| existing == line) {
+            if !log.ends_with('\n') {
+                log.push('\n');
+            }
+            log.push_str(line);
+            log.push('\n');
+        }
+    }
+}
 
 /// 開いているファイルタブ1つ分の状態
 #[derive(Clone)]
@@ -36,7 +47,7 @@ pub fn parse_plot_line(line: &str) -> Vec<(String, f64)> {
         let part = part.trim();
         if let Some(colon) = part.find(':') {
             let name = part[..colon].trim().to_string();
-            let val_str = part[colon+1..].trim();
+            let val_str = part[colon + 1..].trim();
             if let Ok(v) = val_str.parse::<f64>() {
                 result.push((name, v));
             }
@@ -49,11 +60,24 @@ pub fn parse_plot_line(line: &str) -> Vec<(String, f64)> {
 
 // App messages from background tasks
 #[allow(dead_code)]
-pub enum BuildMsg { Started, Progress(String), Finished(crate::core::compiler::BuildResult) }
+pub enum BuildMsg {
+    Started,
+    Progress(String),
+    Finished(crate::core::compiler::BuildResult),
+}
 #[allow(dead_code)]
-pub enum FlashMsg { Started, Progress(String), Finished(crate::core::flasher::FlashResult) }
+pub enum FlashMsg {
+    Started,
+    Progress(String),
+    Finished(crate::core::flasher::FlashResult),
+}
 #[allow(dead_code)]
-pub enum SerialMsg { Line(String), Error(String), Connected, Disconnected }
+pub enum SerialMsg {
+    Line(String),
+    Error(String),
+    Connected,
+    Disconnected,
+}
 #[allow(dead_code)]
 pub enum ToolchainMsg {
     InstallStarted,
@@ -84,7 +108,7 @@ pub struct IdeApp {
     pub is_dirty: bool,
 
     // ボード・ポート選択
-    pub selected_board: usize,      // BOARD_PRESETS のインデックス
+    pub selected_board: usize, // BOARD_PRESETS のインデックス
     pub available_ports: Vec<String>,
     pub selected_port: usize,
 
@@ -107,7 +131,7 @@ pub struct IdeApp {
     pub serial_tx: Option<crossbeam_channel::Sender<crate::core::serial::SerialCommand>>,
 
     // RTT
-    pub rtt_log: Vec<(u32, String)>,         // (channel, message)
+    pub rtt_log: Vec<(u32, String)>, // (channel, message)
     pub rtt_running: bool,
     pub rtt_channel: u32,
 
@@ -231,7 +255,9 @@ impl IdeApp {
         // 日本語フォントを含むシステムフォントをインストール
         crate::ui::fonts::install_japanese_fonts(&cc.egui_ctx);
 
-        let new_project_base_dir = config.workspace_dir.parent()
+        let new_project_base_dir = config
+            .workspace_dir
+            .parent()
             .unwrap_or(&config.workspace_dir)
             .to_path_buf();
 
@@ -342,7 +368,11 @@ impl IdeApp {
                 .and_then(|mut rd| {
                     rd.find_map(|e| {
                         let p = e.ok()?.path();
-                        if p.extension().map(|x| x == "elf").unwrap_or(false) { Some(()) } else { None }
+                        if p.extension().map(|x| x == "elf").unwrap_or(false) {
+                            Some(())
+                        } else {
+                            None
+                        }
                     })
                 })
                 .is_some();
@@ -353,7 +383,11 @@ impl IdeApp {
 
         // LSP 起動（rust-analyzerがあれば）。workspace_dir を使用
         let ws_dir = app.config.workspace_dir.clone();
-        let ws = if ws_dir.exists() { Some(ws_dir) } else { std::env::current_dir().ok() };
+        let ws = if ws_dir.exists() {
+            Some(ws_dir)
+        } else {
+            std::env::current_dir().ok()
+        };
         if let Some(ws) = ws {
             let (lsp_tx, lsp_rx) = unbounded::<crate::core::lsp::LspMessage>();
             let ra_path = app.config.rust_analyzer_path.clone();
@@ -406,20 +440,29 @@ impl IdeApp {
                 }
                 AppMessage::Build(BuildMsg::Finished(br)) => {
                     self.is_building = false;
-                    self.build_log = format!("stdout:\n{}\nstderr:\n{}", br.stdout, br.stderr);
+                    append_log_once(&mut self.build_log, &br.stdout);
+                    append_log_once(&mut self.build_log, &br.stderr);
                     if br.success {
-                        self.build_log = format!("[SUCCESS]\n{}", self.build_log);
+                        self.build_log.push_str("[SUCCESS]\n");
                         if let Some(p) = br.dist_path {
                             self.last_dist_path = Some(p.clone());
                             // Spawn analysis of ELF in background
-                            if let Some(board) = crate::core::board::BOARD_PRESETS.get(self.selected_board) {
+                            if let Some(board) =
+                                crate::core::board::BOARD_PRESETS.get(self.selected_board)
+                            {
                                 let board_clone = board.clone();
                                 let tx = self.msg_tx.clone();
                                 let target = p.clone();
                                 std::thread::spawn(move || {
-                                    if let Some(elf) = crate::core::build_analyzer::find_elf(&target, &board_clone) {
-                                        if let Ok(stats) = crate::core::build_analyzer::analyze_elf(&elf, &board_clone) {
-                                            let _ = tx.send(crate::app::AppMessage::BuildAnalysis(stats));
+                                    if let Some(elf) =
+                                        crate::core::build_analyzer::find_elf(&target, &board_clone)
+                                    {
+                                        if let Ok(stats) = crate::core::build_analyzer::analyze_elf(
+                                            &elf,
+                                            &board_clone,
+                                        ) {
+                                            let _ = tx
+                                                .send(crate::app::AppMessage::BuildAnalysis(stats));
                                         }
                                     }
                                 });
@@ -427,12 +470,15 @@ impl IdeApp {
                             // Build & Flash: auto-trigger flash after successful build
                             if self.auto_flash_after_build {
                                 self.auto_flash_after_build = false;
-                                if let Some(preset) = crate::core::board::BOARD_PRESETS.get(self.selected_board) {
+                                if let Some(preset) =
+                                    crate::core::board::BOARD_PRESETS.get(self.selected_board)
+                                {
                                     // Find ELF artifact for flashing
                                     let elf_path = std::fs::read_dir(&p).ok().and_then(|mut rd| {
                                         rd.find_map(|e| {
                                             let path = e.ok()?.path();
-                                            if path.extension().map(|x| x == "elf").unwrap_or(false) {
+                                            if path.extension().map(|x| x == "elf").unwrap_or(false)
+                                            {
                                                 Some(path)
                                             } else {
                                                 None
@@ -440,15 +486,23 @@ impl IdeApp {
                                         })
                                     });
                                     if let Some(artifact) = elf_path {
-                                        let port = self.available_ports.get(self.selected_port).cloned().unwrap_or_default();
+                                        let port = self
+                                            .available_ports
+                                            .get(self.selected_port)
+                                            .cloned()
+                                            .unwrap_or_default();
                                         let flash_req = crate::core::flasher::FlashRequest {
                                             board: preset.kind.clone(),
                                             artifact,
                                             port,
                                         };
                                         self.is_flashing = true;
-                                        self.build_log = format!("[SUCCESS + FLASH開始]\n{}", self.build_log);
-                                        crate::core::flasher::flash_async(flash_req, self.msg_tx.clone());
+                                        self.build_log =
+                                            format!("[SUCCESS + FLASH開始]\n{}", self.build_log);
+                                        crate::core::flasher::flash_async(
+                                            flash_req,
+                                            self.msg_tx.clone(),
+                                        );
                                     } else {
                                         self.build_log = format!("[SUCCESS]\n[ERROR] フラッシュ用ELFが見つかりません\n{}", self.build_log);
                                     }
@@ -457,12 +511,17 @@ impl IdeApp {
                         }
                     } else {
                         self.auto_flash_after_build = false;
-                        self.build_log = format!("[FAIL]\n{}", self.build_log);
+                        self.build_log.push_str("[FAIL]\n");
                     }
                 }
                 AppMessage::Flash(FlashMsg::Finished(fr)) => {
                     self.is_flashing = false;
-                    self.build_log = format!("[FLASH]\n{}", fr.output);
+                    append_log_once(&mut self.build_log, &fr.output);
+                    self.build_log.push_str(if fr.success {
+                        "[FLASH SUCCESS]\n"
+                    } else {
+                        "[FLASH FAIL]\n"
+                    });
                 }
                 AppMessage::Serial(SerialMsg::Line(line)) => {
                     // Try to parse numeric channels for plotter
@@ -496,6 +555,12 @@ impl IdeApp {
                         self.serial_log.pop_front();
                     }
                 }
+                AppMessage::Serial(SerialMsg::Error(error)) => {
+                    self.serial_log.push_back(format!("[ERROR] {error}"));
+                    while self.serial_log.len() > 500 {
+                        self.serial_log.pop_front();
+                    }
+                }
                 AppMessage::Serial(SerialMsg::Connected) => {
                     self.is_serial_connected = true;
                 }
@@ -506,13 +571,18 @@ impl IdeApp {
                 AppMessage::BoardDetected(Some(detected)) => {
                     self.selected_board = detected.board_index;
                     // ポートも自動選択
-                    if let Some(pos) = self.available_ports.iter().position(|p| *p == detected.port_name) {
+                    if let Some(pos) = self
+                        .available_ports
+                        .iter()
+                        .position(|p| *p == detected.port_name)
+                    {
                         self.selected_port = pos;
                     }
                     self.detection_result = Some(detected.description.clone());
                 }
                 AppMessage::BoardDetected(None) => {
-                    self.detection_result = Some("No board detected. Please connect a board.".to_string());
+                    self.detection_result =
+                        Some("No board detected. Please connect a board.".to_string());
                 }
                 AppMessage::LspCompletion(items) if !items.is_empty() => {
                     self.lsp_completions = items;
@@ -538,7 +608,9 @@ impl IdeApp {
                 }
                 AppMessage::Toolchain(crate::app::ToolchainMsg::InstallFinished(Ok(status))) => {
                     self.ra_installing = false;
-                    let path_str = status.path.as_ref()
+                    let path_str = status
+                        .path
+                        .as_ref()
                         .map(|p| p.to_string_lossy().to_string())
                         .unwrap_or_default();
                     self.ra_install_log = format!("✅ Installed: {}", path_str);
@@ -624,12 +696,16 @@ impl IdeApp {
         self.pending_did_opens.clear();
 
         let ws_dir = self.config.workspace_dir.clone();
-        if !ws_dir.exists() { return; }
+        if !ws_dir.exists() {
+            return;
+        }
 
         let (lsp_tx, lsp_rx) = crossbeam_channel::unbounded::<crate::core::lsp::LspMessage>();
         let ra_path = self.config.rust_analyzer_path.clone();
 
-        let Some(client) = crate::core::lsp::start_lsp(ws_dir, lsp_tx, ra_path) else { return };
+        let Some(client) = crate::core::lsp::start_lsp(ws_dir, lsp_tx, ra_path) else {
+            return;
+        };
 
         // 現在開いているファイルに did_open を送る
         if let Some(ref path) = self.file_path.clone() {
@@ -702,7 +778,9 @@ impl IdeApp {
 
     /// タブを切り替える
     pub fn switch_to_tab(&mut self, idx: usize) {
-        if idx == self.active_tab && !self.open_tabs.is_empty() { return; }
+        if idx == self.active_tab && !self.open_tabs.is_empty() {
+            return;
+        }
         self.sync_active_tab();
         self.active_tab = idx;
         if let Some(tab) = self.open_tabs.get(idx) {
@@ -714,7 +792,9 @@ impl IdeApp {
 
     /// タブを閉じる（dirty なら先に保存）
     pub fn close_tab(&mut self, idx: usize) {
-        if idx >= self.open_tabs.len() { return; }
+        if idx >= self.open_tabs.len() {
+            return;
+        }
         // 閉じる前に保存
         let tab = &self.open_tabs[idx];
         if tab.is_dirty {
@@ -748,7 +828,8 @@ impl IdeApp {
     /// Returns a stable reference to the selected BoardPreset (bounds-safe).
     pub fn selected_board_preset(&self) -> &'static crate::core::board::BoardPreset {
         let presets = crate::core::board::BOARD_PRESETS;
-        presets.get(self.selected_board)
+        presets
+            .get(self.selected_board)
             .or_else(|| presets.first())
             .unwrap_or_else(|| panic!("BOARD_PRESETS must not be empty"))
     }
@@ -823,8 +904,12 @@ impl eframe::App for IdeApp {
                 ui.menu_button("File", |ui| {
                     if ui.button("📁 New Project...").clicked() {
                         self.new_project_name = String::new();
-                        self.new_project_base_dir = self.config.workspace_dir.parent()
-                            .unwrap_or(&self.config.workspace_dir).to_path_buf();
+                        self.new_project_base_dir = self
+                            .config
+                            .workspace_dir
+                            .parent()
+                            .unwrap_or(&self.config.workspace_dir)
+                            .to_path_buf();
                         self.show_new_project_dialog = true;
                         ui.close_menu();
                     }
@@ -836,7 +921,9 @@ impl eframe::App for IdeApp {
                                     self.project_name = info.project_name;
                                     if let Some(board) = info.board {
                                         if let Some(idx) = crate::core::board::BOARD_PRESETS
-                                            .iter().position(|p| p.kind == board) {
+                                            .iter()
+                                            .position(|p| p.kind == board)
+                                        {
                                             self.selected_board = idx;
                                         }
                                     }
@@ -847,13 +934,12 @@ impl eframe::App for IdeApp {
                                     self.open_file_in_tab(main_rs);
                                     self.refresh_workspace_files();
                                     let _ = self.config.save();
-                                    self.build_log = format!(
-                                        "[OK] プロジェクトを開きました: {}",
-                                        dir.display()
-                                    );
+                                    self.build_log =
+                                        format!("[OK] プロジェクトを開きました: {}", dir.display());
                                 }
                                 Err(e) => {
-                                    self.build_log = format!("[ERROR] プロジェクトを開けませんでした: {}", e);
+                                    self.build_log =
+                                        format!("[ERROR] プロジェクトを開けませんでした: {}", e);
                                 }
                             }
                         }
@@ -871,7 +957,9 @@ impl eframe::App for IdeApp {
                             }
                         } else {
                             if let Some(path) = rfd::FileDialog::new()
-                                .add_filter("Rust", &["rs"]).save_file() {
+                                .add_filter("Rust", &["rs"])
+                                .save_file()
+                            {
                                 if let Err(e) = std::fs::write(&path, &self.editor_text) {
                                     self.build_log = format!("[ERROR] 保存失敗: {}", e);
                                 } else {
@@ -886,7 +974,9 @@ impl eframe::App for IdeApp {
                     }
                     if ui.button("💾 Save As...").clicked() {
                         if let Some(path) = rfd::FileDialog::new()
-                            .add_filter("Rust", &["rs"]).save_file() {
+                            .add_filter("Rust", &["rs"])
+                            .save_file()
+                        {
                             if let Err(e) = std::fs::write(&path, &self.editor_text) {
                                 self.build_log = format!("[ERROR] 保存失敗: {}", e);
                             } else {
@@ -898,9 +988,7 @@ impl eframe::App for IdeApp {
                         ui.close_menu();
                     }
                 });
-                ui.menu_button("Build", |ui| {
-                    if ui.button("Build").clicked() {}
-                });
+                ui.menu_button("Build", |ui| if ui.button("Build").clicked() {});
                 ui.menu_button("Help", |ui| {
                     let _ = ui.button("About");
                     if ui.button("使い方ガイド").clicked() {
@@ -916,59 +1004,61 @@ impl eframe::App for IdeApp {
                 ui.checkbox(&mut self.show_debug_panel, "Debug Panel");
             });
         });
-        if settings_clicked { self.show_settings = !self.show_settings; }
+        if settings_clicked {
+            self.show_settings = !self.show_settings;
+        }
 
         // Left: Board picker + Build panel
         egui::SidePanel::left("left_panel")
-    .resizable(true)
-    .default_width(crate::core::config::LEFT_PANEL_WIDTH)
-    .width_range(100.0..=600.0)
-    .show(ctx, |ui| {
-            ui.heading("Board");
-            crate::ui::board_picker::ui_board_picker(self, ui, &msg_tx);
-            ui.separator();
-            crate::ui::build_panel::ui_build_panel(self, ui, &msg_tx);
-            ui.separator();
-            crate::ui::file_explorer::ui_file_explorer(self, ui);
-        });
+            .resizable(true)
+            .default_width(crate::core::config::LEFT_PANEL_WIDTH)
+            .width_range(100.0..=600.0)
+            .show(ctx, |ui| {
+                ui.heading("Board");
+                crate::ui::board_picker::ui_board_picker(self, ui, &msg_tx);
+                ui.separator();
+                crate::ui::build_panel::ui_build_panel(self, ui, &msg_tx);
+                ui.separator();
+                crate::ui::file_explorer::ui_file_explorer(self, ui);
+            });
 
         // Right: Serial monitor / Docs
         egui::SidePanel::right("right_panel")
-    .resizable(true)
-    .default_width(crate::core::config::RIGHT_PANEL_WIDTH)
-    .width_range(100.0..=600.0)
-    .show(ctx, |ui| {
-            // Tab buttons
-            ui.horizontal(|ui| {
-                ui.selectable_value(
-                    &mut self.right_tab,
-                    crate::ui::help_panel::RightTab::SerialMonitor,
-                    "🔌 Serial",
-                );
-                ui.selectable_value(
-                    &mut self.right_tab,
-                    crate::ui::help_panel::RightTab::Docs,
-                    "📖 Docs",
-                );
-                ui.selectable_value(
-                    &mut self.right_tab,
-                    crate::ui::help_panel::RightTab::Pinout,
-                    "📌 ピンアウト",
-                );
+            .resizable(true)
+            .default_width(crate::core::config::RIGHT_PANEL_WIDTH)
+            .width_range(100.0..=600.0)
+            .show(ctx, |ui| {
+                // Tab buttons
+                ui.horizontal(|ui| {
+                    ui.selectable_value(
+                        &mut self.right_tab,
+                        crate::ui::help_panel::RightTab::SerialMonitor,
+                        "🔌 Serial",
+                    );
+                    ui.selectable_value(
+                        &mut self.right_tab,
+                        crate::ui::help_panel::RightTab::Docs,
+                        "📖 Docs",
+                    );
+                    ui.selectable_value(
+                        &mut self.right_tab,
+                        crate::ui::help_panel::RightTab::Pinout,
+                        "📌 ピンアウト",
+                    );
+                });
+                ui.separator();
+                match self.right_tab {
+                    crate::ui::help_panel::RightTab::SerialMonitor => {
+                        crate::ui::serial_monitor::ui_serial_monitor(self, ui, &msg_tx);
+                    }
+                    crate::ui::help_panel::RightTab::Docs => {
+                        crate::ui::help_panel::ui_help_panel(self, ui);
+                    }
+                    crate::ui::help_panel::RightTab::Pinout => {
+                        crate::ui::pinout_panel::ui_pinout_panel(self, ui);
+                    }
+                }
             });
-            ui.separator();
-            match self.right_tab {
-                crate::ui::help_panel::RightTab::SerialMonitor => {
-                    crate::ui::serial_monitor::ui_serial_monitor(self, ui, &msg_tx);
-                }
-                crate::ui::help_panel::RightTab::Docs => {
-                    crate::ui::help_panel::ui_help_panel(self, ui);
-                }
-                crate::ui::help_panel::RightTab::Pinout => {
-                    crate::ui::pinout_panel::ui_pinout_panel(self, ui);
-                }
-            }
-        });
 
         if self.show_debug_panel {
             egui::SidePanel::right("debug_panel")
@@ -1006,29 +1096,49 @@ impl eframe::App for IdeApp {
                     ui.label(format!("📁 {}", name));
                     ui.separator();
                 }
-                ui.label(format!("Board: {}", crate::core::board::BOARD_PRESETS.get(self.selected_board).map(|p| p.display_name).unwrap_or("<unknown>")));
+                ui.label(format!(
+                    "Board: {}",
+                    crate::core::board::BOARD_PRESETS
+                        .get(self.selected_board)
+                        .map(|p| p.display_name)
+                        .unwrap_or("<unknown>")
+                ));
                 ui.separator();
                 ui.label(format!("Ln {}, Col {}", self.cursor_line, self.cursor_col));
-                if self.is_dirty { ui.label("●"); }
+                if self.is_dirty {
+                    ui.label("●");
+                }
                 ui.separator();
                 // LSP ステータス
                 let lsp_text = if self.lsp_client.is_some() {
-                    if self.lsp_initialized { "LSP ●" } else { "LSP…" }
+                    if self.lsp_initialized {
+                        "LSP ●"
+                    } else {
+                        "LSP…"
+                    }
                 } else {
                     "LSP ✕"
                 };
                 let lsp_color = if self.lsp_client.is_some() {
-                    if self.lsp_initialized { egui::Color32::from_rgb(80, 200, 80) } else { egui::Color32::YELLOW }
+                    if self.lsp_initialized {
+                        egui::Color32::from_rgb(80, 200, 80)
+                    } else {
+                        egui::Color32::YELLOW
+                    }
                 } else {
                     egui::Color32::from_rgb(200, 80, 80)
                 };
                 ui.label(egui::RichText::new(lsp_text).color(lsp_color));
                 ui.separator();
-                if self.is_building { ui.label("Building..."); }
-                if self.is_flashing { ui.label("Flashing..."); }
+                if self.is_building {
+                    ui.label("Building...");
+                }
+                if self.is_flashing {
+                    ui.label("Flashing...");
+                }
                 if ui.button("Quit").clicked() {
-                        quit_clicked = true;
-                    }
+                    quit_clicked = true;
+                }
             });
         });
         if quit_clicked {
@@ -1179,7 +1289,8 @@ impl eframe::App for IdeApp {
                             );
                             ui.end_row();
                             ui.label("作成先:");
-                            let project_dir = self.new_project_base_dir.join(self.new_project_name.trim());
+                            let project_dir =
+                                self.new_project_base_dir.join(self.new_project_name.trim());
                             ui.label(
                                 egui::RichText::new(project_dir.to_string_lossy().as_ref())
                                     .monospace()
@@ -1191,7 +1302,10 @@ impl eframe::App for IdeApp {
                     ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         let can_create = !self.new_project_name.trim().is_empty();
-                        if ui.add_enabled(can_create, egui::Button::new("✅ 作成")).clicked() {
+                        if ui
+                            .add_enabled(can_create, egui::Button::new("✅ 作成"))
+                            .clicked()
+                        {
                             do_create = true;
                             close = true;
                         }
@@ -1208,7 +1322,9 @@ impl eframe::App for IdeApp {
                     self.build_log =
                         "[ERROR] そのパスはIDE本体のディレクトリです。別の場所を選択してください。"
                             .to_string();
-                } else if let Some(preset) = crate::core::board::BOARD_PRESETS.get(self.selected_board) {
+                } else if let Some(preset) =
+                    crate::core::board::BOARD_PRESETS.get(self.selected_board)
+                {
                     match crate::templates::create_blink_project(&project_dir, &preset.kind) {
                         Ok(_) => {
                             let main_rs_path = project_dir.join("src").join("main.rs");
@@ -1260,7 +1376,10 @@ impl eframe::App for IdeApp {
                     ui.horizontal(|ui| {
                         let name = self.new_file_name.trim();
                         let can_create = !name.is_empty() && name.ends_with(".rs");
-                        if ui.add_enabled(can_create, egui::Button::new("✅ 作成")).clicked() {
+                        if ui
+                            .add_enabled(can_create, egui::Button::new("✅ 作成"))
+                            .clicked()
+                        {
                             do_create_file = true;
                             close_file_dialog = true;
                         }
@@ -1292,4 +1411,15 @@ impl eframe::App for IdeApp {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::append_log_once;
 
+    #[test]
+    fn finished_output_does_not_replace_or_duplicate_progress() {
+        let mut log = "[BUILD] ビルド開始...\nCompiling app\n".to_string();
+        append_log_once(&mut log, "Compiling app\nFinished dev");
+
+        assert_eq!(log, "[BUILD] ビルド開始...\nCompiling app\nFinished dev\n");
+    }
+}

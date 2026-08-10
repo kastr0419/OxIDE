@@ -63,7 +63,7 @@ jobs:
         shell: pwsh
         run: |
           $bin = "target\${{ matrix.target }}\release\${{ matrix.artifact }}"
-          Compress-Archive -Path $bin, README.md, LICENSE-MIT, LICENSE-APACHE, NOTICE `
+          Compress-Archive -Path $bin, README.md, LICENSE-MIT, LICENSE-APACHE, NOTICE, OSS_LICENSE_AUDIT.md `
             -DestinationPath ${{ matrix.archive }}
 
       # Linux: tar.gz 圧縮 (バイナリをトップレベルに配置)
@@ -72,7 +72,7 @@ jobs:
         run: |
           BIN="target/${{ matrix.target }}/release/${{ matrix.artifact }}"
           cp "$BIN" oxide
-          tar czf ${{ matrix.archive }} oxide README.md LICENSE-MIT LICENSE-APACHE NOTICE
+          tar czf ${{ matrix.archive }} oxide README.md LICENSE-MIT LICENSE-APACHE NOTICE OSS_LICENSE_AUDIT.md
           rm oxide
 
       - name: Upload artifact

@@ -11,26 +11,47 @@ pub enum RightTab {
 
 const DOCS: &[(&str, &str)] = &[
     // --- ボード別 ---
-    ("AVR (Arduino)",           include_str!("../../docs/avr.md")),
-    ("ESP32",                   include_str!("../../docs/esp32.md")),
-    ("nRF / micro:bit",         include_str!("../../docs/nrf_microbit.md")),
-    ("RISC-V",                  include_str!("../../docs/riscv.md")),
-    ("RP2040 (Pico)",           include_str!("../../docs/rp2040.md")),
-    ("SAMD (MKR/M0)",           include_str!("../../docs/samd.md")),
-    ("STM32",                   include_str!("../../docs/stm32.md")),
-    ("Teensy",                  include_str!("../../docs/teensy.md")),
-    ("🔧 書き込みトラブルシューティング", include_str!("../../docs/troubleshooting.md")),
-    ("Raspberry Pi Zero (ベアメタル)", include_str!("../../docs/rpi_zero.md")),
-    ("📦 コンパイル成果物ガイド",       include_str!("../../docs/artifacts.md")),
+    ("AVR (Arduino)", include_str!("../../docs/avr.md")),
+    ("ESP32", include_str!("../../docs/esp32.md")),
+    (
+        "nRF / micro:bit",
+        include_str!("../../docs/nrf_microbit.md"),
+    ),
+    ("RISC-V", include_str!("../../docs/riscv.md")),
+    ("RP2040 (Pico)", include_str!("../../docs/rp2040.md")),
+    ("SAMD (MKR/M0)", include_str!("../../docs/samd.md")),
+    ("STM32", include_str!("../../docs/stm32.md")),
+    ("Teensy", include_str!("../../docs/teensy.md")),
+    (
+        "🔧 書き込みトラブルシューティング",
+        include_str!("../../docs/troubleshooting.md"),
+    ),
+    (
+        "Raspberry Pi Zero (ベアメタル)",
+        include_str!("../../docs/rpi_zero.md"),
+    ),
+    (
+        "📦 コンパイル成果物ガイド",
+        include_str!("../../docs/artifacts.md"),
+    ),
     // --- 機能ガイド ---
-    ("📝 エディタ機能",              include_str!("../../docs/editor.md")),
-    ("🔨 ビルドと書き込み",          include_str!("../../docs/build_and_flash.md")),
-    ("📡 シリアルモニタ",            include_str!("../../docs/serial_monitor.md")),
-    ("📈 シリアルプロッタ",          include_str!("../../docs/plotter.md")),
-    ("🐛 デバッグパネル",            include_str!("../../docs/debug.md")),
-    ("🔩 SVDビューア",              include_str!("../../docs/svd.md")),
-    ("📌 ピンアウト表示",            include_str!("../../docs/pinout.md")),
-    ("⌨️ ショートカット一覧",         include_str!("../../docs/shortcuts.md")),
+    ("📝 エディタ機能", include_str!("../../docs/editor.md")),
+    (
+        "🔨 ビルドと書き込み",
+        include_str!("../../docs/build_and_flash.md"),
+    ),
+    (
+        "📡 シリアルモニタ",
+        include_str!("../../docs/serial_monitor.md"),
+    ),
+    ("📈 シリアルプロッタ", include_str!("../../docs/plotter.md")),
+    ("🐛 デバッグパネル", include_str!("../../docs/debug.md")),
+    ("🔩 SVDビューア", include_str!("../../docs/svd.md")),
+    ("📌 ピンアウト表示", include_str!("../../docs/pinout.md")),
+    (
+        "⌨️ ショートカット一覧",
+        include_str!("../../docs/shortcuts.md"),
+    ),
 ];
 
 pub fn ui_help_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
@@ -76,8 +97,7 @@ pub fn ui_help_panel(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
                 }
             }
 
-            egui_commonmark::CommonMarkViewer::new()
-                .show(ui, &mut app.doc_cache, doc_content);
+            egui_commonmark::CommonMarkViewer::new().show(ui, &mut app.doc_cache, doc_content);
 
             // スタイルを元に戻す
             *ui.style_mut() = (*orig_style).clone();

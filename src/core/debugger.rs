@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
-use std::time::Duration;
 use crossbeam_channel::{Receiver, Sender};
+use std::time::Duration;
 
 #[derive(Debug, Clone)]
 pub struct RegisterValue {
@@ -11,8 +11,12 @@ pub struct RegisterValue {
 }
 
 impl RegisterValue {
-    pub fn hex(&self) -> String { format!("0x{:08X}", self.raw) }
-    pub fn dec(&self) -> String { format!("{}", self.raw) }
+    pub fn hex(&self) -> String {
+        format!("0x{:08X}", self.raw)
+    }
+    pub fn dec(&self) -> String {
+        format!("{}", self.raw)
+    }
 }
 
 #[derive(Debug)]
@@ -55,8 +59,8 @@ pub fn spawn_debugger() -> (Sender<DebugCommand>, Receiver<DebugEvent>) {
 }
 
 fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
-    use probe_rs::{Permissions, probe::list::Lister};
     use probe_rs::MemoryInterface;
+    use probe_rs::{probe::list::Lister, Permissions};
 
     let mut session: Option<probe_rs::Session> = None;
 
@@ -66,7 +70,8 @@ fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
 
     // List probes immediately on start
     let lister = Lister::new();
-    let probes: Vec<String> = lister.list_all()
+    let probes: Vec<String> = lister
+        .list_all()
         .iter()
         .map(|p| format!("{:?}", p))
         .collect();
@@ -81,24 +86,27 @@ fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
                         let lister = Lister::new();
                         let probes_list = lister.list_all();
                         if probes_list.is_empty() {
-                            let _ = evt_tx.send(DebugEvent::Error("No debug probe found. Connect ST-Link/J-Link.".to_string()));
+                            let _ = evt_tx.send(DebugEvent::Error(
+                                "No debug probe found. Connect ST-Link/J-Link.".to_string(),
+                            ));
                             continue;
                         }
                         match probes_list[0].open() {
-                            Ok(probe) => {
-                                match probe.attach(&chip, Permissions::default()) {
-                                    Ok(s) => {
-                                        let names: Vec<String> = probes_list.iter().map(|p| format!("{:?}", p)).collect();
-                                        session = Some(s);
-                                        let _ = evt_tx.send(DebugEvent::Connected { probes: names });
-                                    }
-                                    Err(e) => {
-                                        let _ = evt_tx.send(DebugEvent::Error(format!("Attach failed: {}", e)));
-                                    }
+                            Ok(probe) => match probe.attach(&chip, Permissions::default()) {
+                                Ok(s) => {
+                                    let names: Vec<String> =
+                                        probes_list.iter().map(|p| format!("{:?}", p)).collect();
+                                    session = Some(s);
+                                    let _ = evt_tx.send(DebugEvent::Connected { probes: names });
                                 }
-                            }
+                                Err(e) => {
+                                    let _ = evt_tx
+                                        .send(DebugEvent::Error(format!("Attach failed: {}", e)));
+                                }
+                            },
                             Err(e) => {
-                                let _ = evt_tx.send(DebugEvent::Error(format!("Open probe failed: {}", e)));
+                                let _ = evt_tx
+                                    .send(DebugEvent::Error(format!("Open probe failed: {}", e)));
                             }
                         }
                     }
@@ -126,10 +134,20 @@ fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
                                             // Read registers after halt
                                             send_registers(&mut core, &evt_tx);
                                         }
-                                        Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Halt failed: {}", e))); }
+                                        Err(e) => {
+                                            let _ = evt_tx.send(DebugEvent::Error(format!(
+                                                "Halt failed: {}",
+                                                e
+                                            )));
+                                        }
                                     }
                                 }
-                                Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Core access failed: {}", e))); }
+                                Err(e) => {
+                                    let _ = evt_tx.send(DebugEvent::Error(format!(
+                                        "Core access failed: {}",
+                                        e
+                                    )));
+                                }
                             }
                         } else {
                             let _ = evt_tx.send(DebugEvent::Error("Not connected".to_string()));
@@ -139,13 +157,23 @@ fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
                     DebugCommand::Continue => {
                         if let Some(ref mut s) = session {
                             match s.core(0) {
-                                Ok(mut core) => {
-                                    match core.run() {
-                                        Ok(_) => { let _ = evt_tx.send(DebugEvent::Continued); }
-                                        Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Continue failed: {}", e))); }
+                                Ok(mut core) => match core.run() {
+                                    Ok(_) => {
+                                        let _ = evt_tx.send(DebugEvent::Continued);
                                     }
+                                    Err(e) => {
+                                        let _ = evt_tx.send(DebugEvent::Error(format!(
+                                            "Continue failed: {}",
+                                            e
+                                        )));
+                                    }
+                                },
+                                Err(e) => {
+                                    let _ = evt_tx.send(DebugEvent::Error(format!(
+                                        "Core access failed: {}",
+                                        e
+                                    )));
                                 }
-                                Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Core access failed: {}", e))); }
                             }
                         }
                     }
@@ -153,15 +181,21 @@ fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
                     DebugCommand::Step => {
                         if let Some(ref mut s) = session {
                             match s.core(0) {
-                                Ok(mut core) => {
-                                    match core.step() {
-                                        Ok(_) => {
-                                            send_registers(&mut core, &evt_tx);
-                                        }
-                                        Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Step failed: {}", e))); }
+                                Ok(mut core) => match core.step() {
+                                    Ok(_) => {
+                                        send_registers(&mut core, &evt_tx);
                                     }
+                                    Err(e) => {
+                                        let _ = evt_tx
+                                            .send(DebugEvent::Error(format!("Step failed: {}", e)));
+                                    }
+                                },
+                                Err(e) => {
+                                    let _ = evt_tx.send(DebugEvent::Error(format!(
+                                        "Core access failed: {}",
+                                        e
+                                    )));
                                 }
-                                Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Core access failed: {}", e))); }
                             }
                         }
                     }
@@ -169,8 +203,13 @@ fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
                     DebugCommand::ReadRegisters => {
                         if let Some(ref mut s) = session {
                             match s.core(0) {
-                                Ok(mut core) => { send_registers(&mut core, &evt_tx); }
-                                Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Core access: {}", e))); }
+                                Ok(mut core) => {
+                                    send_registers(&mut core, &evt_tx);
+                                }
+                                Err(e) => {
+                                    let _ = evt_tx
+                                        .send(DebugEvent::Error(format!("Core access: {}", e)));
+                                }
                             }
                         }
                     }
@@ -181,11 +220,22 @@ fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
                                 Ok(mut core) => {
                                     let mut buf = vec![0u8; len];
                                     match core.read(addr, &mut buf) {
-                                        Ok(_) => { let _ = evt_tx.send(DebugEvent::MemoryRead { addr, data: buf }); }
-                                        Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Memory read failed: {}", e))); }
+                                        Ok(_) => {
+                                            let _ = evt_tx
+                                                .send(DebugEvent::MemoryRead { addr, data: buf });
+                                        }
+                                        Err(e) => {
+                                            let _ = evt_tx.send(DebugEvent::Error(format!(
+                                                "Memory read failed: {}",
+                                                e
+                                            )));
+                                        }
                                     }
                                 }
-                                Err(e) => { let _ = evt_tx.send(DebugEvent::Error(format!("Core access: {}", e))); }
+                                Err(e) => {
+                                    let _ = evt_tx
+                                        .send(DebugEvent::Error(format!("Core access: {}", e)));
+                                }
                             }
                         }
                     }
@@ -204,7 +254,10 @@ fn debugger_loop(cmd_rx: Receiver<DebugCommand>, evt_tx: Sender<DebugEvent>) {
                             while stop_rx.try_recv().is_err() {
                                 std::thread::sleep(Duration::from_millis(300));
                                 counter += 1;
-                                let _ = evt_tx_clone.send(DebugEvent::RttData { channel, data: format!("Mock RTT line {}", counter) });
+                                let _ = evt_tx_clone.send(DebugEvent::RttData {
+                                    channel,
+                                    data: format!("Mock RTT line {}", counter),
+                                });
                             }
                         });
                         rtt_worker = Some(handle);
@@ -235,10 +288,22 @@ fn send_registers(core: &mut probe_rs::Core, evt_tx: &Sender<DebugEvent>) {
 
     // ARM register names
     let arm_reg_names = [
-        ("R0", 0u16), ("R1", 1), ("R2", 2), ("R3", 3),
-        ("R4", 4), ("R5", 5), ("R6", 6), ("R7", 7),
-        ("R8", 8), ("R9", 9), ("R10", 10), ("R11", 11),
-        ("R12", 12), ("SP", 13), ("LR", 14), ("PC", 15),
+        ("R0", 0u16),
+        ("R1", 1),
+        ("R2", 2),
+        ("R3", 3),
+        ("R4", 4),
+        ("R5", 5),
+        ("R6", 6),
+        ("R7", 7),
+        ("R8", 8),
+        ("R9", 9),
+        ("R10", 10),
+        ("R11", 11),
+        ("R12", 12),
+        ("SP", 13),
+        ("LR", 14),
+        ("PC", 15),
     ];
 
     for (name, _id) in &arm_reg_names {
@@ -251,24 +316,36 @@ fn send_registers(core: &mut probe_rs::Core, evt_tx: &Sender<DebugEvent>) {
                         probe_rs::RegisterValue::U64(v) => v,
                         probe_rs::RegisterValue::U128(v) => v as u64,
                     };
-                    regs.push(RegisterValue { name: name.to_string(), raw });
+                    regs.push(RegisterValue {
+                        name: name.to_string(),
+                        raw,
+                    });
                 }
                 Err(_) => {
-                    regs.push(RegisterValue { name: name.to_string(), raw: 0 });
+                    regs.push(RegisterValue {
+                        name: name.to_string(),
+                        raw: 0,
+                    });
                 }
             }
         }
     }
 
     // Also try xPSR
-    if let Some(reg) = reg_file.all_registers().find(|r| r.name() == "XPSR" || r.name() == "xPSR") {
+    if let Some(reg) = reg_file
+        .all_registers()
+        .find(|r| r.name() == "XPSR" || r.name() == "xPSR")
+    {
         if let Ok(val) = core.read_core_reg(reg) {
             let raw: u64 = match val {
                 probe_rs::RegisterValue::U32(v) => v as u64,
                 probe_rs::RegisterValue::U64(v) => v,
                 probe_rs::RegisterValue::U128(v) => v as u64,
             };
-            regs.push(RegisterValue { name: "xPSR".to_string(), raw });
+            regs.push(RegisterValue {
+                name: "xPSR".to_string(),
+                raw,
+            });
         }
     }
 
