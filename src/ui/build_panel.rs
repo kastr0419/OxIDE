@@ -18,6 +18,13 @@ fn open_dist_folder(path: &std::path::Path) {
     let _ = std::process::Command::new("open").arg(path).spawn();
 }
 
+fn find_elf(dist: &std::path::Path) -> Option<std::path::PathBuf> {
+    std::fs::read_dir(dist).ok()?.find_map(|entry| {
+        let path = entry.ok()?.path();
+        (path.extension()? == "elf").then_some(path)
+    })
+}
+
 pub fn ui_build_panel(
     app: &mut crate::app::IdeApp,
     ui: &mut egui::Ui,
@@ -46,16 +53,7 @@ pub fn ui_build_panel(
         if flash_btn.clicked() {
             app.is_flashing = true;
             // last_dist_path からELFを検索してflash_asyncを呼ぶ
-            let elf_path = app.last_dist_path.as_ref().and_then(|dist| {
-                std::fs::read_dir(dist).ok()?.find_map(|e| {
-                    let p = e.ok()?.path();
-                    if p.extension().map(|x| x == "elf").unwrap_or(false) {
-                        Some(p)
-                    } else {
-                        None
-                    }
-                })
-            });
+            let elf_path = app.last_dist_path.as_deref().and_then(find_elf);
             match elf_path {
                 Some(artifact) => {
                     if let Some(preset) = crate::core::board::BOARD_PRESETS.get(app.selected_board)
@@ -114,6 +112,43 @@ pub fn ui_build_panel(
         }
         if ui.button("📊 Stack").clicked() {
             app.show_stack_panel = true;
+        }
+
+        let virtual_port = app
+            .available_ports
+            .get(app.selected_port)
+            .map(String::as_str)
+            == Some(crate::core::serial::VIRTUAL_PORT_NAME);
+        if virtual_port {
+            if let Some(preset) = crate::core::board::BOARD_PRESETS.get(app.selected_board) {
+                if crate::core::simulator::is_supported(&preset.kind) {
+                    let artifact = app.last_dist_path.as_deref().and_then(find_elf);
+                    if let Some(artifact) = artifact {
+                        if ui
+                            .button("🧠 CPU/GPIO Sim")
+                            .on_hover_text("Renode を使用して CPU と GPIO をシミュレーション")
+                            .clicked()
+                        {
+                            let request = crate::core::simulator::SimulationRequest {
+                                board: preset.kind.clone(),
+                                artifact,
+                            };
+                            match crate::core::simulator::launch(&request) {
+                                Ok(script) => app.build_log.push_str(&format!(
+                                    "\n[SIM] Renode を起動しました: {}\n",
+                                    script.display()
+                                )),
+                                Err(error) => app
+                                    .build_log
+                                    .push_str(&format!("\n[ERROR] CPU/GPIO simulation: {error}\n")),
+                            }
+                        }
+                    }
+                } else {
+                    ui.label("CPU/GPIO simulation: STM32F1のみ対応")
+                        .on_hover_text("実行には Renode が必要です");
+                }
+            }
         }
     });
 

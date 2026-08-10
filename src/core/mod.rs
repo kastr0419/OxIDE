@@ -13,6 +13,7 @@ pub mod lsp;
 pub mod pinout;
 pub mod project;
 pub mod serial;
+pub mod simulator;
 pub mod snippets;
 pub mod stack_analyzer;
 pub mod svd_parser;

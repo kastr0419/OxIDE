@@ -73,10 +73,11 @@ The virtual environment works with every preset currently shown in the Board pic
 | Build | Runs the real Cargo build for the selected board; its toolchain is still required |
 | Flash | Checks that an artifact exists and simulates a successful write; no hardware is modified |
 | Serial | Emits `sensor:0` through `sensor:99` periodically and replies to input with `echo:` |
-| CPU, GPIO, peripherals | Not emulated |
+| CPU and GPIO | STM32F1 only: executes the real ELF in Renode and simulates the PC13 LED |
+| Other peripherals | Not emulated |
 | Hardware debugging | Not supported |
 
-This environment tests the OxIDE workflow. It does not execute firmware instructions or validate hardware timing.
+To simulate STM32F1 CPU/GPIO, install [Renode](https://renode.io/), add it to PATH, build the firmware, and click **CPU/GPIO Sim**. Other boards still simulate only the OxIDE workflow and do not execute firmware instructions. Renode timing is not identical to physical hardware.
 
 ## 🗺️ Pinout viewer
 
