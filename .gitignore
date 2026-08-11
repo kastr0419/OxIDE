@@ -10,3 +10,12 @@ launch_oxide.vbs
 installer/tools/
 installer/output/
 docs/qiita_article*.md
+
+# 内部資料（公開リポジトリには含めない）
+AGENTS.md
+CODING_GUIDELINES.md
+OSS_LICENSE_AUDIT.md
+REQUIREMENTS.md
+TRACEABILITY.md
+review.md
+todos.md

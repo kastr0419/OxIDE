@@ -28,7 +28,6 @@ Source: "D:\OxIDE\target\release\oxide.exe"; DestDir: "{app}"; Flags: ignorevers
 Source: "D:\OxIDE\LICENSE-MIT"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\OxIDE\LICENSE-APACHE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "D:\OxIDE\NOTICE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\OxIDE\OSS_LICENSE_AUDIT.md"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Rustup installer (will be copied to temporary folder and removed after install)
 Source: "D:\OxIDE\installer\tools\rustup-init.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
