@@ -709,7 +709,7 @@ impl IdeApp {
 
         // 現在開いているファイルに did_open を送る
         if let Some(ref path) = self.file_path.clone() {
-            let uri = format!("file:///{}", path.to_string_lossy().replace('\\', "/"));
+            let uri = crate::core::lsp::file_uri(path);
             client.did_open(&uri, &self.editor_text);
         }
 
@@ -761,7 +761,7 @@ impl IdeApp {
         self.active_tab = self.open_tabs.len() - 1;
         // LSP に did_open を送る（初期化完了後でないと rust-analyzer が無視する）
         {
-            let uri = format!("file:///{}", path.to_string_lossy().replace('\\', "/"));
+            let uri = crate::core::lsp::file_uri(&path);
             if self.lsp_initialized {
                 if let Some(ref lsp) = self.lsp_client {
                     lsp.did_open(&uri, &content);

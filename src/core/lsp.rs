@@ -4,12 +4,83 @@
 use crossbeam_channel::{Receiver, Sender};
 use serde_json::{json, Value};
 use std::io::{BufRead, BufReader, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::thread;
 
 static REQUEST_ID: AtomicI64 = AtomicI64::new(1);
+
+/// Convert an OS path to an LSP `file` URI without losing non-UTF-8 path data.
+pub fn file_uri(path: &Path) -> String {
+    #[cfg(unix)]
+    let bytes = {
+        use std::os::unix::ffi::OsStrExt;
+        path.as_os_str().as_bytes().to_vec()
+    };
+    #[cfg(windows)]
+    let bytes = {
+        use std::os::windows::ffi::OsStrExt;
+        let wide = path.as_os_str().encode_wide().collect::<Vec<_>>();
+        let mut bytes = Vec::new();
+        let mut i = 0;
+        while i < wide.len() {
+            let unit = wide[i];
+            if unit == b'\\' as u16 {
+                bytes.push(b'/');
+                i += 1;
+                continue;
+            }
+            let code = if (0xD800..=0xDBFF).contains(&unit)
+                && wide
+                    .get(i + 1)
+                    .is_some_and(|u| (0xDC00..=0xDFFF).contains(u))
+            {
+                i += 1;
+                0x10000 + (((unit - 0xD800) as u32) << 10) + (wide[i] - 0xDC00) as u32
+            } else {
+                unit as u32
+            };
+            if code < 0x80 {
+                bytes.push(code as u8);
+            } else if code < 0x800 {
+                bytes.extend([0xC0 | (code >> 6) as u8, 0x80 | (code & 0x3F) as u8]);
+            } else if code < 0x10000 {
+                bytes.extend([
+                    0xE0 | (code >> 12) as u8,
+                    0x80 | ((code >> 6) & 0x3F) as u8,
+                    0x80 | (code & 0x3F) as u8,
+                ]);
+            } else {
+                bytes.extend([
+                    0xF0 | (code >> 18) as u8,
+                    0x80 | ((code >> 12) & 0x3F) as u8,
+                    0x80 | ((code >> 6) & 0x3F) as u8,
+                    0x80 | (code & 0x3F) as u8,
+                ]);
+            }
+            i += 1;
+        }
+        bytes
+    };
+
+    let mut uri = if bytes.starts_with(b"//") {
+        "file:".to_string()
+    } else if bytes.starts_with(b"/") {
+        "file://".to_string()
+    } else {
+        "file:///".to_string()
+    };
+    for byte in bytes {
+        if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~' | b'/' | b':') {
+            uri.push(byte as char);
+        } else {
+            use std::fmt::Write;
+            write!(uri, "%{byte:02X}").expect("writing to String cannot fail");
+        }
+    }
+    uri
+}
 
 fn next_id() -> i64 {
     REQUEST_ID.fetch_add(1, Ordering::SeqCst)
@@ -214,7 +285,7 @@ pub fn start_lsp(
         "method": "initialize",
         "params": {
             "processId": std::process::id(),
-            "rootUri": format!("file:///{}", workspace.to_string_lossy().replace('\\', "/")),
+            "rootUri": file_uri(&workspace),
             "capabilities": {
                 "textDocument": {
                     "completion": {
@@ -227,7 +298,7 @@ pub fn start_lsp(
                 }
             },
             "workspaceFolders": [{
-                "uri": format!("file:///{}", workspace.to_string_lossy().replace('\\', "/")),
+                "uri": file_uri(&workspace),
                 "name": workspace.file_name()
                     .and_then(|n| n.to_str()).unwrap_or("workspace")
             }]
@@ -396,4 +467,24 @@ fn parse_diagnostics(json: &Value) -> Option<Vec<Diagnostic>> {
         .collect();
 
     Some(diags)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::file_uri;
+    use std::path::Path;
+
+    #[test]
+    fn file_uri_encodes_reserved_characters() {
+        #[cfg(unix)]
+        assert_eq!(
+            file_uri(Path::new("/tmp/a b#c%d.rs")),
+            "file:///tmp/a%20b%23c%25d.rs"
+        );
+        #[cfg(windows)]
+        assert_eq!(
+            file_uri(Path::new(r"C:\a b#c%d.rs")),
+            "file:///C:/a%20b%23c%25d.rs"
+        );
+    }
 }

@@ -872,16 +872,16 @@ impl BoardPreset {
             mem.flash_length_kb as u64 * 1024
         } else {
             match self.kind {
-                BoardKind::ArduinoUno
-                | BoardKind::ArduinoNano
-                | BoardKind::ArduinoMega
-                | BoardKind::ArduinoLeonardo => 32_768u64,
-                BoardKind::Esp32 | BoardKind::Esp32S2 | BoardKind::Esp32S3 => 4_194_304u64,
-                BoardKind::MicroBitV2
-                | BoardKind::Stm32F4
-                | BoardKind::Stm32L4
-                | BoardKind::Stm32F7
-                | BoardKind::Stm32H7 => 524_288u64,
+                BoardKind::ArduinoUno | BoardKind::ArduinoNano | BoardKind::ArduinoLeonardo => {
+                    32 * 1024
+                }
+                BoardKind::ArduinoMega => 256 * 1024,
+                BoardKind::Esp32
+                | BoardKind::Esp32S2
+                | BoardKind::Esp32S3
+                | BoardKind::Esp32C3
+                | BoardKind::Esp32C6
+                | BoardKind::Esp32H2 => 4 * 1024 * 1024,
                 _ => 0u64,
             }
         }
@@ -892,16 +892,15 @@ impl BoardPreset {
             mem.ram_length_kb as u64 * 1024
         } else {
             match self.kind {
-                BoardKind::ArduinoUno
-                | BoardKind::ArduinoNano
-                | BoardKind::ArduinoMega
-                | BoardKind::ArduinoLeonardo => 2_048u64,
-                BoardKind::Esp32 | BoardKind::Esp32S2 | BoardKind::Esp32S3 => 532_480u64,
-                BoardKind::MicroBitV2
-                | BoardKind::Stm32F4
-                | BoardKind::Stm32L4
-                | BoardKind::Stm32F7
-                | BoardKind::Stm32H7 => 131_072u64,
+                BoardKind::ArduinoUno | BoardKind::ArduinoNano => 2 * 1024,
+                BoardKind::ArduinoMega => 8 * 1024,
+                BoardKind::ArduinoLeonardo => 2560,
+                BoardKind::RpiZero => 512 * 1024 * 1024,
+                BoardKind::Esp32 => 520 * 1024,
+                BoardKind::Esp32S2 => 320 * 1024,
+                BoardKind::Esp32S3 | BoardKind::Esp32C6 => 512 * 1024,
+                BoardKind::Esp32C3 => 400 * 1024,
+                BoardKind::Esp32H2 => 320 * 1024,
                 _ => 0u64,
             }
         }
@@ -1011,5 +1010,22 @@ mod tests {
         for p in BOARD_PRESETS {
             assert!(p.default_baud > 0, "Board {:?} has zero baud rate", p.kind);
         }
+    }
+
+    #[test]
+    fn test_board_memory_capacities() {
+        let capacity = |kind| {
+            BOARD_PRESETS
+                .iter()
+                .find(|preset| preset.kind == kind)
+                .map(|preset| (preset.flash_bytes(), preset.ram_bytes()))
+                .unwrap()
+        };
+
+        assert_eq!(capacity(BoardKind::ArduinoMega), (256 * 1024, 8 * 1024));
+        assert_eq!(capacity(BoardKind::ArduinoLeonardo), (32 * 1024, 2560));
+        assert_eq!(capacity(BoardKind::RpiZero), (0, 512 * 1024 * 1024));
+        assert_eq!(capacity(BoardKind::Stm32L4), (1024 * 1024, 128 * 1024));
+        assert_eq!(capacity(BoardKind::Esp32C3), (4 * 1024 * 1024, 400 * 1024));
     }
 }

@@ -227,7 +227,7 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                 cmd_opt = Some(cmd);
             }
             FlashToolKind::OpenOcd => {
-                // stub
+                log = "OpenOCD flashing is not supported yet".to_string();
             }
             FlashToolKind::Picotool => {
                 // prefer picotool; if not available, fallback to elf2uf2-rs -d
@@ -280,10 +280,10 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
                 }
             }
             FlashToolKind::StFlash => {
-                // stub: st-flash for STM32 via ST-Link
+                log = "st-flash flashing is not supported yet".to_string();
             }
             FlashToolKind::NrfJprog => {
-                // stub: nrfjprog for Nordic chips
+                log = "nrfjprog flashing is not supported yet".to_string();
             }
             FlashToolKind::TeensyLoader => {
                 // ELF -> IHEX, then use teensy_loader_cli
@@ -304,7 +304,8 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
             }
         }
         let final_log = if let Some(cmd) = cmd_opt {
-            let (success, output) = run_with_initial_timeout(cmd, tx.clone());
+            let (success, output) =
+                run_with_initial_timeout(cmd, tx.clone(), Duration::from_secs(60));
             ok_flag = success;
             if log.is_empty() {
                 output
@@ -330,7 +331,11 @@ pub fn flash(preset: &BoardPreset, port: &str, elf: &Path, tx: Sender<FlashMessa
 /// フラッシュコマンドを実行する。
 /// stdout/stderr を収集しつつ、最大60秒でプロセス終了を待つ。
 /// elf2uf2-rs のように出力なしで終了するツールにも対応。
-fn run_with_initial_timeout(mut cmd: Command, progress_tx: Sender<FlashMessage>) -> (bool, String) {
+fn run_with_initial_timeout(
+    mut cmd: Command,
+    progress_tx: Sender<FlashMessage>,
+    timeout: Duration,
+) -> (bool, String) {
     cmd.stdout(Stdio::piped()).stderr(Stdio::piped());
 
     let mut child = match cmd.spawn() {
@@ -372,31 +377,29 @@ fn run_with_initial_timeout(mut cmd: Command, progress_tx: Sender<FlashMessage>)
     drop(tx); // 全 sender を落とすと rx が閉じる
 
     // 出力の有無にかかわらず、最大60秒プロセス終了を待つ
-    let deadline = std::time::Instant::now() + Duration::from_secs(60);
+    let deadline = std::time::Instant::now() + timeout;
     loop {
+        if std::time::Instant::now() >= deadline {
+            let _ = child.kill();
+            let _ = child.wait();
+            for h in handles {
+                let _ = h.join();
+            }
+            return (
+                false,
+                "⏱ タイムアウト (60秒): デバイスが応答しませんでした。\n\
+                 Pico は BOOTSEL モードで接続されていましたか？\n\
+                 (BOOTSELボタンを押しながらUSB接続 → RPI-RP2ドライブが現れてから Flash)"
+                    .to_string(),
+            );
+        }
         match rx.recv_timeout(Duration::from_millis(500)) {
             Ok(_) => { /* 出力あり — 続けて待つ */ }
             Err(crossbeam_channel::RecvTimeoutError::Disconnected) => {
                 // パイプが閉じた = プロセスが終了（出力なしでも正常）
                 break;
             }
-            Err(crossbeam_channel::RecvTimeoutError::Timeout) => {
-                if std::time::Instant::now() >= deadline {
-                    let _ = child.kill();
-                    let _ = child.wait();
-                    for h in handles {
-                        let _ = h.join();
-                    }
-                    return (
-                        false,
-                        "⏱ タイムアウト (60秒): デバイスが応答しませんでした。\n\
-                         Pico は BOOTSEL モードで接続されていましたか？\n\
-                         (BOOTSELボタンを押しながらUSB接続 → RPI-RP2ドライブが現れてから Flash)"
-                            .to_string(),
-                    );
-                }
-                // まだ期限内 — 待機継続
-            }
+            Err(crossbeam_channel::RecvTimeoutError::Timeout) => {}
         }
     }
 
@@ -456,7 +459,9 @@ pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<crate::app::
             .ok();
             return;
         }
-        let preset_opt = BOARD_PRESETS.iter().find(|p| std::mem::discriminant(&p.kind) == std::mem::discriminant(&req.board));
+        let preset_opt = BOARD_PRESETS
+            .iter()
+            .find(|p| std::mem::discriminant(&p.kind) == std::mem::discriminant(&req.board));
         if let Some(preset) = preset_opt {
             let (ftx, frx) = crossbeam_channel::bounded(1);
             let _ = flash(preset, &req.port, &req.artifact, ftx);
@@ -510,7 +515,7 @@ mod tests {
         };
         let (tx, rx) = crossbeam_channel::unbounded();
 
-        let (ok, log) = run_with_initial_timeout(cmd, tx);
+        let (ok, log) = run_with_initial_timeout(cmd, tx, Duration::from_secs(60));
         let progress: Vec<_> = rx
             .try_iter()
             .filter_map(|message| match message {
@@ -525,4 +530,27 @@ mod tests {
         assert!(progress.iter().any(|line| line.trim() == "stderr"));
     }
 
+    #[test]
+    fn times_out_even_while_output_is_streaming() {
+        let mut cmd = if cfg!(windows) {
+            let mut cmd = Command::new("powershell");
+            cmd.args([
+                "-NoProfile",
+                "-Command",
+                "while ($true) { Write-Output tick; Start-Sleep -Milliseconds 10 }",
+            ]);
+            cmd
+        } else {
+            let mut cmd = Command::new("sh");
+            cmd.args(["-c", "while true; do echo tick; sleep 0.01; done"]);
+            cmd
+        };
+        crate::core::no_window(&mut cmd);
+        let (tx, _) = crossbeam_channel::unbounded();
+
+        let (ok, log) = run_with_initial_timeout(cmd, tx, Duration::from_millis(100));
+
+        assert!(!ok);
+        assert!(log.contains("タイムアウト"));
+    }
 }

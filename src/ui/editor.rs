@@ -428,7 +428,7 @@ pub fn ui_editor(
             let uri = app
                 .file_path
                 .as_ref()
-                .map(|p| format!("file:///{}", p.to_string_lossy().replace('\\', "/")))
+                .map(|p| crate::core::lsp::file_uri(p))
                 .unwrap_or_else(|| "file:///untitled.rs".to_string());
             lsp.did_change(&uri, app.doc_version, &app.editor_text);
             let line = app.cursor_line.saturating_sub(1) as u32;
@@ -460,7 +460,7 @@ pub fn ui_editor(
             let uri = app
                 .file_path
                 .as_ref()
-                .map(|p| format!("file:///{}", p.to_string_lossy().replace('\\', "/")))
+                .map(|p| crate::core::lsp::file_uri(p))
                 .unwrap_or_else(|| "file:///untitled.rs".to_string());
             let line = app.cursor_line.saturating_sub(1) as u32;
             let col = app.cursor_col.saturating_sub(1) as u32;

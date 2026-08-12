@@ -3,7 +3,11 @@
 
 use anyhow::{Context, Result};
 use crossbeam_channel::{bounded, Sender};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, ErrorKind, Write};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use std::thread;
 
 pub const VIRTUAL_PORT_NAME: &str = "OxIDE Virtual Board";
@@ -52,26 +56,32 @@ pub fn connect(port_name: &str, baud: u32, tx: Sender<SerialEvent>) -> Result<Se
     tx.send(SerialEvent::Opened).ok();
     let (write_tx, write_rx) = bounded::<String>(10);
     let (stop_tx, stop_rx) = bounded::<()>(1);
-    let stop_rx_reader = stop_rx.clone();
-    let stop_rx_writer = stop_rx.clone();
+    let stopped = Arc::new(AtomicBool::new(false));
+    let stop_reader = stopped.clone();
+    let stop_writer = stopped.clone();
+    thread::spawn(move || {
+        let _ = stop_rx.recv();
+        stopped.store(true, Ordering::Release);
+    });
     let mut reader = BufReader::new(port.try_clone()?);
     let tx_clone = tx.clone();
     thread::spawn(move || {
         let mut line = String::new();
         loop {
+            if stop_reader.load(Ordering::Acquire) {
+                break;
+            }
             line.clear();
             match reader.read_line(&mut line) {
                 Ok(0) => {
                     // no data
-                    if stop_rx_reader.try_recv().is_ok() {
-                        break;
-                    }
                     thread::sleep(std::time::Duration::from_millis(10));
                     continue;
                 }
                 Ok(_) => {
                     let _ = tx_clone.send(SerialEvent::Data(line.clone()));
                 }
+                Err(e) if e.kind() == ErrorKind::TimedOut => continue,
                 Err(e) => {
                     let _ = tx_clone.send(SerialEvent::Error(format!("read error: {}", e)));
                     break;
@@ -82,13 +92,17 @@ pub fn connect(port_name: &str, baud: u32, tx: Sender<SerialEvent>) -> Result<Se
     });
     // writer thread
     let mut port_writer = port;
-    thread::spawn(move || loop {
-        crossbeam_channel::select! {
-            recv(write_rx) -> msg => match msg {
-                Ok(s) => { let _ = port_writer.write_all(s.as_bytes()); }
-                Err(_) => break,
-            },
-            recv(stop_rx_writer) -> _ => break,
+    thread::spawn(move || {
+        while !stop_writer.load(Ordering::Acquire) {
+            match write_rx.recv_timeout(std::time::Duration::from_millis(100)) {
+                Ok(s) => {
+                    if port_writer.write_all(s.as_bytes()).is_err() {
+                        break;
+                    }
+                }
+                Err(crossbeam_channel::RecvTimeoutError::Timeout) => {}
+                Err(crossbeam_channel::RecvTimeoutError::Disconnected) => break,
+            }
         }
     });
     Ok(SerialHandle { write_tx, stop_tx })
