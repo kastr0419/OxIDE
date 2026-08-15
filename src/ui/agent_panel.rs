@@ -34,6 +34,53 @@ fn agent_prompt_editor(prompt: &mut String) -> egui::TextEdit<'_> {
         .lock_focus(true)
 }
 
+fn show_agent_prompt(ui: &mut egui::Ui, prompt: &mut String) -> egui::Response {
+    let prompt_id = ui.make_persistent_id("agent_prompt");
+    let ime_id = prompt_id.with("ime_active");
+    let mut ime_active = ui
+        .ctx()
+        .data_mut(|data| data.get_temp(ime_id).unwrap_or(false));
+
+    if ui.memory(|memory| memory.had_focus_last_frame(prompt_id)) {
+        ui.input_mut(|input| {
+            let suppress_tab = ime_active
+                || input.events.iter().any(|event| {
+                    matches!(
+                        event,
+                        egui::Event::Ime(egui::ImeEvent::Enabled | egui::ImeEvent::Preedit(_))
+                    )
+                });
+            if suppress_tab {
+                input.events.retain(|event| {
+                    !matches!(
+                        event,
+                        egui::Event::Key {
+                            key: egui::Key::Tab,
+                            pressed: true,
+                            ..
+                        }
+                    )
+                });
+            }
+            for event in &input.events {
+                match event {
+                    egui::Event::Ime(egui::ImeEvent::Enabled | egui::ImeEvent::Preedit(_)) => {
+                        ime_active = true;
+                    }
+                    egui::Event::Ime(egui::ImeEvent::Commit(_) | egui::ImeEvent::Disabled) => {
+                        ime_active = false;
+                    }
+                    _ => {}
+                }
+            }
+        });
+    }
+    ui.ctx()
+        .data_mut(|data| data.insert_temp(ime_id, ime_active));
+
+    ui.add(agent_prompt_editor(prompt).id(prompt_id))
+}
+
 fn open_agent_settings_folder() -> anyhow::Result<()> {
     let path = crate::core::agent::ensure_agent_settings()?;
     let folder = path
@@ -203,7 +250,7 @@ pub fn ui_agent_panel(
     }
 
     ui.label("依頼:");
-    ui.add(agent_prompt_editor(&mut app.agent_prompt));
+    show_agent_prompt(ui, &mut app.agent_prompt);
 
     ui.horizontal(|ui| {
         let can_run = !app.agent_running
@@ -252,7 +299,16 @@ pub fn ui_agent_panel(
 
 #[cfg(test)]
 mod tests {
-    use super::{agent_prompt_editor, head_chars, tail_chars};
+    use super::{head_chars, show_agent_prompt, tail_chars};
+
+    fn show_prompt(ctx: &egui::Context, prompt: &mut String, request_focus: bool) {
+        egui::CentralPanel::default().show(ctx, |ui| {
+            let response = show_agent_prompt(ui, prompt);
+            if request_focus {
+                response.request_focus();
+            }
+        });
+    }
 
     #[test]
     fn tab_is_inserted_into_agent_prompt() {
@@ -260,14 +316,10 @@ mod tests {
         let mut prompt = String::new();
 
         let _ = ctx.run(Default::default(), |ctx| {
-            egui::CentralPanel::default().show(ctx, |ui| {
-                ui.add(agent_prompt_editor(&mut prompt)).request_focus();
-            });
+            show_prompt(ctx, &mut prompt, true);
         });
         let _ = ctx.run(Default::default(), |ctx| {
-            egui::CentralPanel::default().show(ctx, |ui| {
-                ui.add(agent_prompt_editor(&mut prompt));
-            });
+            show_prompt(ctx, &mut prompt, false);
         });
         let input = egui::RawInput {
             events: vec![egui::Event::Key {
@@ -280,12 +332,55 @@ mod tests {
             ..Default::default()
         };
         let _ = ctx.run(input, |ctx| {
-            egui::CentralPanel::default().show(ctx, |ui| {
-                ui.add(agent_prompt_editor(&mut prompt));
-            });
+            show_prompt(ctx, &mut prompt, false);
         });
 
         assert_eq!(prompt, "\t");
+    }
+
+    #[test]
+    fn ime_prediction_survives_tab_selection() {
+        let ctx = egui::Context::default();
+        let mut prompt = String::new();
+
+        let _ = ctx.run(Default::default(), |ctx| {
+            show_prompt(ctx, &mut prompt, true);
+        });
+        let _ = ctx.run(Default::default(), |ctx| {
+            show_prompt(ctx, &mut prompt, false);
+        });
+        let input = egui::RawInput {
+            events: vec![
+                egui::Event::Ime(egui::ImeEvent::Enabled),
+                egui::Event::Ime(egui::ImeEvent::Preedit("よそく".into())),
+            ],
+            ..Default::default()
+        };
+        let _ = ctx.run(input, |ctx| {
+            show_prompt(ctx, &mut prompt, false);
+        });
+        let input = egui::RawInput {
+            events: vec![egui::Event::Key {
+                key: egui::Key::Tab,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: egui::Modifiers::NONE,
+            }],
+            ..Default::default()
+        };
+        let _ = ctx.run(input, |ctx| {
+            show_prompt(ctx, &mut prompt, false);
+        });
+        let input = egui::RawInput {
+            events: vec![egui::Event::Ime(egui::ImeEvent::Commit("予測".into()))],
+            ..Default::default()
+        };
+        let _ = ctx.run(input, |ctx| {
+            show_prompt(ctx, &mut prompt, false);
+        });
+
+        assert_eq!(prompt, "予測");
     }
 
     #[test]
