@@ -121,91 +121,96 @@ pub fn ui_editor(
 
     // Smart editor input preprocessing (Tab, Enter, auto-close brackets)
     let te_id = ui.make_persistent_id("main_editor");
+    let editor_had_focus = ui.memory(|memory| memory.had_focus_last_frame(te_id));
     let mut text_to_insert: Option<String> = None;
     let mut close_bracket: Option<char> = None;
     let mut tab_accept_completion = false;
     let mut tab_trigger_completion = false;
+    let mut keep_editor_focus = false;
 
-    ui.input_mut(|input| {
-        input.events.retain(|event| {
-            match event {
-                // Tab -> 補完確定 / 補完トリガー / インデント（文脈依存）
-                egui::Event::Key {
-                    key: egui::Key::Tab,
-                    pressed: true,
-                    modifiers,
-                    ..
-                } if !modifiers.any() => {
-                    if app.show_completion && !app.lsp_completions.is_empty() {
-                        // ポップアップ表示中 → 選択補完を確定
-                        tab_accept_completion = true;
-                    } else {
-                        let word = word_before_cursor(&app.editor_text, app.cursor_char_idx);
-                        if !word.is_empty() {
-                            // 単語の途中 → LSP補完をトリガー
-                            tab_trigger_completion = true;
+    if editor_had_focus {
+        ui.input_mut(|input| {
+            input.events.retain(|event| {
+                match event {
+                    // Tab -> 補完確定 / 補完トリガー / インデント（文脈依存）
+                    egui::Event::Key {
+                        key: egui::Key::Tab,
+                        pressed: true,
+                        modifiers,
+                        ..
+                    } if !modifiers.any() => {
+                        keep_editor_focus = true;
+                        if app.show_completion && !app.lsp_completions.is_empty() {
+                            // ポップアップ表示中 → 選択補完を確定
+                            tab_accept_completion = true;
                         } else {
-                            // 行頭・空白後 → 4スペース挿入
-                            text_to_insert = Some("    ".to_string());
+                            let word = word_before_cursor(&app.editor_text, app.cursor_char_idx);
+                            if !word.is_empty() {
+                                // 単語の途中 → LSP補完をトリガー
+                                tab_trigger_completion = true;
+                            } else {
+                                // 行頭・空白後 → 4スペース挿入
+                                text_to_insert = Some("    ".to_string());
+                            }
                         }
+                        false // consume
                     }
-                    false // consume
-                }
-                // Enter -> auto-indent
-                egui::Event::Key {
-                    key: egui::Key::Enter,
-                    pressed: true,
-                    modifiers,
-                    ..
-                } if !modifiers.any() => {
-                    // compute indentation from current line
-                    let chars: Vec<char> = app.editor_text.chars().collect();
-                    let end = app.cursor_char_idx.min(chars.len());
-                    let line_start = chars[..end]
-                        .iter()
-                        .rposition(|&c| c == '\n')
-                        .map(|i| i + 1)
-                        .unwrap_or(0);
-                    let indent: String = chars[line_start..end]
-                        .iter()
-                        .take_while(|&&c| c == ' ' || c == '\t')
-                        .collect();
-                    // add extra indent if last non-whitespace before cursor is '{'
-                    let extra = {
-                        let last_nw = chars[..end].iter().rposition(|c| !c.is_whitespace());
-                        if last_nw.is_some_and(|i| chars[i] == '{') {
-                            "    "
-                        } else {
-                            ""
+                    // Enter -> auto-indent
+                    egui::Event::Key {
+                        key: egui::Key::Enter,
+                        pressed: true,
+                        modifiers,
+                        ..
+                    } if !modifiers.any() => {
+                        // compute indentation from current line
+                        let chars: Vec<char> = app.editor_text.chars().collect();
+                        let end = app.cursor_char_idx.min(chars.len());
+                        let line_start = chars[..end]
+                            .iter()
+                            .rposition(|&c| c == '\n')
+                            .map(|i| i + 1)
+                            .unwrap_or(0);
+                        let indent: String = chars[line_start..end]
+                            .iter()
+                            .take_while(|&&c| c == ' ' || c == '\t')
+                            .collect();
+                        // add extra indent if last non-whitespace before cursor is '{'
+                        let extra = {
+                            let last_nw = chars[..end].iter().rposition(|c| !c.is_whitespace());
+                            if last_nw.is_some_and(|i| chars[i] == '{') {
+                                "    "
+                            } else {
+                                ""
+                            }
+                        };
+                        text_to_insert = Some(format!("\n{}{}", indent, extra));
+                        false // consume
+                    }
+                    // Intercept text events to detect opening brackets, but let TextEdit insert the character
+                    egui::Event::Text(s) => match s.as_str() {
+                        "{" => {
+                            close_bracket = Some('}');
+                            true
                         }
-                    };
-                    text_to_insert = Some(format!("\n{}{}", indent, extra));
-                    false // consume
-                }
-                // Intercept text events to detect opening brackets, but let TextEdit insert the character
-                egui::Event::Text(s) => match s.as_str() {
-                    "{" => {
-                        close_bracket = Some('}');
-                        true
-                    }
-                    "(" => {
-                        close_bracket = Some(')');
-                        true
-                    }
-                    "[" => {
-                        close_bracket = Some(']');
-                        true
-                    }
-                    "\"" => {
-                        close_bracket = Some('\"');
-                        true
-                    }
+                        "(" => {
+                            close_bracket = Some(')');
+                            true
+                        }
+                        "[" => {
+                            close_bracket = Some(']');
+                            true
+                        }
+                        "\"" => {
+                            close_bracket = Some('\"');
+                            true
+                        }
+                        _ => true,
+                    },
                     _ => true,
-                },
-                _ => true,
-            }
+                }
+            });
         });
-    });
+    }
 
     // Apply any text insertion (Tab/Enter) before showing TextEdit and update cursor state
     if let Some(ins) = text_to_insert {
@@ -293,6 +298,9 @@ pub fn ui_editor(
                     .font(egui::TextStyle::Monospace)
                     .id(te_id)
                     .show(ui);
+                if keep_editor_focus {
+                    te_output.response.request_focus();
+                }
 
                 // カーソル位置を更新
                 let cursor_range = te_output.cursor_range;
