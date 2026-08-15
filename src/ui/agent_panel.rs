@@ -43,19 +43,19 @@ fn show_agent_prompt(ui: &mut egui::Ui, prompt: &mut String) -> egui::Response {
 
     if ui.memory(|memory| memory.had_focus_last_frame(prompt_id)) {
         ui.input_mut(|input| {
-            let suppress_tab = ime_active
+            let suppress_selection_keys = ime_active
                 || input.events.iter().any(|event| {
                     matches!(
                         event,
                         egui::Event::Ime(egui::ImeEvent::Enabled | egui::ImeEvent::Preedit(_))
                     )
                 });
-            if suppress_tab {
+            if suppress_selection_keys {
                 input.events.retain(|event| {
                     !matches!(
                         event,
                         egui::Event::Key {
-                            key: egui::Key::Tab,
+                            key: egui::Key::Tab | egui::Key::Enter,
                             pressed: true,
                             ..
                         }
@@ -339,48 +339,50 @@ mod tests {
     }
 
     #[test]
-    fn ime_prediction_survives_tab_selection() {
-        let ctx = egui::Context::default();
-        let mut prompt = String::new();
+    fn ime_prediction_survives_tab_or_enter_selection() {
+        for key in [egui::Key::Tab, egui::Key::Enter] {
+            let ctx = egui::Context::default();
+            let mut prompt = String::new();
 
-        let _ = ctx.run(Default::default(), |ctx| {
-            show_prompt(ctx, &mut prompt, true);
-        });
-        let _ = ctx.run(Default::default(), |ctx| {
-            show_prompt(ctx, &mut prompt, false);
-        });
-        let input = egui::RawInput {
-            events: vec![
-                egui::Event::Ime(egui::ImeEvent::Enabled),
-                egui::Event::Ime(egui::ImeEvent::Preedit("よそく".into())),
-            ],
-            ..Default::default()
-        };
-        let _ = ctx.run(input, |ctx| {
-            show_prompt(ctx, &mut prompt, false);
-        });
-        let input = egui::RawInput {
-            events: vec![egui::Event::Key {
-                key: egui::Key::Tab,
-                physical_key: None,
-                pressed: true,
-                repeat: false,
-                modifiers: egui::Modifiers::NONE,
-            }],
-            ..Default::default()
-        };
-        let _ = ctx.run(input, |ctx| {
-            show_prompt(ctx, &mut prompt, false);
-        });
-        let input = egui::RawInput {
-            events: vec![egui::Event::Ime(egui::ImeEvent::Commit("予測".into()))],
-            ..Default::default()
-        };
-        let _ = ctx.run(input, |ctx| {
-            show_prompt(ctx, &mut prompt, false);
-        });
+            let _ = ctx.run(Default::default(), |ctx| {
+                show_prompt(ctx, &mut prompt, true);
+            });
+            let _ = ctx.run(Default::default(), |ctx| {
+                show_prompt(ctx, &mut prompt, false);
+            });
+            let input = egui::RawInput {
+                events: vec![
+                    egui::Event::Ime(egui::ImeEvent::Enabled),
+                    egui::Event::Ime(egui::ImeEvent::Preedit("よそく".into())),
+                ],
+                ..Default::default()
+            };
+            let _ = ctx.run(input, |ctx| {
+                show_prompt(ctx, &mut prompt, false);
+            });
+            let input = egui::RawInput {
+                events: vec![egui::Event::Key {
+                    key,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::NONE,
+                }],
+                ..Default::default()
+            };
+            let _ = ctx.run(input, |ctx| {
+                show_prompt(ctx, &mut prompt, false);
+            });
+            let input = egui::RawInput {
+                events: vec![egui::Event::Ime(egui::ImeEvent::Commit("予測".into()))],
+                ..Default::default()
+            };
+            let _ = ctx.run(input, |ctx| {
+                show_prompt(ctx, &mut prompt, false);
+            });
 
-        assert_eq!(prompt, "予測");
+            assert_eq!(prompt, "予測", "key={key:?}");
+        }
     }
 
     #[test]
