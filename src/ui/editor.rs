@@ -4,7 +4,7 @@
 pub fn ui_editor(
     app: &mut crate::app::IdeApp,
     ui: &mut egui::Ui,
-    _tx: &crossbeam_channel::Sender<crate::app::AppMessage>,
+    _tx: &crossbeam_channel::Sender<crate::core::event::CoreEvent>,
 ) {
     // ─ タブバー ─
     if !app.open_tabs.is_empty() {

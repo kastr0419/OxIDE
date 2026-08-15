@@ -3,7 +3,7 @@
 
 //! 設定の統合テスト
 
-use oxide::core::config::AppConfig;
+use oxide::app::config::AppConfig;
 
 #[test]
 fn config_roundtrip_toml() {

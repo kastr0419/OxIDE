@@ -3,31 +3,16 @@
 
 pub mod agent;
 pub mod board;
-pub mod build_analyzer;
-pub mod compiler;
-pub mod config;
-pub mod debugger;
-pub mod detector;
-pub mod elf_analyzer;
-pub mod flasher;
-pub mod lsp;
-pub mod pinout;
-pub mod project;
+pub mod build;
+pub mod editor;
+pub mod event;
+pub mod inspect;
+pub mod process;
 pub mod serial;
 pub mod simulator;
-pub mod snippets;
-pub mod stack_analyzer;
-pub mod svd_parser;
-pub mod toolchain;
 
-/// Windows でコンソールウィンドウを表示しないよう CREATE_NO_WINDOW フラグを設定する。
-/// 他OSでは何もしない。
-pub fn no_window(cmd: &mut std::process::Command) -> &mut std::process::Command {
-    #[cfg(target_os = "windows")]
-    {
-        use std::os::windows::process::CommandExt;
-        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-        cmd.creation_flags(CREATE_NO_WINDOW);
-    }
-    cmd
-}
+pub use board::{detector, pinout};
+pub use build::{analyzer as build_analyzer, compiler, flasher, toolchain};
+pub use editor::{lsp, project, snippets};
+pub use inspect::{debugger, elf as elf_analyzer, stack as stack_analyzer, svd as svd_parser};
+pub use process::no_window;

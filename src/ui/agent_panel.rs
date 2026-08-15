@@ -129,7 +129,7 @@ fn oxide_context(app: &crate::app::IdeApp) -> String {
 pub fn ui_agent_panel(
     app: &mut crate::app::IdeApp,
     ui: &mut egui::Ui,
-    tx: &crossbeam_channel::Sender<crate::app::AppMessage>,
+    tx: &crossbeam_channel::Sender<crate::core::event::CoreEvent>,
 ) {
     ui.horizontal(|ui| {
         ui.label(

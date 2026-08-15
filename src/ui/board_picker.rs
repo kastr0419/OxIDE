@@ -6,7 +6,7 @@ use egui::ComboBox;
 pub fn ui_board_picker(
     app: &mut crate::app::IdeApp,
     ui: &mut egui::Ui,
-    tx: &crossbeam_channel::Sender<crate::app::AppMessage>,
+    tx: &crossbeam_channel::Sender<crate::core::event::CoreEvent>,
 ) {
     // Board selection
     let prev_board = app.selected_board;

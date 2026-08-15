@@ -6,7 +6,7 @@ use crate::core::serial::SerialSettings;
 pub fn ui_serial_monitor(
     app: &mut crate::app::IdeApp,
     ui: &mut egui::Ui,
-    tx: &crossbeam_channel::Sender<crate::app::AppMessage>,
+    tx: &crossbeam_channel::Sender<crate::core::event::CoreEvent>,
 ) {
     ui.horizontal(|ui| {
         if app.is_serial_connected {
@@ -25,7 +25,7 @@ pub fn ui_serial_monitor(
                 let baud = crate::core::board::BOARD_PRESETS
                     .get(app.selected_board)
                     .map(|p| p.default_baud)
-                    .unwrap_or(crate::core::config::DEFAULT_BAUD_RATE);
+                    .unwrap_or(crate::app::config::DEFAULT_BAUD_RATE);
                 let settings = SerialSettings {
                     port_name: port.clone(),
                     baud_rate: baud,

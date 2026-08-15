@@ -12,13 +12,13 @@ rust-embedded-ide は **3 層アーキテクチャ**で構成されます。
 
 ```
 ┌───────────────────────────────────────────┐
-│                  UI 層                     │  src/ui/*.rs
+│                  UI 層                     │  src/ui/**
 │  egui パネル描画。重い処理は Core に委譲    │
 ├───────────────────────────────────────────┤
-│                 App 層                     │  src/app.rs
+│                 App 層                     │  src/app/**
 │  IdeApp 状態管理・メッセージルーティング    │
 ├───────────────────────────────────────────┤
-│                Core 層                     │  src/core/*.rs
+│                Core 層                     │  src/core/**
 │  I/O・ビルド・フラッシュ・デバッグロジック  │  （egui に非依存）
 └───────────────────────────────────────────┘
 ```
@@ -38,24 +38,24 @@ src/main.rs
   └── eframe::run_native(IdeApp)
         │
         ▼
-src/app.rs ── IdeApp
-  ├── Sender<AppMessage>   ─── バックグラウンドスレッドが送信
-  ├── Receiver<AppMessage> ─── 毎フレーム try_recv() でポーリング
+src/app/mod.rs ── IdeApp
+  ├── Sender<CoreEvent>   ─── バックグラウンドスレッドが送信
+  ├── Receiver<CoreEvent> ─── 毎フレーム try_recv() でポーリング
   │
   ├── [Core 呼び出し]
-  │    ├── core::compiler   build_async()
-  │    ├── core::flasher    flash()
+  │    ├── core::build::compiler   build_async()
+  │    ├── core::build::flasher    flash()
   │    ├── core::serial     connect() / list_ports()
-  │    ├── core::lsp        LspClient::start()
-  │    ├── core::debugger   spawn_debugger()
-  │    ├── core::detector   detect_by_usb_id() / detect_by_probe_rs()
-  │    ├── core::config     AppConfig::load() / save()
-  │    ├── core::elf_analyzer  analyze_elf()
-  │    ├── core::stack_analyzer analyze_stack()
-  │    ├── core::svd_parser    parse_svd()
-  │    ├── core::toolchain     check_rust_analyzer()
-  │    ├── core::project       open_project()
-  │    └── core::snippets      get_snippets()
+  │    ├── core::editor::lsp        LspClient::start()
+  │    ├── core::inspect::debugger  spawn_debugger()
+  │    ├── core::board::detector    detect_by_usb_id() / detect_by_probe_rs()
+  │    ├── app::config              AppConfig::load() / save()
+  │    ├── core::inspect::elf       analyze_elf()
+  │    ├── core::inspect::stack     analyze_stack()
+  │    ├── core::inspect::svd       parse_svd()
+  │    ├── core::build::toolchain   check_rust_analyzer()
+  │    ├── core::editor::project    open_project()
+  │    └── core::editor::snippets   get_snippets()
   │
   └── [UI 呼び出し]
        ├── ui::editor          ui_editor()
@@ -80,26 +80,26 @@ src/app.rs ── IdeApp
 
 すべての重い処理（ビルド・書き込み・シリアル通信・LSP・デバッグ）は
 バックグラウンドスレッドで実行し、`crossbeam_channel` を通じて
-`AppMessage` として UI スレッドに結果を送信します。
+`CoreEvent` として UI スレッドに結果を送信します。
 
 ```
 [UI スレッド]                    [バックグラウンドスレッド]
     │                                    │
-    │  Sender<AppMessage> をクローンして渡す
+    │  Sender<CoreEvent> をクローンして渡す
     │────────────────────────────────────►│
     │                                    │  重い処理（I/O・外部コマンド）
     │                                    │
     │◄───────────────────────────────────│
-    │  tx.send(AppMessage::XXX(...))
+    │  tx.send(CoreEvent::XXX(...))
     │
     │  毎フレーム: while let Ok(msg) = rx.try_recv() { ... }
     │  IdeApp フィールドを更新 → 次フレームの描画に反映
 ```
 
-### AppMessage バリアント一覧
+### CoreEvent バリアント一覧
 
 ```rust
-pub enum AppMessage {
+pub enum CoreEvent {
     Build(BuildMsg),                    // ビルド進捗・結果
     Flash(FlashMsg),                    // 書き込み進捗・結果
     Serial(SerialMsg),                  // シリアル受信・接続状態
@@ -125,13 +125,13 @@ pub enum AppMessage {
 ```
 [ui::build_panel]
   ↓ Build ボタン押下
-[app.rs]
-  ↓ core::compiler::build_async(BuildRequest, msg_tx.clone())
-[core::compiler — バックグラウンドスレッド]
+[app/mod.rs]
+  ↓ core::build::compiler::build_async(BuildRequest, msg_tx.clone())
+[core::build::compiler — バックグラウンドスレッド]
   ↓ cargo build --release --target <triple>
   ↓ 成功時: ELF を dist/ にコピー
-  ↓ tx.send(AppMessage::Build(BuildMsg::Finished(BuildResult)))
-[app.rs handle_messages()]
+  ↓ tx.send(CoreEvent::Build(BuildMsg::Finished(BuildResult)))
+[app/events.rs handle_messages()]
   ↓ is_building = false / build_log 更新 / last_dist_path 設定
   ↓ (auto_flash_after_build が true なら flash_async を起動)
 [ui::build_panel]
@@ -143,9 +143,9 @@ pub enum AppMessage {
 ```
 [ui::build_panel]
   ↓ Flash ボタン押下
-[app.rs]
-  ↓ core::flasher::flash(preset, port, elf_path, flash_tx)
-[core::flasher — バックグラウンドスレッド]
+[app/mod.rs]
+  ↓ core::build::flasher::flash(preset, port, elf_path, flash_tx)
+[core::build::flasher — バックグラウンドスレッド]
   ↓ FlashToolKind に応じて外部コマンド実行:
     Avrdude   → avrdude -c arduino -p <mcu> -P <port> -U flash:w:<hex>:i
     Esptool   → esptool.py --port <port> write_flash <offset> <bin>
@@ -155,8 +155,8 @@ pub enum AppMessage {
     DaplinkHex→ ELF→HEX 変換 → ドライブにコピー
     SdCard    → ELF→kernel.img 変換 → ドライブにコピー
     (他: OpenOcd / StFlash / NrfJprog / TeensyLoader)
-  ↓ tx.send(AppMessage::Flash(FlashMsg::Finished(FlashResult)))
-[app.rs]
+  ↓ tx.send(CoreEvent::Flash(FlashMsg::Finished(FlashResult)))
+[app/mod.rs]
   → is_flashing = false / build_log 更新
 ```
 
@@ -165,39 +165,39 @@ pub enum AppMessage {
 ```
 [ui::serial_monitor]
   ↓ 接続ボタン押下
-[app.rs]
+[app/mod.rs]
   ↓ core::serial::connect(port, baud, serial_event_tx) → SerialHandle
   ↓ SerialHandle { write_tx, stop_tx } を serial_tx に保存
 
 [core::serial — 読み込みスレッド]
   BufReader::read_line() ループ
-  → SerialEvent::Data(line) → AppMessage::Serial(SerialMsg::Line)
-  → SerialEvent::Error     → AppMessage::Serial(SerialMsg::Error)
-  → SerialEvent::Closed    → AppMessage::Serial(SerialMsg::Disconnected)
+  → SerialEvent::Data(line) → CoreEvent::Serial(SerialMsg::Line)
+  → SerialEvent::Error     → CoreEvent::Serial(SerialMsg::Error)
+  → SerialEvent::Closed    → CoreEvent::Serial(SerialMsg::Disconnected)
 
 [core::serial — 書き込みスレッド]
   crossbeam select! { write_rx → write, stop_rx → break }
 
 [ui::serial_monitor]
   ↓ 送信ボタン / Enter キー
-[app.rs]
+[app/mod.rs]
   ↓ serial_tx.as_ref().map(|h| h.write_tx.send(text))
 ```
 
 ### 4.4 LSP フロー
 
 ```
-[app.rs（プロジェクト読み込み時）]
-  ↓ core::lsp::LspClient::start(workspace, ra_path, ui_tx)
-[core::lsp — LSP 送受信スレッド]
+[app/mod.rs（プロジェクト読み込み時）]
+  ↓ core::editor::lsp::LspClient::start(workspace, ra_path, ui_tx)
+[core::editor::lsp — LSP 送受信スレッド]
   1. rust-analyzer プロセス起動
   2. initialize リクエスト送信
   3. レスポンス受信 → LspMessage::Initialized → ui_tx.send()
-  4. (app.rs で initialized を受信) → initialized 通知 + didOpen 送信
+  4. (app/events.rs で initialized を受信) → initialized 通知 + didOpen 送信
   5. textDocument/completion リクエスト → LspMessage::CompletionItems
   6. textDocument/publishDiagnostics 通知 → LspMessage::Diagnostics
 
-[app.rs handle_messages()]
+[app/events.rs handle_messages()]
   LspInitialized → lsp_initialized = true、pending_did_opens を送信
   LspCompletion  → lsp_completions 更新
   LspDiagnostic  → lsp_diagnostics 更新
@@ -206,14 +206,14 @@ pub enum AppMessage {
 ### 4.5 デバッグフロー
 
 ```
-[app.rs（起動時）]
-  ↓ core::debugger::spawn_debugger() → (debug_cmd_tx, debug_evt_rx)
+[app/mod.rs（起動時）]
+  ↓ core::inspect::debugger::spawn_debugger() → (debug_cmd_tx, debug_evt_rx)
 
 [ui::debug_panel]
   ↓ 接続ボタン押下
   ↓ debug_cmd_tx.send(DebugCommand::Connect { chip })
 
-[core::debugger — デバッグスレッド]
+[core::inspect::debugger — デバッグスレッド]
   probe_rs::Permissions::new() → Session 確立
   DebugCommand::Halt       → core.halt()
   DebugCommand::Continue   → core.run()
@@ -223,7 +223,7 @@ pub enum AppMessage {
   DebugCommand::StartRtt   → RTT ワーカースレッド起動
   → evt_tx.send(DebugEvent::XXX)
 
-[app.rs（毎フレーム）]
+[app/events.rs（毎フレーム）]
   debug_evt_rx.try_recv() → debug_registers / debug_memory 更新
 ```
 
@@ -305,48 +305,48 @@ AppConfig (Serialize/Deserialize)
 ## 8. モジュール依存関係
 
 ```
-app.rs
+app/mod.rs
   ├─► core::board        (BoardPreset, BOARD_PRESETS, BoardKind)
-  ├─► core::compiler     (build_async, BuildRequest, BuildResult)
-  ├─► core::flasher      (flash, FlashMessage)
+  ├─► core::build::compiler (build_async, BuildRequest, BuildResult)
+  ├─► core::build::flasher  (flash, FlashMessage)
   ├─► core::serial       (connect, list_ports, SerialHandle, SerialEvent)
-  ├─► core::lsp          (LspClient, LspMessage, CompletionItem, Diagnostic)
-  ├─► core::debugger     (spawn_debugger, DebugCommand, DebugEvent, RegisterValue)
-  ├─► core::detector     (detect_by_usb_id, detect_by_probe_rs, DetectedBoard)
-  ├─► core::config       (AppConfig)
-  ├─► core::build_analyzer (BuildStats)
-  ├─► core::elf_analyzer  (ElfInfo)
-  ├─► core::stack_analyzer (StackReport)
-  ├─► core::svd_parser   (SvdDevice)
-  ├─► core::toolchain    (check_rust_analyzer, RustAnalyzerStatus)
-  ├─► core::project      (open_project)
-  ├─► core::snippets     (get_snippets)
+  ├─► core::editor::lsp  (LspClient, LspMessage, CompletionItem, Diagnostic)
+  ├─► core::inspect::debugger (spawn_debugger, DebugCommand, DebugEvent, RegisterValue)
+  ├─► core::board::detector   (detect_by_usb_id, detect_by_probe_rs, DetectedBoard)
+  ├─► app::config        (AppConfig)
+  ├─► core::build::analyzer (BuildStats)
+  ├─► core::inspect::elf   (ElfInfo)
+  ├─► core::inspect::stack (StackReport)
+  ├─► core::inspect::svd   (SvdDevice)
+  ├─► core::build::toolchain (check_rust_analyzer, RustAnalyzerStatus)
+  ├─► core::editor::project  (open_project)
+  ├─► core::editor::snippets (get_snippets)
   └─► ui::*              (各 ui_xxx_panel 関数)
 
 ui::pinout_panel
-  └─► core::pinout       (get_pinout, BoardPinout, PinInfo, PinFunction)
+  └─► core::board::pinout (get_pinout, BoardPinout, PinInfo, PinFunction)
 
 ui::build_panel
-  └─► core::build_analyzer (BuildStats)
+  └─► core::build::analyzer (BuildStats)
 
 ui::debug_panel
-  └─► core::debugger     (DebugCommand, DebugEvent, RegisterValue)
+  └─► core::inspect::debugger (DebugCommand, DebugEvent, RegisterValue)
 
 ui::svd_panel
-  └─► core::svd_parser   (SvdDevice, SvdPeripheral, SvdRegister)
+  └─► core::inspect::svd (SvdDevice, SvdPeripheral, SvdRegister)
 
 ui::elf_panel
-  └─► core::elf_analyzer (ElfInfo, ElfSection, ElfSymbol)
+  └─► core::inspect::elf (ElfInfo, ElfSection, ElfSymbol)
 
 ui::stack_panel
-  └─► core::stack_analyzer (StackReport, StackFrame)
+  └─► core::inspect::stack (StackReport, StackFrame)
 ```
 
 ---
 
 ## 9. 主要な型定義
 
-### IdeApp（src/app.rs）
+### IdeApp（src/app/mod.rs）
 
 `IdeApp` は `eframe::App` を実装するアプリ全体の状態コンテナです。
 フィールド命名規則：
@@ -381,7 +381,7 @@ std::thread::spawn(move || {
         .args(&["build", "--release", "--target", &triple])
         .output()
         .expect("cargo not found");
-    let _ = tx.send(AppMessage::Build(BuildMsg::Finished(BuildResult {
+    let _ = tx.send(CoreEvent::Build(BuildMsg::Finished(BuildResult {
         success: output.status.success(),
         stdout: String::from_utf8_lossy(&output.stdout).into(),
         stderr: String::from_utf8_lossy(&output.stderr).into(),
@@ -418,7 +418,7 @@ detect_by_probe_rs()                  (Stage 2, ARM/RISC-V のみ)
 ```
 [ui::board_picker — テンプレート読み込みボタン]
   ↓ template_confirm_board = Some(index)
-[app.rs — 確認ダイアログ OK]
+[ui/workbench.rs — 確認ダイアログ OK]
   ↓ core::templates::generate(board_kind)
   → .cargo/config.toml（target triple 設定）
   → Cargo.toml（依存クレート）

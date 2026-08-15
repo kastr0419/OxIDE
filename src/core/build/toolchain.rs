@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
+use crate::core::event::{CoreEvent, ToolchainMsg};
 use std::path::PathBuf;
 use std::process::Command;
 
@@ -55,12 +56,10 @@ pub fn validate_custom_path(path: &std::path::Path) -> bool {
 }
 
 /// `rustup component add rust-analyzer` をバックグラウンドで実行する
-/// 結果は AppMessage::Toolchain(...) として tx へ送信される
-pub fn install_rust_analyzer_async(tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
+/// 結果は CoreEvent::Toolchain(...) として tx へ送信される
+pub fn install_rust_analyzer_async(tx: crossbeam_channel::Sender<CoreEvent>) {
     std::thread::spawn(move || {
-        let _ = tx.send(crate::app::AppMessage::Toolchain(
-            crate::app::ToolchainMsg::InstallStarted,
-        ));
+        let _ = tx.send(CoreEvent::Toolchain(ToolchainMsg::InstallStarted));
 
         let mut rustup_cmd = Command::new("rustup");
         let result = crate::core::no_window(&mut rustup_cmd)
@@ -69,23 +68,20 @@ pub fn install_rust_analyzer_async(tx: crossbeam_channel::Sender<crate::app::App
 
         match result {
             Ok(output) if output.status.success() => {
-                let _ = tx.send(crate::app::AppMessage::Toolchain(
-                    crate::app::ToolchainMsg::InstallFinished(Ok(check_rust_analyzer())),
-                ));
+                let _ = tx.send(CoreEvent::Toolchain(ToolchainMsg::InstallFinished(Ok(
+                    check_rust_analyzer(),
+                ))));
             }
             Ok(output) => {
                 let err = String::from_utf8_lossy(&output.stderr).to_string();
-                let _ = tx.send(crate::app::AppMessage::Toolchain(
-                    crate::app::ToolchainMsg::InstallFinished(Err(err)),
-                ));
+                let _ = tx.send(CoreEvent::Toolchain(ToolchainMsg::InstallFinished(Err(
+                    err,
+                ))));
             }
             Err(e) => {
-                let _ = tx.send(crate::app::AppMessage::Toolchain(
-                    crate::app::ToolchainMsg::InstallFinished(Err(format!(
-                        "rustup not found: {}",
-                        e
-                    ))),
-                ));
+                let _ = tx.send(CoreEvent::Toolchain(ToolchainMsg::InstallFinished(Err(
+                    format!("rustup not found: {}", e),
+                ))));
             }
         }
     });

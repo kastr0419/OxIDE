@@ -3,13 +3,11 @@
 
 #![windows_subsystem = "windows"]
 
-mod app;
-mod core;
-mod templates;
-mod ui;
-
 fn main() {
-    use crate::core::config::{WINDOW_HEIGHT, WINDOW_WIDTH};
+    use oxide::app::{
+        config::{WINDOW_HEIGHT, WINDOW_WIDTH},
+        IdeApp,
+    };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([WINDOW_WIDTH, WINDOW_HEIGHT])
@@ -19,7 +17,7 @@ fn main() {
     if let Err(e) = eframe::run_native(
         "OxIDE",
         options,
-        Box::new(|cc| Ok(Box::new(app::IdeApp::new(cc)))),
+        Box::new(|cc| Ok(Box::new(IdeApp::new(cc)))),
     ) {
         eprintln!("Failed to run application: {}", e);
     }

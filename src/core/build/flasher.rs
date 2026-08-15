@@ -4,6 +4,7 @@
 #![allow(dead_code)]
 
 use crate::core::board::{BoardPreset, FlashToolKind};
+use crate::core::event::{CoreEvent, FlashMsg};
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use std::io::BufRead;
@@ -432,27 +433,26 @@ pub struct FlashResult {
     pub output: String,
 }
 
-pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
-    // 既存の flash() 関数を呼び出し、結果を AppMessage::FlashFinished に変換
+pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<CoreEvent>) {
+    // 既存の flash() 関数を呼び出し、結果を CoreEvent::FlashFinished に変換
     // board kind から preset を探してflashを呼ぶ
     use crate::core::board::BOARD_PRESETS;
     std::thread::spawn(move || {
         if req.port == crate::core::serial::VIRTUAL_PORT_NAME {
-            use crate::app::{AppMessage, FlashMsg};
-            tx.send(AppMessage::Flash(FlashMsg::Started)).ok();
+            tx.send(CoreEvent::Flash(FlashMsg::Started)).ok();
             if !req.artifact.is_file() {
-                tx.send(AppMessage::Flash(FlashMsg::Finished(FlashResult {
+                tx.send(CoreEvent::Flash(FlashMsg::Finished(FlashResult {
                     success: false,
                     output: format!("Artifact not found: {}", req.artifact.display()),
                 })))
                 .ok();
                 return;
             }
-            tx.send(AppMessage::Flash(FlashMsg::Progress(
+            tx.send(CoreEvent::Flash(FlashMsg::Progress(
                 "Flashing virtual board".into(),
             )))
             .ok();
-            tx.send(AppMessage::Flash(FlashMsg::Finished(FlashResult {
+            tx.send(CoreEvent::Flash(FlashMsg::Finished(FlashResult {
                 success: true,
                 output: "Virtual flash completed".into(),
             })))
@@ -468,18 +468,13 @@ pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<crate::app::
             while let Ok(msg) = frx.recv() {
                 match msg {
                     FlashMessage::Progress(line) => {
-                        tx.send(crate::app::AppMessage::Flash(
-                            crate::app::FlashMsg::Progress(line),
-                        ))
-                        .ok();
+                        tx.send(CoreEvent::Flash(FlashMsg::Progress(line))).ok();
                     }
                     FlashMessage::Finished { ok, log } => {
-                        tx.send(crate::app::AppMessage::Flash(
-                            crate::app::FlashMsg::Finished(FlashResult {
-                                success: ok,
-                                output: log,
-                            }),
-                        ))
+                        tx.send(CoreEvent::Flash(FlashMsg::Finished(FlashResult {
+                            success: ok,
+                            output: log,
+                        })))
                         .ok();
                         break;
                     }
@@ -487,12 +482,10 @@ pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<crate::app::
                 }
             }
         } else {
-            tx.send(crate::app::AppMessage::Flash(
-                crate::app::FlashMsg::Finished(FlashResult {
-                    success: false,
-                    output: "Board not found".to_string(),
-                }),
-            ))
+            tx.send(CoreEvent::Flash(FlashMsg::Finished(FlashResult {
+                success: false,
+                output: "Board not found".to_string(),
+            })))
             .ok();
         }
     });

@@ -21,17 +21,20 @@ pub fn ui_elf_panel(app: &mut IdeApp, ui: &mut Ui) {
                     {
                         match crate::core::elf_analyzer::analyze_elf(&elf_path) {
                             Ok(info) => {
-                                let _ = tx.send(crate::app::AppMessage::ElfAnalysis(info));
+                                let _ = tx.send(crate::core::event::CoreEvent::ElfAnalysis(info));
                             }
                             Err(e) => {
-                                let _ = tx.send(crate::app::AppMessage::Error(e.to_string()));
+                                let _ =
+                                    tx.send(crate::core::event::CoreEvent::Error(e.to_string()));
                             }
                         }
                     } else {
-                        let _ = tx.send(crate::app::AppMessage::Error("ELF not found".to_string()));
+                        let _ = tx.send(crate::core::event::CoreEvent::Error(
+                            "ELF not found".to_string(),
+                        ));
                     }
                 } else {
-                    let _ = tx.send(crate::app::AppMessage::Error(
+                    let _ = tx.send(crate::core::event::CoreEvent::Error(
                         "No board selected".to_string(),
                     ));
                 }

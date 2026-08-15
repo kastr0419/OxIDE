@@ -110,7 +110,7 @@ The pinout viewer contains curated pin maps for these boards:
 - ESP32 (DevKit-style)
 - STM32F4 Discovery
 
-(See source: src/core/pinout.rs)
+(See source: src/core/board/pinout.rs)
 
 ## 📦 Installation
 

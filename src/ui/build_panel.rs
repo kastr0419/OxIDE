@@ -28,7 +28,7 @@ fn find_elf(dist: &std::path::Path) -> Option<std::path::PathBuf> {
 pub fn ui_build_panel(
     app: &mut crate::app::IdeApp,
     ui: &mut egui::Ui,
-    tx: &crossbeam_channel::Sender<crate::app::AppMessage>,
+    tx: &crossbeam_channel::Sender<crate::core::event::CoreEvent>,
 ) {
     ui.horizontal(|ui| {
         let build_btn = ui.add_enabled(!app.is_building, egui::Button::new("▶ Build"));

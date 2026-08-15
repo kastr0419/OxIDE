@@ -21,18 +21,21 @@ pub fn ui_stack_panel(app: &mut IdeApp, ui: &mut Ui) {
                         {
                             match crate::core::stack_analyzer::analyze_stack(&elf_path) {
                                 Ok(report) => {
-                                    let _ = tx.send(crate::app::AppMessage::StackAnalysis(report));
+                                    let _ = tx
+                                        .send(crate::core::event::CoreEvent::StackAnalysis(report));
                                 }
                                 Err(e) => {
-                                    let _ = tx.send(crate::app::AppMessage::Error(e.to_string()));
+                                    let _ = tx
+                                        .send(crate::core::event::CoreEvent::Error(e.to_string()));
                                 }
                             }
                         } else {
-                            let _ =
-                                tx.send(crate::app::AppMessage::Error("ELF not found".to_string()));
+                            let _ = tx.send(crate::core::event::CoreEvent::Error(
+                                "ELF not found".to_string(),
+                            ));
                         }
                     } else {
-                        let _ = tx.send(crate::app::AppMessage::Error(
+                        let _ = tx.send(crate::core::event::CoreEvent::Error(
                             "No board selected".to_string(),
                         ));
                     }

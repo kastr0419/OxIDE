@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
+use crate::core::event::CoreEvent;
 use anyhow::{anyhow, ensure, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
@@ -77,27 +78,23 @@ pub fn ensure_agent_settings() -> Result<PathBuf> {
     ensure_agent_settings_at(&agent_settings_path()?)
 }
 
-pub fn run_async(req: AgentRequest, tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
+pub fn run_async(req: AgentRequest, tx: crossbeam_channel::Sender<CoreEvent>) {
     std::thread::spawn(move || {
-        tx.send(crate::app::AppMessage::Agent(AgentEvent::Started))
-            .ok();
+        tx.send(CoreEvent::Agent(AgentEvent::Started)).ok();
         let result = run(req, &tx);
-        tx.send(crate::app::AppMessage::Agent(AgentEvent::Finished(result)))
-            .ok();
+        tx.send(CoreEvent::Agent(AgentEvent::Finished(result))).ok();
     });
 }
 
-pub fn login_async(tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
+pub fn login_async(tx: crossbeam_channel::Sender<CoreEvent>) {
     std::thread::spawn(move || {
-        tx.send(crate::app::AppMessage::Agent(AgentEvent::Started))
-            .ok();
+        tx.send(CoreEvent::Agent(AgentEvent::Started)).ok();
         let result = login(&tx);
-        tx.send(crate::app::AppMessage::Agent(AgentEvent::Finished(result)))
-            .ok();
+        tx.send(CoreEvent::Agent(AgentEvent::Finished(result))).ok();
     });
 }
 
-fn run(req: AgentRequest, tx: &crossbeam_channel::Sender<crate::app::AppMessage>) -> Result<()> {
+fn run(req: AgentRequest, tx: &crossbeam_channel::Sender<CoreEvent>) -> Result<()> {
     let user_prompt = req.prompt.trim();
     ensure!(!user_prompt.is_empty(), "agent prompt is empty");
     ensure!(
@@ -192,7 +189,7 @@ fn read_agent_settings(path: &Path) -> Result<String> {
     Ok(settings)
 }
 
-fn login(tx: &crossbeam_channel::Sender<crate::app::AppMessage>) -> Result<()> {
+fn login(tx: &crossbeam_channel::Sender<CoreEvent>) -> Result<()> {
     let mut command = login_command()?;
     command.stdout(Stdio::piped()).stderr(Stdio::piped());
     let mut child = command.spawn().context("failed to start `codex login`")?;
@@ -292,7 +289,7 @@ type Reader = std::thread::JoinHandle<Result<()>>;
 
 fn capture_output(
     child: &mut Child,
-    tx: &crossbeam_channel::Sender<crate::app::AppMessage>,
+    tx: &crossbeam_channel::Sender<CoreEvent>,
 ) -> Result<(Reader, Reader)> {
     Ok((
         stream_output(
@@ -316,12 +313,12 @@ fn capture_output(
 
 fn stream_output(
     stream: impl Read + Send + 'static,
-    tx: crossbeam_channel::Sender<crate::app::AppMessage>,
+    tx: crossbeam_channel::Sender<CoreEvent>,
     name: &'static str,
 ) -> std::thread::JoinHandle<Result<()>> {
     std::thread::spawn(move || {
         for line in BufReader::new(stream).lines() {
-            tx.send(crate::app::AppMessage::Agent(AgentEvent::Output(
+            tx.send(CoreEvent::Agent(AgentEvent::Output(
                 line.with_context(|| format!("failed to read codex {name}"))?,
             )))
             .ok();

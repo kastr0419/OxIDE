@@ -2,6 +2,7 @@
 // Copyright 2026 rust-embedded-ide contributors
 
 use crate::core::board::{BoardKind, FlashToolKind, BOARD_PRESETS};
+use crate::core::event::CoreEvent;
 
 /// 検出結果の確信度
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -305,8 +306,8 @@ pub fn detect_by_port_hint() -> Vec<DetectedBoard> {
 
 // ─── 統合検出 ────────────────────────────────────────────────────────────────
 
-/// 全ステージを実行し最良の結果を AppMessage::BoardDetected で送信する。
-pub fn auto_detect(tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
+/// 全ステージを実行し最良の結果を CoreEvent::BoardDetected で送信する。
+pub fn auto_detect(tx: crossbeam_channel::Sender<CoreEvent>) {
     std::thread::spawn(move || {
         let mut all: Vec<DetectedBoard> = Vec::new();
 
@@ -358,7 +359,7 @@ pub fn auto_detect(tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
         all.dedup_by_key(|r| r.port_name.clone());
 
         let best = all.into_iter().next();
-        tx.send(crate::app::AppMessage::BoardDetected(best)).ok();
+        tx.send(CoreEvent::BoardDetected(best)).ok();
     });
 }
 

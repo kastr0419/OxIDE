@@ -108,7 +108,7 @@ Renode公式プラットフォームとの照合結果：
 - ESP32 (DevKit スタイル)
 - STM32F4 Discovery
 
-(ソース参照: src/core/pinout.rs)
+(ソース参照: src/core/board/pinout.rs)
 
 ## 📦 インストール
 

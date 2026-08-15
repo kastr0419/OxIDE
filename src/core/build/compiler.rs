@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
+use crate::core::event::{BuildMsg, CoreEvent};
 // UIが期待する型を追加
 pub struct BuildRequest {
     pub project_dir: std::path::PathBuf,
@@ -19,7 +20,7 @@ pub struct BuildResult {
     pub dist_path: Option<std::path::PathBuf>,
 }
 
-pub fn build_async(req: BuildRequest, tx: crossbeam_channel::Sender<crate::app::AppMessage>) {
+pub fn build_async(req: BuildRequest, tx: crossbeam_channel::Sender<CoreEvent>) {
     std::thread::spawn(move || {
         let mut cmd = std::process::Command::new("cargo");
         crate::core::no_window(&mut cmd);
@@ -80,7 +81,7 @@ pub fn build_async(req: BuildRequest, tx: crossbeam_channel::Sender<crate::app::
             Ok(mut child) => {
                 let read_output =
                     |stream: Box<dyn std::io::Read + Send>,
-                     tx: crossbeam_channel::Sender<crate::app::AppMessage>| {
+                     tx: crossbeam_channel::Sender<CoreEvent>| {
                         std::thread::spawn(move || {
                             use std::io::BufRead;
                             let mut output = String::new();
@@ -90,10 +91,7 @@ pub fn build_async(req: BuildRequest, tx: crossbeam_channel::Sender<crate::app::
                             {
                                 output.push_str(&line);
                                 output.push('\n');
-                                tx.send(crate::app::AppMessage::Build(
-                                    crate::app::BuildMsg::Progress(line),
-                                ))
-                                .ok();
+                                tx.send(CoreEvent::Build(BuildMsg::Progress(line))).ok();
                             }
                             output
                         })
@@ -117,27 +115,23 @@ pub fn build_async(req: BuildRequest, tx: crossbeam_channel::Sender<crate::app::
                 } else {
                     None
                 };
-                tx.send(crate::app::AppMessage::Build(
-                    crate::app::BuildMsg::Finished(BuildResult {
-                        success,
-                        stdout,
-                        stderr,
-                        artifact_path,
-                        dist_path,
-                    }),
-                ))
+                tx.send(CoreEvent::Build(BuildMsg::Finished(BuildResult {
+                    success,
+                    stdout,
+                    stderr,
+                    artifact_path,
+                    dist_path,
+                })))
                 .ok();
             }
             Err(e) => {
-                tx.send(crate::app::AppMessage::Build(
-                    crate::app::BuildMsg::Finished(BuildResult {
-                        success: false,
-                        stdout: String::new(),
-                        stderr: format!("cargo not found: {}", e),
-                        artifact_path: None,
-                        dist_path: None,
-                    }),
-                ))
+                tx.send(CoreEvent::Build(BuildMsg::Finished(BuildResult {
+                    success: false,
+                    stdout: String::new(),
+                    stderr: format!("cargo not found: {}", e),
+                    artifact_path: None,
+                    dist_path: None,
+                })))
                 .ok();
             }
         }

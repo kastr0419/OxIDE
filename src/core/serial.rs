@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
+use crate::core::event::{CoreEvent, SerialMsg};
 use anyhow::{Context, Result};
 use crossbeam_channel::{bounded, Sender};
 use std::io::{BufRead, BufReader, ErrorKind, Write};
@@ -126,7 +127,7 @@ pub enum SerialCommand {
 
 pub fn connect_async(
     settings: SerialSettings,
-    app_tx: crossbeam_channel::Sender<crate::app::AppMessage>,
+    app_tx: crossbeam_channel::Sender<CoreEvent>,
     cmd_rx: crossbeam_channel::Receiver<SerialCommand>,
 ) {
     std::thread::spawn(move || {
@@ -137,11 +138,7 @@ pub fn connect_async(
         let (event_tx, event_rx) = bounded(32);
         match connect(&settings.port_name, settings.baud_rate, event_tx) {
             Ok(handle) => {
-                app_tx
-                    .send(crate::app::AppMessage::Serial(
-                        crate::app::SerialMsg::Connected,
-                    ))
-                    .ok();
+                app_tx.send(CoreEvent::Serial(SerialMsg::Connected)).ok();
                 // forward events
                 std::thread::spawn(move || {
                     loop {
@@ -160,31 +157,15 @@ pub fn connect_async(
                         // receive events
                         match event_rx.try_recv() {
                             Ok(SerialEvent::Data(s)) => {
-                                app_tx
-                                    .send(crate::app::AppMessage::Serial(
-                                        crate::app::SerialMsg::Line(s),
-                                    ))
-                                    .ok();
+                                app_tx.send(CoreEvent::Serial(SerialMsg::Line(s))).ok();
                             }
                             Ok(SerialEvent::Error(error)) => {
-                                app_tx
-                                    .send(crate::app::AppMessage::Serial(
-                                        crate::app::SerialMsg::Error(error),
-                                    ))
-                                    .ok();
-                                app_tx
-                                    .send(crate::app::AppMessage::Serial(
-                                        crate::app::SerialMsg::Disconnected,
-                                    ))
-                                    .ok();
+                                app_tx.send(CoreEvent::Serial(SerialMsg::Error(error))).ok();
+                                app_tx.send(CoreEvent::Serial(SerialMsg::Disconnected)).ok();
                                 return;
                             }
                             Ok(SerialEvent::Closed) => {
-                                app_tx
-                                    .send(crate::app::AppMessage::Serial(
-                                        crate::app::SerialMsg::Disconnected,
-                                    ))
-                                    .ok();
+                                app_tx.send(CoreEvent::Serial(SerialMsg::Disconnected)).ok();
                                 return;
                             }
                             _ => {}
@@ -195,10 +176,7 @@ pub fn connect_async(
             }
             Err(e) => {
                 app_tx
-                    .send(crate::app::AppMessage::Error(format!(
-                        "Serial error: {}",
-                        e
-                    )))
+                    .send(CoreEvent::Error(format!("Serial error: {}", e)))
                     .ok();
             }
         }
@@ -206,30 +184,27 @@ pub fn connect_async(
 }
 
 fn run_virtual_serial(
-    app_tx: crossbeam_channel::Sender<crate::app::AppMessage>,
+    app_tx: crossbeam_channel::Sender<CoreEvent>,
     cmd_rx: crossbeam_channel::Receiver<SerialCommand>,
 ) {
-    use crate::app::{AppMessage, SerialMsg};
     use std::time::Duration;
 
-    app_tx.send(AppMessage::Serial(SerialMsg::Connected)).ok();
+    app_tx.send(CoreEvent::Serial(SerialMsg::Connected)).ok();
     let ticker = crossbeam_channel::tick(Duration::from_millis(250));
     let mut sample = 0;
     loop {
         crossbeam_channel::select! {
             recv(cmd_rx) -> command => match command {
                 Ok(SerialCommand::Send(text)) => {
-                    app_tx.send(AppMessage::Serial(SerialMsg::Line(format!("echo:{}", text)))).ok();
+                    app_tx.send(CoreEvent::Serial(SerialMsg::Line(format!("echo:{}", text)))).ok();
                 }
                 Ok(SerialCommand::Disconnect) | Err(_) => break,
             },
             recv(ticker) -> _ => {
-                app_tx.send(AppMessage::Serial(SerialMsg::Line(format!("sensor:{}", sample)))).ok();
+                app_tx.send(CoreEvent::Serial(SerialMsg::Line(format!("sensor:{}", sample)))).ok();
                 sample = (sample + 1) % 100;
             }
         }
     }
-    app_tx
-        .send(AppMessage::Serial(SerialMsg::Disconnected))
-        .ok();
+    app_tx.send(CoreEvent::Serial(SerialMsg::Disconnected)).ok();
 }

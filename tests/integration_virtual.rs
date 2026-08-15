@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use oxide::app::{AppMessage, FlashMsg, SerialMsg};
 use oxide::core::board::BoardKind;
+use oxide::core::event::{CoreEvent, FlashMsg, SerialMsg};
 use oxide::core::flasher::{flash_async, FlashRequest, FlashResult};
 use oxide::core::serial::VIRTUAL_PORT_NAME;
 use oxide::core::serial::{connect_async, list_ports, SerialCommand, SerialSettings};
@@ -29,20 +29,20 @@ fn virtual_port_connects_echoes_and_disconnects() {
     );
     assert!(matches!(
         app_rx.recv_timeout(Duration::from_secs(1)),
-        Ok(AppMessage::Serial(SerialMsg::Connected))
+        Ok(CoreEvent::Serial(SerialMsg::Connected))
     ));
     assert!(matches!(
         app_rx.recv_timeout(Duration::from_secs(1)),
-        Ok(AppMessage::Serial(SerialMsg::Line(line))) if line == "sensor:0"
+        Ok(CoreEvent::Serial(SerialMsg::Line(line))) if line == "sensor:0"
     ));
     cmd_tx.send(SerialCommand::Send("ping".into())).unwrap();
     assert!(
-        matches!(app_rx.recv_timeout(Duration::from_secs(1)), Ok(AppMessage::Serial(SerialMsg::Line(line))) if line == "echo:ping")
+        matches!(app_rx.recv_timeout(Duration::from_secs(1)), Ok(CoreEvent::Serial(SerialMsg::Line(line))) if line == "echo:ping")
     );
     cmd_tx.send(SerialCommand::Disconnect).unwrap();
     assert!(matches!(
         app_rx.recv_timeout(Duration::from_secs(1)),
-        Ok(AppMessage::Serial(SerialMsg::Disconnected))
+        Ok(CoreEvent::Serial(SerialMsg::Disconnected))
     ));
 }
 
@@ -63,15 +63,15 @@ fn flashes_existing_artifact_to_virtual_board() {
 
     assert!(matches!(
         rx.recv_timeout(Duration::from_secs(1)),
-        Ok(AppMessage::Flash(FlashMsg::Started))
+        Ok(CoreEvent::Flash(FlashMsg::Started))
     ));
     assert!(matches!(
         rx.recv_timeout(Duration::from_secs(1)),
-        Ok(AppMessage::Flash(FlashMsg::Progress(_)))
+        Ok(CoreEvent::Flash(FlashMsg::Progress(_)))
     ));
     assert!(matches!(
         rx.recv_timeout(Duration::from_secs(1)),
-        Ok(AppMessage::Flash(FlashMsg::Finished(FlashResult {
+        Ok(CoreEvent::Flash(FlashMsg::Finished(FlashResult {
             success: true,
             ..
         })))
@@ -96,11 +96,11 @@ fn virtual_flash_rejects_missing_artifact() {
 
     assert!(matches!(
         rx.recv_timeout(Duration::from_secs(1)),
-        Ok(AppMessage::Flash(FlashMsg::Started))
+        Ok(CoreEvent::Flash(FlashMsg::Started))
     ));
     assert!(matches!(
         rx.recv_timeout(Duration::from_secs(1)),
-        Ok(AppMessage::Flash(FlashMsg::Finished(FlashResult {
+        Ok(CoreEvent::Flash(FlashMsg::Finished(FlashResult {
             success: false,
             ..
         })))

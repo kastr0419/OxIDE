@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
-use super::agent::AgentModel;
+use crate::core::agent::AgentModel;
 
 // Named constants to avoid magic numbers
 pub const DEFAULT_BAUD_RATE: u32 = 115_200;
