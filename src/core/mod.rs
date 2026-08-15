@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
+pub mod agent;
 pub mod board;
 pub mod build_analyzer;
 pub mod compiler;

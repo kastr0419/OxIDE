@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+use super::agent::AgentModel;
+
 // Named constants to avoid magic numbers
 pub const DEFAULT_BAUD_RATE: u32 = 115_200;
 pub const LEFT_PANEL_WIDTH: f32 = 250.0;
@@ -23,6 +25,8 @@ pub struct AppConfig {
     /// rust-analyzer のカスタムパス（手動指定時）
     #[serde(default)]
     pub rust_analyzer_path: Option<PathBuf>,
+    #[serde(default)]
+    pub agent_model: AgentModel,
 }
 
 impl AppConfig {
@@ -73,6 +77,7 @@ impl Default for AppConfig {
                 .unwrap_or_else(|| std::env::current_dir().unwrap_or_default()),
             theme: None,
             rust_analyzer_path: None,
+            agent_model: AgentModel::default(),
         }
     }
 }
@@ -95,6 +100,7 @@ mod tests {
             last_port: Some("COM3".to_string()),
             workspace: None,
             theme: Some("dark".to_string()),
+            agent_model: AgentModel::Gpt56Terra,
             ..Default::default()
         };
         let toml_str = toml::to_string_pretty(&cfg).expect("serialize failed");
@@ -102,5 +108,13 @@ mod tests {
         let cfg2: AppConfig = toml::from_str(&toml_str).expect("deserialize failed");
         assert_eq!(cfg2.last_board.as_deref(), Some("ArduinoUno"));
         assert_eq!(cfg2.last_port.as_deref(), Some("COM3"));
+        assert_eq!(cfg2.agent_model, AgentModel::Gpt56Terra);
+    }
+
+    #[test]
+    fn old_config_defaults_agent_model() {
+        let cfg: AppConfig = toml::from_str("workspace_dir = 'workspace'")
+            .expect("deserialize config without agent_model");
+        assert_eq!(cfg.agent_model, AgentModel::CodexDefault);
     }
 }

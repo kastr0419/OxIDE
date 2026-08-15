@@ -24,6 +24,15 @@ fn append_log_once(log: &mut String, text: &str) {
     }
 }
 
+fn reload_clean_tabs(tabs: &mut Vec<FileTab>) {
+    tabs.retain(|tab| tab.is_dirty || tab.path.is_file());
+    for tab in tabs.iter_mut().filter(|tab| !tab.is_dirty) {
+        if let Ok(content) = std::fs::read_to_string(&tab.path) {
+            tab.content = content;
+        }
+    }
+}
+
 /// 開いているファイルタブ1つ分の状態
 #[derive(Clone)]
 pub struct FileTab {
@@ -86,6 +95,7 @@ pub enum ToolchainMsg {
 
 #[allow(dead_code)]
 pub enum AppMessage {
+    Agent(crate::core::agent::AgentEvent),
     Build(BuildMsg),
     Flash(FlashMsg),
     Serial(SerialMsg),
@@ -185,6 +195,12 @@ pub struct IdeApp {
     pub workspace_files: Vec<PathBuf>,
     pub show_new_file_dialog: bool,
     pub new_file_name: String,
+
+    // Agent
+    pub agent_prompt: String,
+    pub agent_log: String,
+    pub agent_running: bool,
+    pub agent_allow_edits: bool,
 
     // LSP
     pub lsp_client: Option<crate::core::lsp::LspClient>,
@@ -309,6 +325,10 @@ impl IdeApp {
             workspace_files: Vec::new(),
             show_new_file_dialog: false,
             new_file_name: String::new(),
+            agent_prompt: String::new(),
+            agent_log: String::new(),
+            agent_running: false,
+            agent_allow_edits: false,
             show_settings: false,
             show_help_window: false,
             snippet_query: String::new(),
@@ -423,6 +443,36 @@ impl IdeApp {
     fn handle_messages(&mut self) {
         while let Ok(msg) = self.msg_rx.try_recv() {
             match msg {
+                AppMessage::Agent(crate::core::agent::AgentEvent::Started) => {
+                    self.agent_running = true;
+                }
+                AppMessage::Agent(crate::core::agent::AgentEvent::Output(output)) => {
+                    self.agent_log.push_str(&output);
+                    self.agent_log.push('\n');
+                }
+                AppMessage::Agent(crate::core::agent::AgentEvent::Finished(result)) => {
+                    self.agent_running = false;
+                    if let Err(error) = result {
+                        if !self.agent_log.ends_with('\n') {
+                            self.agent_log.push('\n');
+                        }
+                        self.agent_log.push_str(&format!("[ERROR] {error}\n"));
+                    }
+
+                    self.sync_active_tab();
+                    reload_clean_tabs(&mut self.open_tabs);
+                    self.active_tab = self.active_tab.min(self.open_tabs.len().saturating_sub(1));
+                    if let Some(tab) = self.open_tabs.get(self.active_tab) {
+                        self.editor_text = tab.content.clone();
+                        self.file_path = Some(tab.path.clone());
+                        self.is_dirty = tab.is_dirty;
+                    } else {
+                        self.editor_text.clear();
+                        self.file_path = None;
+                        self.is_dirty = false;
+                    }
+                    self.refresh_workspace_files();
+                }
                 AppMessage::Build(BuildMsg::Started) => {
                     self.is_building = true;
                     self.build_log = "[BUILD] ビルド開始...\n".to_string();
@@ -1029,11 +1079,16 @@ impl eframe::App for IdeApp {
             .width_range(100.0..=600.0)
             .show(ctx, |ui| {
                 // Tab buttons
-                ui.horizontal(|ui| {
+                ui.horizontal_wrapped(|ui| {
                     ui.selectable_value(
                         &mut self.right_tab,
                         crate::ui::help_panel::RightTab::SerialMonitor,
                         "🔌 Serial",
+                    );
+                    ui.selectable_value(
+                        &mut self.right_tab,
+                        crate::ui::help_panel::RightTab::Agent,
+                        "🤖 Agent",
                     );
                     ui.selectable_value(
                         &mut self.right_tab,
@@ -1050,6 +1105,9 @@ impl eframe::App for IdeApp {
                 match self.right_tab {
                     crate::ui::help_panel::RightTab::SerialMonitor => {
                         crate::ui::serial_monitor::ui_serial_monitor(self, ui, &msg_tx);
+                    }
+                    crate::ui::help_panel::RightTab::Agent => {
+                        crate::ui::agent_panel::ui_agent_panel(self, ui, &msg_tx);
                     }
                     crate::ui::help_panel::RightTab::Docs => {
                         crate::ui::help_panel::ui_help_panel(self, ui);
@@ -1413,7 +1471,7 @@ impl eframe::App for IdeApp {
 
 #[cfg(test)]
 mod tests {
-    use super::append_log_once;
+    use super::{append_log_once, reload_clean_tabs, FileTab};
 
     #[test]
     fn finished_output_does_not_replace_or_duplicate_progress() {
@@ -1421,5 +1479,40 @@ mod tests {
         append_log_once(&mut log, "Compiling app\nFinished dev");
 
         assert_eq!(log, "[BUILD] ビルド開始...\nCompiling app\nFinished dev\n");
+    }
+
+    #[test]
+    fn agent_reload_preserves_dirty_tabs() {
+        let dir = std::env::temp_dir().join(format!("oxide-agent-reload-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let clean_path = dir.join("clean.rs");
+        let dirty_path = dir.join("dirty.rs");
+        let deleted_path = dir.join("deleted.rs");
+        std::fs::write(&clean_path, "from disk").unwrap();
+        std::fs::write(&dirty_path, "from disk").unwrap();
+        let mut tabs = vec![
+            FileTab {
+                path: clean_path,
+                content: "old".into(),
+                is_dirty: false,
+            },
+            FileTab {
+                path: dirty_path,
+                content: "unsaved".into(),
+                is_dirty: true,
+            },
+            FileTab {
+                path: deleted_path,
+                content: "stale".into(),
+                is_dirty: false,
+            },
+        ];
+
+        reload_clean_tabs(&mut tabs);
+
+        assert_eq!(tabs[0].content, "from disk");
+        assert_eq!(tabs[1].content, "unsaved");
+        assert_eq!(tabs.len(), 2);
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }

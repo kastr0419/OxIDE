@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 // Copyright 2026 rust-embedded-ide contributors
 
+pub mod agent_panel;
 pub mod board_picker;
 pub mod build_panel;
 pub mod debug_panel;

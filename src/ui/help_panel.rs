@@ -5,6 +5,7 @@
 pub enum RightTab {
     #[default]
     SerialMonitor,
+    Agent,
     Docs,
     Pinout,
 }
