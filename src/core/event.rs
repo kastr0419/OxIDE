@@ -35,6 +35,7 @@ pub enum CoreEvent {
     Build(BuildMsg),
     Flash(FlashMsg),
     Serial(SerialMsg),
+    VirtualBoard(super::simulator::VirtualBoardEvent),
     Toolchain(ToolchainMsg),
     BoardDetected(Option<super::board::detector::DetectedBoard>),
     LspCompletion(Vec<super::editor::lsp::CompletionItem>),

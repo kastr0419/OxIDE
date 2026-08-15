@@ -13,6 +13,7 @@ pub mod pinout_panel;
 pub mod serial_monitor;
 pub mod serial_plotter;
 pub mod settings;
+pub mod virtual_board_panel;
 pub mod workbench;
 
 pub use inspect::{debug_panel, elf_panel, rtt_panel, stack_panel, svd_panel};

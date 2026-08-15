@@ -5,6 +5,7 @@
 
 use crate::core::board::{BoardPreset, FlashToolKind};
 use crate::core::event::{CoreEvent, FlashMsg};
+use crate::core::simulator::VirtualBoardEvent;
 use anyhow::Result;
 use crossbeam_channel::Sender;
 use std::io::BufRead;
@@ -440,11 +441,17 @@ pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<CoreEvent>) 
     std::thread::spawn(move || {
         if req.port == crate::core::serial::VIRTUAL_PORT_NAME {
             tx.send(CoreEvent::Flash(FlashMsg::Started)).ok();
+            tx.send(CoreEvent::VirtualBoard(VirtualBoardEvent::FlashStarted))
+                .ok();
             if !req.artifact.is_file() {
                 tx.send(CoreEvent::Flash(FlashMsg::Finished(FlashResult {
                     success: false,
                     output: format!("Artifact not found: {}", req.artifact.display()),
                 })))
+                .ok();
+                tx.send(CoreEvent::VirtualBoard(VirtualBoardEvent::FlashFinished(
+                    false,
+                )))
                 .ok();
                 return;
             }
@@ -456,6 +463,10 @@ pub fn flash_async(req: FlashRequest, tx: crossbeam_channel::Sender<CoreEvent>) 
                 success: true,
                 output: "Virtual flash completed".into(),
             })))
+            .ok();
+            tx.send(CoreEvent::VirtualBoard(VirtualBoardEvent::FlashFinished(
+                true,
+            )))
             .ok();
             return;
         }

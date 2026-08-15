@@ -33,6 +33,7 @@ pub struct IdeApp {
     pub selected_board: usize, // BOARD_PRESETS のインデックス
     pub available_ports: Vec<String>,
     pub selected_port: usize,
+    pub virtual_board: crate::core::simulator::VirtualBoardState,
 
     // ビルド状態
     pub build_log: String,
@@ -198,6 +199,7 @@ impl IdeApp {
             selected_board,
             available_ports: ports,
             selected_port: 0,
+            virtual_board: crate::core::simulator::VirtualBoardState::default(),
             build_log: String::new(),
             is_building: false,
             is_flashing: false,

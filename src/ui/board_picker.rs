@@ -49,6 +49,9 @@ pub fn ui_board_picker(
             for (i, port) in app.available_ports.iter().enumerate() {
                 if ui.selectable_label(app.selected_port == i, port).clicked() {
                     app.selected_port = i;
+                    if port == crate::core::serial::VIRTUAL_PORT_NAME {
+                        app.right_tab = crate::ui::help_panel::RightTab::VirtualBoard;
+                    }
                 }
             }
         });

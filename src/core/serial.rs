@@ -2,6 +2,7 @@
 // Copyright 2026 ALLoIDE contributors
 
 use crate::core::event::{CoreEvent, SerialMsg};
+use crate::core::simulator::VirtualBoardEvent;
 use anyhow::{Context, Result};
 use crossbeam_channel::{bounded, Sender};
 use std::io::{BufRead, BufReader, ErrorKind, Write};
@@ -190,21 +191,33 @@ fn run_virtual_serial(
     use std::time::Duration;
 
     app_tx.send(CoreEvent::Serial(SerialMsg::Connected)).ok();
+    app_tx
+        .send(CoreEvent::VirtualBoard(VirtualBoardEvent::SerialConnected))
+        .ok();
     let ticker = crossbeam_channel::tick(Duration::from_millis(250));
     let mut sample = 0;
     loop {
         crossbeam_channel::select! {
             recv(cmd_rx) -> command => match command {
                 Ok(SerialCommand::Send(text)) => {
-                    app_tx.send(CoreEvent::Serial(SerialMsg::Line(format!("echo:{}", text)))).ok();
+                    let line = format!("echo:{}", text);
+                    app_tx.send(CoreEvent::Serial(SerialMsg::Line(line.clone()))).ok();
+                    app_tx.send(CoreEvent::VirtualBoard(VirtualBoardEvent::SerialLine(line))).ok();
                 }
                 Ok(SerialCommand::Disconnect) | Err(_) => break,
             },
             recv(ticker) -> _ => {
-                app_tx.send(CoreEvent::Serial(SerialMsg::Line(format!("sensor:{}", sample)))).ok();
+                let line = format!("sensor:{}", sample);
+                app_tx.send(CoreEvent::Serial(SerialMsg::Line(line.clone()))).ok();
+                app_tx.send(CoreEvent::VirtualBoard(VirtualBoardEvent::SerialLine(line))).ok();
                 sample = (sample + 1) % 100;
             }
         }
     }
     app_tx.send(CoreEvent::Serial(SerialMsg::Disconnected)).ok();
+    app_tx
+        .send(CoreEvent::VirtualBoard(
+            VirtualBoardEvent::SerialDisconnected,
+        ))
+        .ok();
 }

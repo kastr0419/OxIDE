@@ -8,6 +8,58 @@ use anyhow::{bail, Context, Result};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum VirtualFlashState {
+    #[default]
+    Empty,
+    Flashing,
+    Ready,
+    Failed,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct VirtualBoardState {
+    pub flash: VirtualFlashState,
+    pub serial_connected: bool,
+    pub activity_led: bool,
+    pub sensor_value: Option<u8>,
+    pub last_serial: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum VirtualBoardEvent {
+    FlashStarted,
+    FlashFinished(bool),
+    SerialConnected,
+    SerialDisconnected,
+    SerialLine(String),
+}
+
+impl VirtualBoardState {
+    pub fn apply(&mut self, event: VirtualBoardEvent) {
+        match event {
+            VirtualBoardEvent::FlashStarted => self.flash = VirtualFlashState::Flashing,
+            VirtualBoardEvent::FlashFinished(true) => self.flash = VirtualFlashState::Ready,
+            VirtualBoardEvent::FlashFinished(false) => self.flash = VirtualFlashState::Failed,
+            VirtualBoardEvent::SerialConnected => self.serial_connected = true,
+            VirtualBoardEvent::SerialDisconnected => {
+                self.serial_connected = false;
+                self.activity_led = false;
+            }
+            VirtualBoardEvent::SerialLine(line) => {
+                self.activity_led = !self.activity_led;
+                if let Some(value) = line
+                    .strip_prefix("sensor:")
+                    .and_then(|value| value.parse().ok())
+                {
+                    self.sensor_value = Some(value);
+                }
+                self.last_serial = Some(line);
+            }
+        }
+    }
+}
+
 pub struct SimulationRequest {
     pub board: BoardKind,
     pub artifact: PathBuf,
@@ -179,5 +231,21 @@ mod tests {
     #[test]
     fn rejects_newline_in_artifact_path() {
         assert!(script(&BoardKind::Stm32F1, Path::new("firmware\nquit.elf")).is_err());
+    }
+
+    #[test]
+    fn virtual_board_state_tracks_flash_and_serial_activity() {
+        let mut state = VirtualBoardState::default();
+        state.apply(VirtualBoardEvent::FlashStarted);
+        state.apply(VirtualBoardEvent::FlashFinished(true));
+        state.apply(VirtualBoardEvent::SerialConnected);
+        state.apply(VirtualBoardEvent::SerialLine("sensor:42".into()));
+        state.apply(VirtualBoardEvent::SerialDisconnected);
+
+        assert_eq!(state.flash, VirtualFlashState::Ready);
+        assert!(!state.serial_connected);
+        assert!(!state.activity_led);
+        assert_eq!(state.sensor_value, Some(42));
+        assert_eq!(state.last_serial.as_deref(), Some("sensor:42"));
     }
 }

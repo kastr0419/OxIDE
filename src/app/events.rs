@@ -212,6 +212,7 @@ impl IdeApp {
                     self.is_serial_connected = false;
                     self.serial_tx = None;
                 }
+                CoreEvent::VirtualBoard(event) => self.virtual_board.apply(event),
                 CoreEvent::BoardDetected(Some(detected)) => {
                     self.selected_board = detected.board_index;
                     // ポートも自動選択

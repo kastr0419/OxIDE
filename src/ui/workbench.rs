@@ -172,6 +172,11 @@ pub(crate) fn update(app: &mut IdeApp, ctx: &egui::Context, _frame: &mut eframe:
                     crate::ui::help_panel::RightTab::Pinout,
                     "📌 ピンアウト",
                 );
+                ui.selectable_value(
+                    &mut app.right_tab,
+                    crate::ui::help_panel::RightTab::VirtualBoard,
+                    "🧪 Board",
+                );
             });
             ui.separator();
             match app.right_tab {
@@ -186,6 +191,9 @@ pub(crate) fn update(app: &mut IdeApp, ctx: &egui::Context, _frame: &mut eframe:
                 }
                 crate::ui::help_panel::RightTab::Pinout => {
                     crate::ui::pinout_panel::ui_pinout_panel(app, ui);
+                }
+                crate::ui::help_panel::RightTab::VirtualBoard => {
+                    crate::ui::virtual_board_panel::ui_virtual_board_panel(app, ui);
                 }
             }
         });

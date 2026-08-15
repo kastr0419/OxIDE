@@ -8,6 +8,7 @@ pub enum RightTab {
     Agent,
     Docs,
     Pinout,
+    VirtualBoard,
 }
 
 const DOCS: &[(&str, &str)] = &[
