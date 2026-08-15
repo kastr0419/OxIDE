@@ -119,7 +119,7 @@ pub fn ui_settings(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
                     ui.separator();
                     ui.label(
                         egui::RichText::new("⚠ PATHが通っていない可能性があります")
-                            .color(egui::Color32::YELLOW)
+                            .color(ui.visuals().warn_fg_color)
                             .small(),
                     );
                     ui.label(

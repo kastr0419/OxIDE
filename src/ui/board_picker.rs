@@ -58,7 +58,10 @@ pub fn ui_board_picker(
         .map(String::as_str)
         == Some(crate::core::serial::VIRTUAL_PORT_NAME)
     {
-        ui.colored_label(egui::Color32::YELLOW, "仮想環境（実機への書き込みなし）");
+        ui.colored_label(
+            ui.visuals().warn_fg_color,
+            "仮想環境（実機への書き込みなし）",
+        );
     }
     if ui.button("🔄 Refresh Ports").clicked() {
         app.available_ports = crate::core::serial::list_ports().unwrap_or_default();
@@ -95,7 +98,7 @@ pub fn ui_board_picker(
     if let Some(ref msg) = app.detection_result {
         ui.colored_label(
             if msg.contains("No board") || msg.contains("Detecting") {
-                egui::Color32::YELLOW
+                ui.visuals().warn_fg_color
             } else {
                 egui::Color32::GREEN
             },

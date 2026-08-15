@@ -16,7 +16,7 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
 
     if !is_arm {
         ui.colored_label(
-            egui::Color32::YELLOW,
+            ui.visuals().warn_fg_color,
             "⚠ Hardware debug not supported for this target.",
         );
         ui.label("Use avr-gdb or esptool with external GDB for AVR/ESP32.");
@@ -75,7 +75,7 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
     // ステータス
     let status_color = if app.debug_connected {
         if app.debug_halted {
-            egui::Color32::YELLOW
+            ui.visuals().warn_fg_color
         } else {
             egui::Color32::GREEN
         }

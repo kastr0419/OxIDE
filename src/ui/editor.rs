@@ -747,7 +747,9 @@ pub fn ui_editor(
                     ui.horizontal(|ui| {
                         let cat_color = match snippet.category {
                             crate::core::snippets::SnippetCategory::Gpio => egui::Color32::GREEN,
-                            crate::core::snippets::SnippetCategory::Uart => egui::Color32::YELLOW,
+                            crate::core::snippets::SnippetCategory::Uart => {
+                                ui.visuals().warn_fg_color
+                            }
                             crate::core::snippets::SnippetCategory::Spi
                             | crate::core::snippets::SnippetCategory::I2c => {
                                 egui::Color32::LIGHT_BLUE
@@ -777,7 +779,7 @@ pub fn ui_editor(
         for diag in app.lsp_diagnostics.iter().take(5) {
             let color = match diag.severity {
                 crate::core::lsp::DiagSeverity::Error => egui::Color32::RED,
-                crate::core::lsp::DiagSeverity::Warning => egui::Color32::YELLOW,
+                crate::core::lsp::DiagSeverity::Warning => ui.visuals().warn_fg_color,
                 _ => egui::Color32::GRAY,
             };
             ui.label(

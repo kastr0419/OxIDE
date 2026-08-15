@@ -101,7 +101,7 @@ pub fn ui_elf_panel(app: &mut IdeApp, ui: &mut Ui) {
         });
     } else {
         ui.colored_label(
-            egui::Color32::YELLOW,
+            ui.visuals().warn_fg_color,
             "ビルド後に「Analyze ELF」をクリックしてください",
         );
     }

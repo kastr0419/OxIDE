@@ -51,7 +51,7 @@ pub fn ui_rtt_panel(app: &mut IdeApp, ui: &mut Ui) {
 
     if !app.debug_connected {
         ui.colored_label(
-            egui::Color32::YELLOW,
+            ui.visuals().warn_fg_color,
             "デバッガに接続してからRTTを開始してください",
         );
         return;

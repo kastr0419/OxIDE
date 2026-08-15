@@ -1123,7 +1123,7 @@ impl eframe::App for IdeApp {
                     if self.lsp_initialized {
                         egui::Color32::from_rgb(80, 200, 80)
                     } else {
-                        egui::Color32::YELLOW
+                        ui.visuals().warn_fg_color
                     }
                 } else {
                     egui::Color32::from_rgb(200, 80, 80)

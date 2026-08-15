@@ -223,7 +223,7 @@ fn ui_table(ui: &mut egui::Ui, pins: &[PinInfo], filter: u8, hovered: &mut Optio
                 body.row(20.0, |mut row| {
                     row.col(|ui| {
                         let txt = RichText::new(format!("{}", p.number)).color(if is_sel {
-                            Color32::YELLOW
+                            ui.visuals().warn_fg_color
                         } else {
                             Color32::GRAY
                         });
@@ -314,7 +314,10 @@ pub fn ui_pinout_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
         ui.label(RichText::new(format!("🔧 {}", b.display_name)).strong());
 
         let Some(pinout) = crate::core::pinout::get_pinout(b.kind) else {
-            ui.colored_label(Color32::YELLOW, "このボードのピンアウトデータはありません");
+            ui.colored_label(
+                ui.visuals().warn_fg_color,
+                "このボードのピンアウトデータはありません",
+            );
             return;
         };
 

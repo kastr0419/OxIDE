@@ -75,7 +75,7 @@ pub fn ui_stack_panel(app: &mut IdeApp, ui: &mut Ui) {
                 ui.separator();
                 ui.label("Warnings:");
                 for w in &report.warnings {
-                    ui.colored_label(egui::Color32::YELLOW, format!("- {}", w));
+                    ui.colored_label(ui.visuals().warn_fg_color, format!("- {}", w));
                 }
             }
         } else {

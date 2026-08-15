@@ -211,7 +211,7 @@ pub fn ui_build_panel(
             let flash_color = if stats.flash_percent() > 0.9 {
                 egui::Color32::RED
             } else if stats.flash_percent() > 0.75 {
-                egui::Color32::YELLOW
+                ui.visuals().warn_fg_color
             } else {
                 egui::Color32::from_rgb(0, 180, 100)
             };
@@ -232,7 +232,7 @@ pub fn ui_build_panel(
             let ram_color = if stats.ram_percent() > 0.9 {
                 egui::Color32::RED
             } else if stats.ram_percent() > 0.75 {
-                egui::Color32::YELLOW
+                ui.visuals().warn_fg_color
             } else {
                 egui::Color32::from_rgb(0, 120, 220)
             };
