@@ -103,10 +103,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: cargo clippy
-        run: cargo clippy --all-targets --all-features -- \
-          -D warnings \
-          -A clippy::too_many_arguments \
-          -A clippy::type_complexity
+        run: cargo clippy --all-targets --all-features -- -D warnings -A clippy::too_many_arguments -A clippy::type_complexity
 
   # ─────────────────────────────────────────────
   # ③ ドキュメント生成チェック
