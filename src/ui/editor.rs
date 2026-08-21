@@ -365,7 +365,7 @@ pub fn ui_editor(
                         painter.rect_stroke(
                             char_rect,
                             0.0,
-                            egui::Stroke::new(1.0, highlight_color),
+                            egui::Stroke::new(1.0_f32, highlight_color),
                             egui::StrokeKind::Inside,
                         );
                     }

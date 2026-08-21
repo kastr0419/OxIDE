@@ -95,7 +95,7 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
 
     // エラーメッセージ
     if !app.debug_error.is_empty() {
-        ui.colored_label(egui::Color32::RED, format!("⚠ {}", &app.debug_error));
+        ui.colored_label(egui::Color32::RED, format!("⚠ {}", app.debug_error));
     }
 
     ui.separator();
