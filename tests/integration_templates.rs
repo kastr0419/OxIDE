@@ -177,8 +177,10 @@ fn create_blink_project_avr_has_no_memory_x() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).unwrap();
 
-    let result =
-        alloide::templates::create_blink_project(&tmp, &alloide::core::board::BoardKind::ArduinoUno);
+    let result = alloide::templates::create_blink_project(
+        &tmp,
+        &alloide::core::board::BoardKind::ArduinoUno,
+    );
     assert!(result.is_ok());
 
     // AVR は memory.x なし

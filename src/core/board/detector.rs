@@ -132,8 +132,8 @@ pub fn detect_by_usb_id() -> Vec<DetectedBoard> {
 /// probe-rs list でARM Cortex-M チップを検出し、チップ名からボードを特定する。
 ///
 /// probe-rs list の出力例:
-///   [0]: STLink V2 -- 0483:3748 (S/N: ...)
-///   [0]: CMSIS-DAP -- 0D28:0204 -- nRF52833_xxAA
+///   \[0\]: STLink V2 -- 0483:3748 (S/N: ...)
+///   \[0\]: CMSIS-DAP -- 0D28:0204 -- nRF52833_xxAA
 pub fn detect_by_probe_rs() -> Vec<DetectedBoard> {
     let mut results = Vec::new();
     let mut probe_cmd = std::process::Command::new("probe-rs");
