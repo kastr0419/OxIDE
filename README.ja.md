@@ -1,10 +1,10 @@
-# OxIDE — 小さな組み込み Rust IDE
+# ALLoIDE — 小さな組み込み Rust IDE
 
 Rust で組み込みファームウェアを書くためのクロスプラットフォーム GUI IDE。Arduino IDE のシンプルなワークフローに触発され、egui / eframe 上に最小限で使いやすい編集→ビルド→書き込みの体験を提供します。
 
 English: [README.md](README.md)
 
-## 🚀 OxIDE の特徴
+## 🚀 ALLoIDE の特徴
 
 - 初心者やホビイスト向けに軽量で統合された開発体験を提供します。
 - AVR、RP2040、ESP32、STM32、nRF など主要 MCU ファミリ向けの実用的なツール群を備えます。
@@ -79,7 +79,7 @@ CPU/GPIOを試すには、[Renode](https://renode.io/) をインストールし�
 
 Renode公式プラットフォームとの照合結果：
 
-| OxIDEプリセット | CPU/GPIO | Renodeモデル / 理由 |
+| ALLoIDEプリセット | CPU/GPIO | Renodeモデル / 理由 |
 |---|---|---|
 | SAMD21 | 対応 | `atsamd21j17d-aft.repl`, PA17 |
 | STM32F1 | 対応 | `stm32f103.repl`, PC13 |
@@ -116,16 +116,16 @@ Renode公式プラットフォームとの照合結果：
 
 Rust・avrdude を自動セットアップする all-in-one インストーラーです。
 
-1. [Releases ページ](https://github.com/kastr0419/OxIDE/releases/latest) から `OxIDE_Setup_*.exe` をダウンロード
+1. [Releases ページ](https://github.com/kastr0419/ALLoIDE/releases/latest) から `OxIDE_Setup_*.exe` をダウンロード
 2. 実行してウィザードに従う
-3. スタートメニュー / デスクトップから **OxIDE** を起動
+3. スタートメニュー / デスクトップから **ALLoIDE** を起動（現行インストーラーのショートカット名は **OxIDE**）
 
 > 同梱: oxide.exe + rustup (Rust 自動インストール) + avrdude v8.1
 
 ### Linux — ワンライナー
 
 ```bash
-curl -sSf https://raw.githubusercontent.com/kastr0419/OxIDE/master/installer/install.sh | bash
+curl -sSf https://raw.githubusercontent.com/kastr0419/ALLoIDE/master/installer/install.sh | bash
 ```
 
 対応ディストリビューション: Ubuntu/Debian, Fedora/RHEL, Arch Linux, openSUSE
@@ -141,7 +141,7 @@ bash install.sh --version=v0.1.0      # バージョン指定
 
 ### ポータブル（Windows / Linux 共通）
 
-[Releases ページ](https://github.com/kastr0419/OxIDE/releases/latest) からアーカイブをダウンロード:
+[Releases ページ](https://github.com/kastr0419/ALLoIDE/releases/latest) からアーカイブをダウンロード:
 
 | ファイル | OS |
 |---|---|
@@ -151,8 +151,8 @@ bash install.sh --version=v0.1.0      # バージョン指定
 ### ソースからビルド
 
 ```sh
-git clone https://github.com/kastr0419/OxIDE.git
-cd OxIDE
+git clone https://github.com/kastr0419/ALLoIDE.git
+cd ALLoIDE
 cargo build --release
 ./target/release/oxide          # Linux
 .\target\release\oxide.exe      # Windows
@@ -164,7 +164,7 @@ cargo build --release
 
 ### 1. Rust 環境のセットアップ
 
-OxIDE は**自身のビルド**にも、**ファームウェアのコンパイル**にも Rust が必要です。
+ALLoIDE は**自身のビルド**にも、**ファームウェアのコンパイル**にも Rust が必要です。
 
 ```sh
 # rustup（Rust ツールチェーンマネージャ）をインストール
@@ -247,7 +247,7 @@ rustup component add llvm-tools-preview
 
 ## 🚀 クイックスタート
 
-1. OxIDE を起動
+1. ALLoIDE を起動（現行の実行ファイル／ウィンドウ名は **OxIDE**）
 2. **Settings** でワークスペースを設定
 3. **Board picker** でボードを選択
 4. （任意）**Load Template** で Blink プロジェクトを生成

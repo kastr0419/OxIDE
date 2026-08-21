@@ -1,6 +1,6 @@
-OxIDE Windows installer (Inno Setup)
+ALLoIDE Windows installer (Inno Setup)
 
-This folder contains the Inno Setup script and helper to build a full Windows installer that bundles OxIDE and options to install the Rust toolchain and avrdude.
+This folder contains the Inno Setup script and helper to build a full Windows installer that bundles ALLoIDE and options to install the Rust toolchain and avrdude.
 
 Files:
 - oxide_setup.iss  : Inno Setup 6 script for the installer
@@ -15,6 +15,7 @@ How to build
    .\build_installer.ps1
 
 Notes
+- Current implementation identifiers remain unchanged: `oxide.exe` is the binary, `OxIDE_Setup_0.1.0.exe` is the installer output, `OxIDE` is the installer/shortcut display name, and `{pf}\OxIDE` is the install directory.
 - The installer will attempt to run rustup-init.exe silently during installation. If rustup is already installed on the target machine, the installer will skip rustup-init.
 - The installer adds {pf}\OxIDE to the system PATH and creates shortcuts.
 - ESP32 (xtensa) toolchain is not bundled and requires the espup tool (user must install separately).

@@ -1,12 +1,12 @@
 # 仮想マイコン アーキテクチャ設計書
 
 > 実装逆引き版
-> 対象: OxIDE 0.1.0 / 2026-08-11
+> 対象: ALLoIDE 0.1.0 / 2026-08-11
 > 根拠: `src/core/simulator.rs`、`src/core/serial.rs`、`src/core/flasher.rs`、`src/ui/build_panel.rs`
 
 ## 1. 目的と範囲
 
-OxIDEの仮想マイコン環境は、実機なしで次の2段階の試験を行うための機能である。
+ALLoIDEの仮想マイコン環境は、実機なしで次の2段階の試験を行うための機能である。
 
 1. 全ボード共通のIDE操作試験: 仮想Flash、仮想Serial、Serial Plotter
 2. 対応ボードのファームウェア試験: RenodeによるELF命令実行とLED GPIO観測
@@ -134,7 +134,7 @@ sequenceDiagram
     S-->>UI: script path / error
 ```
 
-Renodeは別プロセスとして起動する。OxIDEは子プロセス終了を待たず、起動後のCPU状態やGPIO状態はRenode側で観測する。
+Renodeは別プロセスとして起動する。ALLoIDEは子プロセス終了を待たず、起動後のCPU状態やGPIO状態はRenode側で観測する。
 
 ## 5. Renodeスクリプト
 
@@ -152,7 +152,7 @@ Windowsのパス区切りは `/` へ正規化し、`"` をエスケープする�
 
 ## 6. CPU/GPIO対応表
 
-対応条件は「OxIDEプリセットのMCUと一致する公式Renodeプラットフォームがあり、対象LEDのGPIOモデルも存在すること」である。近似MCUは使用しない。
+対応条件は「ALLoIDEプリセットのMCUと一致する公式Renodeプラットフォームがあり、対象LEDのGPIOモデルも存在すること」である。近似MCUは使用しない。
 
 | BoardKind | 状態 | Renode platform | LED GPIO |
 |---|---|---|---|
@@ -221,7 +221,7 @@ Renode実行ファイルは開発環境に必須とせず、スクリプト生�
 ## 11. 現在の制約
 
 - RenodeのインストールとPATH設定は利用者が行う。
-- Renode子プロセスの停止・再起動・状態取得をOxIDEから制御しない。
+- Renode子プロセスの停止・再起動・状態取得をALLoIDEから制御しない。
 - GPIO観測対象は各テンプレートのLED 1ピンのみ。
 - 仮想SerialはRenode UARTと接続されず、独立したテストデータ生成器である。
 - 実時間、クロック誤差、電気特性、未モデル化周辺回路は再現しない。
@@ -233,7 +233,7 @@ Renode実行ファイルは開発環境に必須とせず、スクリプト生�
 
 追加前に次を確認する。
 
-1. OxIDEプリセットの正確なMCUに対応するRenode platformがある。
+1. ALLoIDEプリセットの正確なMCUに対応するRenode platformがある。
 2. ELFのロードアドレスとメモリマップが一致する。
 3. テンプレートのLED GPIOコントローラとpinがRenodeに存在する。
 4. 生成rescをWindowsとLinuxのRenodeで起動できる。
