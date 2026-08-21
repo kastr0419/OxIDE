@@ -54,7 +54,7 @@ UI の Build & Flash ワークフローに統合されているプリセット:
 
 ## 🧪 仮想マイコン環境
 
-Board picker で任意のボードを選び、Port に **OxIDE Virtual Board** を指定すると、実機なしで Build → Flash → Serial の操作を確認できます。
+Board picker で任意のボードを選び、Port に **ALLoIDE Virtual Board** を指定すると、実機なしで Build → Flash → Serial の操作を確認できます。
 
 仮想環境は、現在 Board picker に表示される全プリセットで利用できます：
 
@@ -116,11 +116,11 @@ Renode公式プラットフォームとの照合結果：
 
 Rust・avrdude を自動セットアップする all-in-one インストーラーです。
 
-1. [Releases ページ](https://github.com/kastr0419/ALLoIDE/releases/latest) から `OxIDE_Setup_*.exe` をダウンロード
+1. [Releases ページ](https://github.com/kastr0419/ALLoIDE/releases/latest) から `ALLoIDE_Setup_*.exe` をダウンロード
 2. 実行してウィザードに従う
-3. スタートメニュー / デスクトップから **ALLoIDE** を起動（現行インストーラーのショートカット名は **OxIDE**）
+3. スタートメニュー / デスクトップから **ALLoIDE** を起動
 
-> 同梱: oxide.exe + rustup (Rust 自動インストール) + avrdude v8.1
+> 同梱: alloide.exe + rustup (Rust 自動インストール) + avrdude v8.1
 
 ### Linux — ワンライナー
 
@@ -145,8 +145,8 @@ bash install.sh --version=v0.1.0      # バージョン指定
 
 | ファイル | OS |
 |---|---|
-| `oxide-windows-x86_64.zip` | Windows 64-bit |
-| `oxide-linux-x86_64.tar.gz` | Linux 64-bit |
+| `alloide-windows-x86_64.zip` | Windows 64-bit |
+| `alloide-linux-x86_64.tar.gz` | Linux 64-bit |
 
 ### ソースからビルド
 
@@ -154,8 +154,8 @@ bash install.sh --version=v0.1.0      # バージョン指定
 git clone https://github.com/kastr0419/ALLoIDE.git
 cd ALLoIDE
 cargo build --release
-./target/release/oxide          # Linux
-.\target\release\oxide.exe      # Windows
+./target/release/alloide          # Linux
+.\target\release\alloide.exe      # Windows
 ```
 
 ---
@@ -247,7 +247,7 @@ rustup component add llvm-tools-preview
 
 ## 🚀 クイックスタート
 
-1. ALLoIDE を起動（現行の実行ファイル／ウィンドウ名は **OxIDE**）
+1. ALLoIDE を起動
 2. **Settings** でワークスペースを設定
 3. **Board picker** でボードを選択
 4. （任意）**Load Template** で Blink プロジェクトを生成

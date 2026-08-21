@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 //! 自動検出ロジックの統合テスト
 
-use oxide::core::board::BOARD_PRESETS;
-use oxide::core::detector::{detect_by_port_hint, detect_by_usb_id, DetectionConfidence};
+use alloide::core::board::BOARD_PRESETS;
+use alloide::core::detector::{detect_by_port_hint, detect_by_usb_id, DetectionConfidence};
 
 #[test]
 fn detect_usb_returns_valid_indices() {

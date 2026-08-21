@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 
-use oxide::core::board::BoardKind;
-use oxide::core::event::{CoreEvent, FlashMsg, SerialMsg};
-use oxide::core::flasher::{flash_async, FlashRequest, FlashResult};
-use oxide::core::serial::VIRTUAL_PORT_NAME;
-use oxide::core::serial::{connect_async, list_ports, SerialCommand, SerialSettings};
+use alloide::core::board::BoardKind;
+use alloide::core::event::{CoreEvent, FlashMsg, SerialMsg};
+use alloide::core::flasher::{flash_async, FlashRequest, FlashResult};
+use alloide::core::serial::VIRTUAL_PORT_NAME;
+use alloide::core::serial::{connect_async, list_ports, SerialCommand, SerialSettings};
 use std::time::Duration;
 
 #[test]
@@ -48,7 +48,7 @@ fn virtual_port_connects_echoes_and_disconnects() {
 
 #[test]
 fn flashes_existing_artifact_to_virtual_board() {
-    let artifact = std::env::temp_dir().join(format!("oxide-virtual-{}.elf", std::process::id()));
+    let artifact = std::env::temp_dir().join(format!("alloide-virtual-{}.elf", std::process::id()));
     std::fs::write(&artifact, b"test").unwrap();
     let (tx, rx) = crossbeam_channel::bounded(3);
 
@@ -86,7 +86,7 @@ fn virtual_flash_rejects_missing_artifact() {
         FlashRequest {
             board: BoardKind::ArduinoUno,
             artifact: std::env::temp_dir().join(format!(
-                "oxide-missing-virtual-artifact-{}.elf",
+                "alloide-missing-virtual-artifact-{}.elf",
                 std::process::id()
             )),
             port: VIRTUAL_PORT_NAME.into(),

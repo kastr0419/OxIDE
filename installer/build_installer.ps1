@@ -1,5 +1,5 @@
 <#
-PowerShell helper to build OxIDE Windows installer.
+PowerShell helper to build ALLoIDE Windows installer.
 This script will:
   - Build the release binary (cargo build --release)
   - Download rustup-init.exe to installer/tools\rustup-init.exe
@@ -80,13 +80,13 @@ $isccPaths = @(
 $isccPath = $isccPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $isccPath) {
     Write-Warning "ISCC.exe not found in common locations. Please install Inno Setup 6 and ensure ISCC.exe is available."
-    Write-Host "You can also run ISCC manually: ISCC.exe $scriptDir\\oxide_setup.iss"
+    Write-Host "You can also run ISCC manually: ISCC.exe $scriptDir\\alloide_setup.iss"
     exit 0
 }
 
 Write-Host "Found ISCC: $isccPath"
-& "$isccPath" (Join-Path $scriptDir 'oxide_setup.iss')
+& "$isccPath" (Join-Path $scriptDir 'alloide_setup.iss')
 
-Write-Host "Installer build finished. Output will be in: $outputDir (per oxide_setup.iss)"
+Write-Host "Installer build finished. Output will be in: $outputDir (per alloide_setup.iss)"
 
 # End

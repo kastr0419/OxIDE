@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 //! rust-analyzer ツールチェーン管理の統合テスト
 
-use oxide::core::toolchain::{check_rust_analyzer, home_cargo_bin, validate_custom_path};
+use alloide::core::toolchain::{check_rust_analyzer, home_cargo_bin, validate_custom_path};
 use std::path::PathBuf;
 
 #[test]

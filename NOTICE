@@ -1,7 +1,7 @@
-rust-embedded-ide
-Copyright 2026 rust-embedded-ide contributors
+ALLoIDE
+Copyright 2026 ALLoIDE contributors
 
-This product includes software developed by the rust-embedded-ide project.
+This product includes software developed by the ALLoIDE project.
 Licensed under the Apache License, Version 2.0 or the MIT License.
 
 Third-party dependencies are listed in Cargo.toml and Cargo.lock, and are

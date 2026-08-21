@@ -296,8 +296,8 @@ AppConfig (Serialize/Deserialize)
   └── rust_analyzer_path: Option<PathBuf> // ra カスタムパス
 
 保存先 (dirs クレート):
-  Windows: %APPDATA%\rust-embedded-ide\config.toml
-  Linux:   ~/.config/rust-embedded-ide/config.toml
+  Windows: %APPDATA%\alloide\config.toml
+  Linux:   ~/.config/alloide/config.toml
 ```
 
 ---

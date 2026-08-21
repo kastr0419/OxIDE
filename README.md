@@ -56,7 +56,7 @@ These presets include build target, flash tool selection and are wired into the 
 
 ## 🧪 Virtual MCU environment
 
-Select any board in the Board picker and choose **OxIDE Virtual Board** as the port to exercise the Build → Flash → Serial workflow without hardware.
+Select any board in the Board picker and choose **ALLoIDE Virtual Board** as the port to exercise the Build → Flash → Serial workflow without hardware.
 
 The virtual environment works with every preset currently shown in the Board picker:
 
@@ -118,11 +118,11 @@ The pinout viewer contains curated pin maps for these boards:
 
 All-in-one installer that automatically sets up Rust and avrdude.
 
-1. Download `OxIDE_Setup_*.exe` from the [Releases page](https://github.com/kastr0419/ALLoIDE/releases/latest)
+1. Download `ALLoIDE_Setup_*.exe` from the [Releases page](https://github.com/kastr0419/ALLoIDE/releases/latest)
 2. Run it and follow the wizard
-3. Launch **ALLoIDE** from the Start Menu or Desktop (the current installer shortcut is named **OxIDE**)
+3. Launch **ALLoIDE** from the Start Menu or Desktop
 
-> Bundled: oxide.exe + rustup (auto-installs Rust) + avrdude v8.1
+> Bundled: alloide.exe + rustup (auto-installs Rust) + avrdude v8.1
 
 ### Linux — One-liner
 
@@ -147,8 +147,8 @@ Download an archive from the [Releases page](https://github.com/kastr0419/ALLoID
 
 | File | OS |
 |---|---|
-| `oxide-windows-x86_64.zip` | Windows 64-bit |
-| `oxide-linux-x86_64.tar.gz` | Linux 64-bit |
+| `alloide-windows-x86_64.zip` | Windows 64-bit |
+| `alloide-linux-x86_64.tar.gz` | Linux 64-bit |
 
 ### Build from Source
 
@@ -156,8 +156,8 @@ Download an archive from the [Releases page](https://github.com/kastr0419/ALLoID
 git clone https://github.com/kastr0419/ALLoIDE.git
 cd ALLoIDE
 cargo build --release
-./target/release/oxide          # Linux
-.\target\release\oxide.exe      # Windows
+./target/release/alloide          # Linux
+.\target\release\alloide.exe      # Windows
 ```
 
 ---
@@ -249,7 +249,7 @@ rustup component add llvm-tools-preview
 
 ## 🚀 Quick start
 
-1. Start ALLoIDE (current executable/window name: **OxIDE**).
+1. Start ALLoIDE.
 2. In **Settings**, set your workspace directory.
 3. Select a board in the **Board picker**.
 4. (Optional) Click **Load Template** to generate a blink project for the selected board.

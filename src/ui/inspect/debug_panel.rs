@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 use crate::app::IdeApp;
 use crate::core::debugger::DebugCommand;

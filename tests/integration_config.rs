@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 //! 設定の統合テスト
 
-use oxide::app::config::AppConfig;
+use alloide::app::config::AppConfig;
 
 #[test]
 fn config_roundtrip_toml() {

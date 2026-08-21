@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -31,7 +31,7 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn path() -> Option<PathBuf> {
-        dirs::config_dir().map(|d| d.join("rust-embedded-ide").join("config.toml"))
+        dirs::config_dir().map(|d| d.join("alloide").join("config.toml"))
     }
 
     pub fn load() -> Result<Self> {
