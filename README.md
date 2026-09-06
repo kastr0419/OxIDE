@@ -1,10 +1,10 @@
-# OxIDE — a small embedded Rust IDE
+# ALLoIDE — a small embedded Rust IDE
 
 A cross-platform GUI IDE for writing embedded firmware in Rust, inspired by the simplicity of the Arduino IDE. Built with egui / eframe and focused on a clean, minimal workflow: edit, build, inspect, and flash.
 
 Japanese README: [README.ja.md](README.ja.md)
 
-## 🚀 Why OxIDE
+## 🚀 Why ALLoIDE
 
 - Designed for hobbyists and embedded Rust newcomers who want a lightweight, integrated editing/building/flashing workflow.
 - Provides focused tooling for common microcontroller families (AVR, RP2040, ESP32, STM32, nRF, etc.).
@@ -27,7 +27,7 @@ Note: Features implemented in the UI call into core modules. Some backends depen
 
 ## 📋 Project templates
 
-OxIDE provides blink/project templates for the following boards (templates generate a ready-to-build Cargo project):
+ALLoIDE provides blink/project templates for the following boards (templates generate a ready-to-build Cargo project):
 
 - AVR: Arduino Uno, Arduino Nano, Arduino Mega, Arduino Leonardo
 - RP2040: Raspberry Pi Pico, Raspberry Pi Pico 2
@@ -56,7 +56,7 @@ These presets include build target, flash tool selection and are wired into the 
 
 ## 🧪 Virtual MCU environment
 
-Select any board in the Board picker and choose **OxIDE Virtual Board** as the port to exercise the Build → Flash → Serial workflow without hardware.
+Select any board in the Board picker and choose **ALLoIDE Virtual Board** as the port to exercise the Build → Flash → Serial workflow without hardware.
 
 The virtual environment works with every preset currently shown in the Board picker:
 
@@ -81,7 +81,7 @@ To simulate CPU/GPIO, install [Renode](https://renode.io/), add it to PATH, buil
 
 Audit against official Renode platforms:
 
-| OxIDE preset | CPU/GPIO | Renode model / reason |
+| ALLoIDE preset | CPU/GPIO | Renode model / reason |
 |---|---|---|
 | SAMD21 | Supported | `atsamd21j17d-aft.repl`, PA17 |
 | STM32F1 | Supported | `stm32f103.repl`, PC13 |
@@ -118,16 +118,16 @@ The pinout viewer contains curated pin maps for these boards:
 
 All-in-one installer that automatically sets up Rust and avrdude.
 
-1. Download `OxIDE_Setup_*.exe` from the [Releases page](https://github.com/kastr0419/OxIDE/releases/latest)
+1. Download `ALLoIDE_Setup_*.exe` from the [Releases page](https://github.com/kastr0419/ALLoIDE/releases/latest)
 2. Run it and follow the wizard
-3. Launch **OxIDE** from the Start Menu or Desktop
+3. Launch **ALLoIDE** from the Start Menu or Desktop
 
-> Bundled: oxide.exe + rustup (auto-installs Rust) + avrdude v8.1
+> Bundled: alloide.exe + rustup (auto-installs Rust) + avrdude v8.1
 
 ### Linux — One-liner
 
 ```bash
-curl -sSf https://raw.githubusercontent.com/kastr0419/OxIDE/master/installer/install.sh | bash
+curl -sSf https://raw.githubusercontent.com/kastr0419/ALLoIDE/master/installer/install.sh | bash
 ```
 
 Supported distributions: Ubuntu/Debian, Fedora/RHEL, Arch Linux, openSUSE
@@ -143,21 +143,21 @@ bash install.sh --version=v0.1.0      # specify version
 
 ### Portable (Windows / Linux)
 
-Download an archive from the [Releases page](https://github.com/kastr0419/OxIDE/releases/latest):
+Download an archive from the [Releases page](https://github.com/kastr0419/ALLoIDE/releases/latest):
 
 | File | OS |
 |---|---|
-| `oxide-windows-x86_64.zip` | Windows 64-bit |
-| `oxide-linux-x86_64.tar.gz` | Linux 64-bit |
+| `alloide-windows-x86_64.zip` | Windows 64-bit |
+| `alloide-linux-x86_64.tar.gz` | Linux 64-bit |
 
 ### Build from Source
 
 ```sh
-git clone https://github.com/kastr0419/OxIDE.git
-cd OxIDE
+git clone https://github.com/kastr0419/ALLoIDE.git
+cd ALLoIDE
 cargo build --release
-./target/release/oxide          # Linux
-.\target\release\oxide.exe      # Windows
+./target/release/alloide          # Linux
+.\target\release\alloide.exe      # Windows
 ```
 
 ---
@@ -166,7 +166,7 @@ cargo build --release
 
 ### 1. Set up Rust
 
-OxIDE requires Rust both to **run itself** (build from source) and to **compile your firmware**.
+ALLoIDE requires Rust both to **run itself** (build from source) and to **compile your firmware**.
 
 ```sh
 # Install rustup (the Rust toolchain manager)
@@ -249,7 +249,7 @@ rustup component add llvm-tools-preview
 
 ## 🚀 Quick start
 
-1. Start OxIDE.
+1. Start ALLoIDE.
 2. In **Settings**, set your workspace directory.
 3. Select a board in the **Board picker**.
 4. (Optional) Click **Load Template** to generate a blink project for the selected board.

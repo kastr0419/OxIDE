@@ -2,8 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git rm *)",
-      "Bash(mkdir -p \"/c/Users/Owner/AppData/Local/Temp/claude/D--OxIDE/6b6f49ff-cc59-4aa7-8d16-7034d75c60db/scratchpad/backup\")",
-      "Bash(cp review.md todos.md \"/c/Users/Owner/AppData/Local/Temp/claude/D--OxIDE/6b6f49ff-cc59-4aa7-8d16-7034d75c60db/scratchpad/backup/\")",
+      "Bash(mkdir -p \"/c/Users/Owner/AppData/Local/Temp/claude/D--ALLoIDE/6b6f49ff-cc59-4aa7-8d16-7034d75c60db/scratchpad/backup\")",
+      "Bash(cp review.md todos.md \"/c/Users/Owner/AppData/Local/Temp/claude/D--ALLoIDE/6b6f49ff-cc59-4aa7-8d16-7034d75c60db/scratchpad/backup/\")",
       "Bash(git reset *)",
       "Bash(git ls-remote *)",
       "Bash(grep -v '^$')"

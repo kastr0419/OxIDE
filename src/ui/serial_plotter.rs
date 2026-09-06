@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 pub fn ui_serial_plotter(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
     // Controls
@@ -46,7 +46,10 @@ pub fn ui_serial_plotter(app: &mut crate::app::IdeApp, ui: &mut egui::Ui) {
                     .enumerate()
                     .map(|(i, &v)| [i as f64, v])
                     .collect();
-                let line = Line::new(points).name(name).color(channel.color).width(1.5);
+                let line = Line::new(points)
+                    .name(name)
+                    .color(channel.color)
+                    .width(1.5_f32);
                 plot_ui.line(line);
             }
         });

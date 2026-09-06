@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 #![allow(dead_code)]
 
@@ -87,7 +87,7 @@ pub fn launch(req: &SimulationRequest) -> Result<PathBuf> {
         .artifact
         .parent()
         .context("simulation artifact has no parent directory")?
-        .join(".oxide-sim.resc");
+        .join(".alloide-sim.resc");
     std::fs::write(&script_path, script(&req.board, &req.artifact)?)
         .with_context(|| format!("failed to write {}", script_path.display()))?;
 

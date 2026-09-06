@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 use crate::core::event::{CoreEvent, SerialMsg};
 use anyhow::{Context, Result};
@@ -11,7 +11,7 @@ use std::sync::{
 };
 use std::thread;
 
-pub const VIRTUAL_PORT_NAME: &str = "OxIDE Virtual Board";
+pub const VIRTUAL_PORT_NAME: &str = "ALLoIDE Virtual Board";
 
 pub enum SerialEvent {
     Opened,

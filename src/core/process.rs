@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 /// Windows でコンソールウィンドウを表示しないよう CREATE_NO_WINDOW フラグを設定する。
 /// 他OSでは何もしない。

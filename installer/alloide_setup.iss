@@ -1,19 +1,19 @@
 [Setup]
-AppName=OxIDE
+AppName=ALLoIDE
 AppVersion=0.1.0
 AppPublisher=kastr0419
-AppPublisherURL=https://github.com/kastr0419/OxIDE
-DefaultDirName={autopf}\OxIDE
-DefaultGroupName=OxIDE
-OutputDir=D:\OxIDE\installer\output
-OutputBaseFilename=OxIDE_Setup_0.1.0
-;SetupIconFile=D:\OxIDE\assets\oxide.ico
+AppPublisherURL=https://github.com/kastr0419/ALLoIDE
+DefaultDirName={autopf}\ALLoIDE
+DefaultGroupName=ALLoIDE
+OutputDir=D:\ALLoIDE\installer\output
+OutputBaseFilename=ALLoIDE_Setup_0.1.0
+;SetupIconFile=D:\ALLoIDE\assets\alloide.ico
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
 ChangesEnvironment=yes
-LicenseFile=D:\OxIDE\LICENSE-MIT
+LicenseFile=D:\ALLoIDE\LICENSE-MIT
 
 [Languages]
 Name: "japanese"; MessagesFile: "compiler:Languages\\Japanese.isl"
@@ -24,21 +24,21 @@ Name: "desktopicon"; Description: "デスクトップにショートカットを
 
 [Files]
 ; Main executable
-Source: "D:\OxIDE\target\release\oxide.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\OxIDE\LICENSE-MIT"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\OxIDE\LICENSE-APACHE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "D:\OxIDE\NOTICE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\ALLoIDE\target\release\alloide.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\ALLoIDE\LICENSE-MIT"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\ALLoIDE\LICENSE-APACHE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "D:\ALLoIDE\NOTICE"; DestDir: "{app}"; Flags: ignoreversion
 
 ; Rustup installer (will be copied to temporary folder and removed after install)
-Source: "D:\OxIDE\installer\tools\rustup-init.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
+Source: "D:\ALLoIDE\installer\tools\rustup-init.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall
 
 ; avrdude
-Source: "D:\OxIDE\installer\tools\avrdude.exe"; DestDir: "{app}\\tools"; Flags: ignoreversion
+Source: "D:\ALLoIDE\installer\tools\avrdude.exe"; DestDir: "{app}\\tools"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\OxIDE"; Filename: "{app}\\oxide.exe"
-Name: "{group}\OxIDEのアンインストール"; Filename: "{uninstallexe}"
-Name: "{commondesktop}\OxIDE"; Filename: "{app}\\oxide.exe"; Tasks: desktopicon
+Name: "{group}\ALLoIDE"; Filename: "{app}\\alloide.exe"
+Name: "{group}\ALLoIDEのアンインストール"; Filename: "{uninstallexe}"
+Name: "{commondesktop}\ALLoIDE"; Filename: "{app}\\alloide.exe"; Tasks: desktopicon
 
 [Run]
 ; Install Rust (only run rustup-init if rustup is not already installed)

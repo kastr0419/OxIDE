@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 use crate::core::event::CoreEvent;
 use anyhow::{anyhow, ensure, Context, Result};
@@ -66,10 +66,10 @@ pub enum AgentEvent {
 }
 
 pub fn agent_settings_path() -> Result<PathBuf> {
-    let executable = std::env::current_exe().context("failed to locate the OxIDE executable")?;
+    let executable = std::env::current_exe().context("failed to locate the ALLoIDE executable")?;
     Ok(executable
         .parent()
-        .context("the OxIDE executable has no parent directory")?
+        .context("the ALLoIDE executable has no parent directory")?
         .join("agent_setting")
         .join("agent.md"))
 }
@@ -139,7 +139,7 @@ fn run(req: AgentRequest, tx: &crossbeam_channel::Sender<CoreEvent>) -> Result<(
 
 fn compose_prompt(instructions: &str, context: &str, user_prompt: &str) -> String {
     format!(
-        "{}\n\n## OxIDE runtime context\n\n{}\n\n## User request\n\n{}",
+        "{}\n\n## ALLoIDE runtime context\n\n{}\n\n## User request\n\n{}",
         instructions.trim(),
         context.trim(),
         user_prompt
@@ -253,7 +253,7 @@ fn codex_executable() -> Result<PathBuf> {
         )?;
         ensure!(
             path.is_file(),
-            "Codex CLI executable was not found; install Codex and restart OxIDE"
+            "Codex CLI executable was not found; install Codex and restart ALLoIDE"
         );
         Ok(path)
     }
@@ -407,7 +407,7 @@ mod tests {
                 "inspect the firmware"
             ),
             format!(
-                "{}\n\n## OxIDE runtime context\n\nboard: micro:bit v2\n\n## User request\n\ninspect the firmware",
+                "{}\n\n## ALLoIDE runtime context\n\nboard: micro:bit v2\n\n## User request\n\ninspect the firmware",
                 DEFAULT_AGENT_SETTINGS.trim()
             )
         );
@@ -416,7 +416,7 @@ mod tests {
     #[test]
     fn settings_are_created_once_and_external_edits_are_loaded() {
         let directory = std::env::temp_dir().join(format!(
-            "oxide-agent-settings-{}-{}",
+            "alloide-agent-settings-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)

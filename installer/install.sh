@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MIT OR Apache-2.0
-# OxIDE Linux Installer
-# Usage: curl -sSf https://raw.githubusercontent.com/kastr0419/OxIDE/master/installer/install.sh | bash
+# ALLoIDE Linux Installer
+# Usage: curl -sSf https://raw.githubusercontent.com/kastr0419/ALLoIDE/master/installer/install.sh | bash
 # Or:    bash install.sh [--prefix /usr/local] [--no-tools] [--no-rust]
 
 set -euo pipefail
 
-REPO="kastr0419/OxIDE"
+REPO="kastr0419/ALLoIDE"
 VERSION="latest"
 INSTALL_PREFIX="${INSTALL_PREFIX:-}"
 NO_TOOLS=0
@@ -27,10 +27,10 @@ done
 
 # ── Colors ────────────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
-info()    { echo -e "${CYAN}[OxIDE]${NC} $*"; }
-success() { echo -e "${GREEN}[OxIDE]${NC} ✅ $*"; }
-warn()    { echo -e "${YELLOW}[OxIDE]${NC} ⚠️  $*"; }
-die()     { echo -e "${RED}[OxIDE]${NC} ❌ $*"; exit 1; }
+info()    { echo -e "${CYAN}[ALLoIDE]${NC} $*"; }
+success() { echo -e "${GREEN}[ALLoIDE]${NC} ✅ $*"; }
+warn()    { echo -e "${YELLOW}[ALLoIDE]${NC} ⚠️  $*"; }
+die()     { echo -e "${RED}[ALLoIDE]${NC} ❌ $*"; exit 1; }
 
 # ── Detect OS / arch ──────────────────────────────────────────────────────────
 OS="$(uname -s)"
@@ -49,7 +49,7 @@ fi
 BIN_DIR="$INSTALL_PREFIX/bin"
 SHARE_DIR="$INSTALL_PREFIX/share"
 
-info "Installing OxIDE to $BIN_DIR"
+info "Installing ALLoIDE to $BIN_DIR"
 mkdir -p "$BIN_DIR"
 
 # ── Detect package manager ────────────────────────────────────────────────────
@@ -119,50 +119,50 @@ install_rust() {
   success "Rust targets installed"
 }
 
-# ── Download OxIDE binary ─────────────────────────────────────────────────────
-download_oxide() {
+# ── Download ALLoIDE binary ─────────────────────────────────────────────────────
+download_alloide() {
   if [[ "$VERSION" == "latest" ]]; then
-    DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/oxide-linux-x86_64.tar.gz"
+    DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/alloide-linux-x86_64.tar.gz"
   else
-    DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/oxide-linux-x86_64.tar.gz"
+    DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/alloide-linux-x86_64.tar.gz"
   fi
 
-  info "Downloading OxIDE from $DOWNLOAD_URL ..."
+  info "Downloading ALLoIDE from $DOWNLOAD_URL ..."
   TMPDIR="$(mktemp -d)"
   trap 'rm -rf "$TMPDIR"' EXIT
 
-  curl -sSfL "$DOWNLOAD_URL" -o "$TMPDIR/oxide.tar.gz" || \
+  curl -sSfL "$DOWNLOAD_URL" -o "$TMPDIR/alloide.tar.gz" || \
     die "Failed to download. Check your internet connection or visit: https://github.com/${REPO}/releases"
 
-  tar -xzf "$TMPDIR/oxide.tar.gz" -C "$TMPDIR"
+  tar -xzf "$TMPDIR/alloide.tar.gz" -C "$TMPDIR"
 
-  # Find the oxide binary in extracted files
-  OXIDE_BIN="$(find "$TMPDIR" -name "oxide" -type f | head -1)"
-  [[ -z "$OXIDE_BIN" ]] && die "oxide binary not found in archive."
+  # Find the alloide binary in extracted files
+  ALLOIDE_BIN="$(find "$TMPDIR" -name "alloide" -type f | head -1)"
+  [[ -z "$ALLOIDE_BIN" ]] && die "alloide binary not found in archive."
 
-  chmod +x "$OXIDE_BIN"
-  cp "$OXIDE_BIN" "$BIN_DIR/oxide"
-  success "OxIDE installed to $BIN_DIR/oxide"
+  chmod +x "$ALLOIDE_BIN"
+  cp "$ALLOIDE_BIN" "$BIN_DIR/alloide"
+  success "ALLoIDE installed to $BIN_DIR/alloide"
 }
 
 # ── Create .desktop entry ─────────────────────────────────────────────────────
 create_desktop_entry() {
   APPS_DIR="$SHARE_DIR/applications"
   mkdir -p "$APPS_DIR"
-  cat > "$APPS_DIR/oxide.desktop" <<EOF
+  cat > "$APPS_DIR/alloide.desktop" <<EOF
 [Desktop Entry]
 Version=1.0
-Name=OxIDE
+Name=ALLoIDE
 Comment=Rust Embedded Development IDE
-Exec=$BIN_DIR/oxide
-Icon=oxide
+Exec=$BIN_DIR/alloide
+Icon=alloide
 Terminal=false
 Type=Application
 Categories=Development;IDE;
 Keywords=rust;embedded;arduino;esp32;stm32;
 StartupNotify=true
 EOF
-  success "Desktop entry created at $APPS_DIR/oxide.desktop"
+  success "Desktop entry created at $APPS_DIR/alloide.desktop"
 
   # Update desktop database if available
   command -v update-desktop-database &>/dev/null && \
@@ -183,13 +183,13 @@ check_path() {
 # ── Main ──────────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║     OxIDE Linux Installer          ║${NC}"
+echo -e "${CYAN}║     ALLoIDE Linux Installer        ║${NC}"
 echo -e "${CYAN}║  Rust Embedded Development IDE     ║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════╝${NC}"
 echo ""
 
 install_deps
-download_oxide
+download_alloide
 create_desktop_entry
 
 [[ $NO_TOOLS -eq 0 ]] && install_avrdude
@@ -198,7 +198,7 @@ create_desktop_entry
 check_path
 
 echo ""
-success "Installation complete! Run: oxide"
+success "Installation complete! Run: alloide"
 echo ""
 echo -e "  📖 Docs:    ${CYAN}https://github.com/${REPO}${NC}"
 echo -e "  🐛 Issues:  ${CYAN}https://github.com/${REPO}/issues${NC}"

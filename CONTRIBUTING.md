@@ -1,6 +1,6 @@
-# Contributing to rust-embedded-ide
+# Contributing to ALLoIDE
 
-ありがとうございます！rust-embedded-ide への貢献は大歓迎です。以下に貢献ガイドラインを示します。
+ありがとうございます！ALLoIDE への貢献は大歓迎です。以下に貢献ガイドラインを示します。
 
 ## ライセンス
 本プロジェクトに対するすべてのコントリビューターは、MIT License と Apache-2.0 のデュアルライセンス（MIT + Apache-2.0）に同意したものとみなされます。PR を送ることで同意したことになります。

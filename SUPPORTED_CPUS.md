@@ -1,6 +1,6 @@
 # マイコンCPU対応一覧 / Supported MCU CPU Reference
 
-> rust-embedded-ide が対応する（または将来対応予定の）マイコンCPUアーキテクチャ一覧。
+> ALLoIDE が対応する（または将来対応予定の）マイコンCPUアーキテクチャ一覧。
 > 調査日: 2026-04-16
 
 ---

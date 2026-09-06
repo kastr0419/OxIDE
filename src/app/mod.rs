@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 
@@ -440,7 +440,7 @@ mod tests {
 
     #[test]
     fn agent_reload_preserves_dirty_tabs() {
-        let dir = std::env::temp_dir().join(format!("oxide-agent-reload-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("alloide-agent-reload-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let clean_path = dir.join("clean.rs");
         let dirty_path = dir.join("dirty.rs");

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 //! コンパイララッパーの統合テスト
 
-use oxide::core::compiler::{BuildRequest, BuildResult};
+use alloide::core::compiler::{BuildRequest, BuildResult};
 use std::path::PathBuf;
 
 #[test]
@@ -35,10 +35,10 @@ fn build_result_failure() {
 fn build_result_success() {
     let r = BuildResult {
         success: true,
-        stdout: "Compiling rust-embedded-ide v0.1.0".to_string(),
+        stdout: "Compiling alloide v0.1.0".to_string(),
         stderr: String::new(),
         artifact_path: Some(PathBuf::from(
-            "target/thumbv7em-none-eabihf/release/rust-embedded-ide",
+            "target/thumbv7em-none-eabihf/release/alloide",
         )),
         dist_path: None,
     };

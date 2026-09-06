@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 fn save_editor_to_disk(app: &mut crate::app::IdeApp) {
     if let Some(path) = &app.file_path {

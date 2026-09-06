@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 //! ボード定義の統合テスト
 
-use oxide::core::board::{BoardKind, FlashToolKind, BOARD_PRESETS};
+use alloide::core::board::{BoardKind, FlashToolKind, BOARD_PRESETS};
 
 #[test]
 fn all_boards_have_valid_target_triple() {

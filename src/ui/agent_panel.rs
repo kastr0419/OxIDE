@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 use std::fmt::Write;
 
@@ -103,7 +103,7 @@ fn open_agent_settings_folder() -> anyhow::Result<()> {
     anyhow::bail!("opening the agent settings folder is unsupported on this OS")
 }
 
-fn oxide_context(app: &crate::app::IdeApp) -> String {
+fn alloide_context(app: &crate::app::IdeApp) -> String {
     let board = app.selected_board_preset();
     let port = app
         .available_ports
@@ -116,7 +116,7 @@ fn oxide_context(app: &crate::app::IdeApp) -> String {
         .map(|path| path.display().to_string())
         .unwrap_or_else(|| "<none>".to_owned());
     let mut context = format!(
-        "- OxIDE version: {}\n\
+        "- ALLoIDE version: {}\n\
          - Workspace: `{}`\n\
          - Board: {} (`{}`)\n\
          - Port: `{port}`\n\
@@ -236,7 +236,7 @@ pub fn ui_agent_panel(
         "AIによるワークスペースの編集を許可",
     );
     ui.label(
-        egui::RichText::new("OxIDEの状態（ボード、診断、ログなど）を依頼に共有します。")
+        egui::RichText::new("ALLoIDEの状態（ボード、診断、ログなど）を依頼に共有します。")
             .small()
             .weak(),
     );
@@ -267,7 +267,7 @@ pub fn ui_agent_panel(
                     workspace: app.config.workspace_dir.clone(),
                     prompt: app.agent_prompt.trim().to_owned(),
                     allow_edits: app.agent_allow_edits,
-                    context: oxide_context(app),
+                    context: alloide_context(app),
                     model: app.config.agent_model,
                 },
                 tx.clone(),

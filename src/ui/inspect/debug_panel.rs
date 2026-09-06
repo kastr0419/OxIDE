@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 use crate::app::IdeApp;
 use crate::core::debugger::DebugCommand;
@@ -95,7 +95,7 @@ pub fn ui_debug_panel(app: &mut IdeApp, ui: &mut egui::Ui) {
 
     // エラーメッセージ
     if !app.debug_error.is_empty() {
-        ui.colored_label(egui::Color32::RED, format!("⚠ {}", &app.debug_error));
+        ui.colored_label(egui::Color32::RED, format!("⚠ {}", app.debug_error));
     }
 
     ui.separator();

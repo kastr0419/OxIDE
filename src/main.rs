@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
 #![windows_subsystem = "windows"]
 
 fn main() {
-    use oxide::app::{
+    use alloide::app::{
         config::{WINDOW_HEIGHT, WINDOW_WIDTH},
         IdeApp,
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([WINDOW_WIDTH, WINDOW_HEIGHT])
-            .with_title("OxIDE"),
+            .with_title("ALLoIDE"),
         ..Default::default()
     };
     if let Err(e) = eframe::run_native(
-        "OxIDE",
+        "ALLoIDE",
         options,
         Box::new(|cc| Ok(Box::new(IdeApp::new(cc)))),
     ) {

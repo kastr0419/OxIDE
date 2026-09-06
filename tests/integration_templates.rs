@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// Copyright 2026 rust-embedded-ide contributors
+// Copyright 2026 ALLoIDE contributors
 
-use oxide::core::board::{BoardKind, BOARD_PRESETS};
-use oxide::templates::blink::get_blink_template;
-use oxide::templates::create_blink_project;
+use alloide::core::board::{BoardKind, BOARD_PRESETS};
+use alloide::templates::blink::get_blink_template;
+use alloide::templates::create_blink_project;
 
 /// すべてのボードにテンプレートが存在することを確認
 #[test]
@@ -148,7 +148,7 @@ fn create_blink_project_writes_cargo_config() {
     std::fs::create_dir_all(&tmp).unwrap();
 
     let result =
-        oxide::templates::create_blink_project(&tmp, &oxide::core::board::BoardKind::Stm32F4);
+        alloide::templates::create_blink_project(&tmp, &alloide::core::board::BoardKind::Stm32F4);
     assert!(
         result.is_ok(),
         "create_blink_project failed: {:?}",
@@ -177,8 +177,10 @@ fn create_blink_project_avr_has_no_memory_x() {
     let _ = std::fs::remove_dir_all(&tmp);
     std::fs::create_dir_all(&tmp).unwrap();
 
-    let result =
-        oxide::templates::create_blink_project(&tmp, &oxide::core::board::BoardKind::ArduinoUno);
+    let result = alloide::templates::create_blink_project(
+        &tmp,
+        &alloide::core::board::BoardKind::ArduinoUno,
+    );
     assert!(result.is_ok());
 
     // AVR は memory.x なし
@@ -197,7 +199,7 @@ fn create_blink_project_stm32_has_memory_x() {
     std::fs::create_dir_all(&tmp).unwrap();
 
     let result =
-        oxide::templates::create_blink_project(&tmp, &oxide::core::board::BoardKind::Stm32F4);
+        alloide::templates::create_blink_project(&tmp, &alloide::core::board::BoardKind::Stm32F4);
     assert!(result.is_ok());
 
     // STM32 は memory.x あり

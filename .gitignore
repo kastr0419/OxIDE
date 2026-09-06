@@ -6,7 +6,7 @@
 config.toml
 *.exe
 *.pdb
-launch_oxide.vbs
+launch_alloide.vbs
 installer/tools/
 installer/output/
 docs/qiita_article*.md

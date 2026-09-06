@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT OR Apache-2.0
-# Copyright 2026 rust-embedded-ide contributors
+# Copyright 2026 ALLoIDE contributors
 name: Release
 
 on:
@@ -22,12 +22,12 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: oxide.exe
-            archive: oxide-windows-x86_64.zip
+            artifact: alloide.exe
+            archive: alloide-windows-x86_64.zip
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            artifact: oxide
-            archive: oxide-linux-x86_64.tar.gz
+            artifact: alloide
+            archive: alloide-linux-x86_64.tar.gz
 
     steps:
       - uses: actions/checkout@v4
@@ -71,9 +71,9 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           BIN="target/${{ matrix.target }}/release/${{ matrix.artifact }}"
-          cp "$BIN" oxide
-          tar czf ${{ matrix.archive }} oxide README.md LICENSE-MIT LICENSE-APACHE NOTICE
-          rm oxide
+          cp "$BIN" alloide
+          tar czf ${{ matrix.archive }} alloide README.md LICENSE-MIT LICENSE-APACHE NOTICE
+          rm alloide
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -101,7 +101,7 @@ jobs:
         with:
           name: "Release ${{ github.ref_name }}"
           body: |
-            ## OxIDE ${{ github.ref_name }}
+            ## ALLoIDE ${{ github.ref_name }}
 
             > Arduino-IDE-style simplicity, for Rust embedded development.
 
@@ -111,13 +111,13 @@ jobs:
             - STM32F4xx (ARM Cortex-M4F)
 
             ### ダウンロード
-            - `OxIDE_Setup_*.exe` — Windows 64-bit インストーラー (Rust同梱)
-            - `oxide-windows-x86_64.zip` — Windows 64-bit ポータブル
-            - `oxide-linux-x86_64.tar.gz` — Linux 64-bit
+            - `ALLoIDE_Setup_*.exe` — Windows 64-bit インストーラー (Rust同梱)
+            - `alloide-windows-x86_64.zip` — Windows 64-bit ポータブル
+            - `alloide-linux-x86_64.tar.gz` — Linux 64-bit
 
             ### Linux クイックインストール
             ```bash
-            curl -sSf https://raw.githubusercontent.com/kastr0419/OxIDE/master/installer/install.sh | bash
+            curl -sSf https://raw.githubusercontent.com/kastr0419/ALLoIDE/master/installer/install.sh | bash
             ```
 
             ### ライセンス

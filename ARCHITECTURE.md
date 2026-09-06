@@ -1,4 +1,4 @@
-# アーキテクチャ設計書 — rust-embedded-ide
+# アーキテクチャ設計書 — ALLoIDE
 
 > バージョン: 0.1  
 > 作成日: 2026-04-19  
@@ -8,7 +8,7 @@
 
 ## 1. システム概要
 
-rust-embedded-ide は **3 層アーキテクチャ**で構成されます。
+ALLoIDE は **3 層アーキテクチャ**で構成されます。
 
 ```
 ┌───────────────────────────────────────────┐
@@ -296,8 +296,8 @@ AppConfig (Serialize/Deserialize)
   └── rust_analyzer_path: Option<PathBuf> // ra カスタムパス
 
 保存先 (dirs クレート):
-  Windows: %APPDATA%\rust-embedded-ide\config.toml
-  Linux:   ~/.config/rust-embedded-ide/config.toml
+  Windows: %APPDATA%\alloide\config.toml
+  Linux:   ~/.config/alloide/config.toml
 ```
 
 ---

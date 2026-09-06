@@ -109,7 +109,7 @@ fn ui_legend_and_filter(ui: &mut egui::Ui, filter: &mut u8) {
                 } else {
                     Color32::TRANSPARENT
                 })
-                .stroke(Stroke::new(1.0, color));
+                .stroke(Stroke::new(1.0_f32, color));
             if ui.add(btn).clicked() {
                 *filter = if *filter == *id { 0 } else { *id };
             }
@@ -130,7 +130,7 @@ fn ui_diagram(ui: &mut egui::Ui, pins: &[PinInfo], filter: u8, hovered: &mut Opt
     painter.rect_stroke(
         rect,
         8.0,
-        Stroke::new(1.5, Color32::from_rgb(70, 90, 100)),
+        Stroke::new(1.5_f32, Color32::from_rgb(70, 90, 100)),
         egui::StrokeKind::Inside,
     );
 
@@ -160,7 +160,7 @@ fn ui_diagram(ui: &mut egui::Ui, pins: &[PinInfo], filter: u8, hovered: &mut Opt
         } else {
             Color32::BLACK
         };
-        let stroke_w = if is_selected { 2.0 } else { 1.0 };
+        let stroke_w = if is_selected { 2.0_f32 } else { 1.0_f32 };
         painter.circle_stroke(center, pin_r, Stroke::new(stroke_w, stroke_color));
 
         // Pin label inside circle
@@ -283,7 +283,7 @@ fn ui_pin_detail(ui: &mut egui::Ui, pins: &[PinInfo], hovered: Option<u8>) {
                         .small(),
                 )
                 .fill(c.linear_multiply(0.7))
-                .stroke(Stroke::new(1.0, c));
+                .stroke(Stroke::new(1.0_f32, c));
                 ui.add(badge);
             }
         });

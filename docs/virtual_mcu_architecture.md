@@ -1,17 +1,17 @@
 # 仮想マイコン アーキテクチャ設計書
 
 > 実装逆引き版
-> 対象: OxIDE 0.1.0 / 2026-08-11
+> 対象: ALLoIDE 0.1.0 / 2026-08-11
 > 根拠: `src/core/simulator.rs`、`src/core/serial.rs`、`src/core/flasher.rs`、`src/ui/build_panel.rs`
 
 ## 1. 目的と範囲
 
-OxIDEの仮想マイコン環境は、実機なしで次の2段階の試験を行うための機能である。
+ALLoIDEの仮想マイコン環境は、実機なしで次の2段階の試験を行うための機能である。
 
 1. 全ボード共通のIDE操作試験: 仮想Flash、仮想Serial、Serial Plotter
 2. 対応ボードのファームウェア試験: RenodeによるELF命令実行とLED GPIO観測
 
-仮想環境は `OxIDE Virtual Board` という特別なポート名で選択する。実機用のビルド処理は置き換えず、選択ボード向けの実ELFをそのまま使用する。
+仮想環境は `ALLoIDE Virtual Board` という特別なポート名で選択する。実機用のビルド処理は置き換えず、選択ボード向けの実ELFをそのまま使用する。
 
 ## 2. 実装から逆引きした構成
 
@@ -27,8 +27,8 @@ flowchart LR
     ELF[(ELF)]
 
     UI --> BUILD --> ELF
-    UI -->|OxIDE Virtual Board| FLASH
-    UI -->|OxIDE Virtual Board| SERIAL
+    UI -->|ALLoIDE Virtual Board| FLASH
+    UI -->|ALLoIDE Virtual Board| SERIAL
     UI -->|CPU/GPIO Sim| SIM
     ELF --> FLASH
     ELF --> SIM --> RENODE
@@ -50,7 +50,7 @@ flowchart LR
 
 ### 3.1 仮想ポート
 
-`core::serial::VIRTUAL_PORT_NAME` の値は `OxIDE Virtual Board` である。`list_ports()` はOSから取得した実ポート一覧へ、この値を重複なしで追加する。
+`core::serial::VIRTUAL_PORT_NAME` の値は `ALLoIDE Virtual Board` である。`list_ports()` はOSから取得した実ポート一覧へ、この値を重複なしで追加する。
 
 UI、Flash、Serialは同じ定数を参照する。文字列を各層へ重複定義しないことで、仮想経路の判定を一元化している。
 
@@ -78,7 +78,7 @@ pub struct SimulationRequest {
 }
 ```
 
-`launch()` は `anyhow::Result<PathBuf>` を返す。成功値は生成した `.oxide-sim.resc` のパスであり、UIはこれをBuild Logへ表示する。
+`launch()` は `anyhow::Result<PathBuf>` を返す。成功値は生成した `.alloide-sim.resc` のパスであり、UIはこれをBuild Logへ表示する。
 
 ## 4. データフロー
 
@@ -129,16 +129,16 @@ sequenceDiagram
     S-->>UI: Supported / Unsupported(reason)
     UI->>S: launch(SimulationRequest)
     S->>S: board・ELF・Renodeを検証
-    S->>FS: .oxide-sim.rescを書き込み
+    S->>FS: .alloide-sim.rescを書き込み
     S->>R: Command::spawn(script)
     S-->>UI: script path / error
 ```
 
-Renodeは別プロセスとして起動する。OxIDEは子プロセス終了を待たず、起動後のCPU状態やGPIO状態はRenode側で観測する。
+Renodeは別プロセスとして起動する。ALLoIDEは子プロセス終了を待たず、起動後のCPU状態やGPIO状態はRenode側で観測する。
 
 ## 5. Renodeスクリプト
 
-生成先はELFと同じディレクトリの `.oxide-sim.resc` である。内容は対応表から組み立てる。
+生成先はELFと同じディレクトリの `.alloide-sim.resc` である。内容は対応表から組み立てる。
 
 ```text
 mach create
@@ -152,7 +152,7 @@ Windowsのパス区切りは `/` へ正規化し、`"` をエスケープする�
 
 ## 6. CPU/GPIO対応表
 
-対応条件は「OxIDEプリセットのMCUと一致する公式Renodeプラットフォームがあり、対象LEDのGPIOモデルも存在すること」である。近似MCUは使用しない。
+対応条件は「ALLoIDEプリセットのMCUと一致する公式Renodeプラットフォームがあり、対象LEDのGPIOモデルも存在すること」である。近似MCUは使用しない。
 
 | BoardKind | 状態 | Renode platform | LED GPIO |
 |---|---|---|---|
@@ -171,7 +171,7 @@ Windowsのパス区切りは `/` へ正規化し、`"` をエスケープする�
 
 CPU/GPIO操作は次の条件をすべて満たす場合だけ表示される。
 
-1. 選択ポートが `OxIDE Virtual Board`
+1. 選択ポートが `ALLoIDE Virtual Board`
 2. 選択した `BoardKind` が `SimulationSupport::Supported`
 3. `last_dist_path` 内に拡張子 `.elf` の成果物が存在する
 
@@ -221,7 +221,7 @@ Renode実行ファイルは開発環境に必須とせず、スクリプト生�
 ## 11. 現在の制約
 
 - RenodeのインストールとPATH設定は利用者が行う。
-- Renode子プロセスの停止・再起動・状態取得をOxIDEから制御しない。
+- Renode子プロセスの停止・再起動・状態取得をALLoIDEから制御しない。
 - GPIO観測対象は各テンプレートのLED 1ピンのみ。
 - 仮想SerialはRenode UARTと接続されず、独立したテストデータ生成器である。
 - 実時間、クロック誤差、電気特性、未モデル化周辺回路は再現しない。
@@ -233,7 +233,7 @@ Renode実行ファイルは開発環境に必須とせず、スクリプト生�
 
 追加前に次を確認する。
 
-1. OxIDEプリセットの正確なMCUに対応するRenode platformがある。
+1. ALLoIDEプリセットの正確なMCUに対応するRenode platformがある。
 2. ELFのロードアドレスとメモリマップが一致する。
 3. テンプレートのLED GPIOコントローラとpinがRenodeに存在する。
 4. 生成rescをWindowsとLinuxのRenodeで起動できる。
