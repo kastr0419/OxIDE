@@ -12,6 +12,8 @@ installer/output/
 docs/qiita_article*.md
 
 # 内部資料（公開リポジトリには含めない）
+/.claude/
+/agent_setting/
 AGENTS.md
 CODING_GUIDELINES.md
 OSS_LICENSE_AUDIT.md
